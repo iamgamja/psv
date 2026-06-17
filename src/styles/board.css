@@ -1,0 +1,69 @@
+#board {
+  --size-cell: 32px;
+
+  margin: 1rem;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  touch-action: none;
+}
+
+#board-container {
+  width: calc(var(--size-cell) * 11); /* 1 + 9 + 1 */
+  height: calc(var(--size-cell) * 11);
+
+  position: relative;
+}
+
+.cell {
+  width: var(--size-cell);
+  height: var(--size-cell);
+  position: absolute;
+
+  font-size: 20px;
+  box-sizing: border-box;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.cell-memo {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.cell-memo > .memo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 8px;
+}
+
+.memo.hide {
+  visibility: hidden;
+}
+
+.cell-selected.selected {
+  border: 4px rgba(150, 227, 255, 0.5) solid;
+}
+
+.cell-error.error {
+  border: 4px rgb(255, 150, 150) solid;
+  background-color: rgba(255, 150, 150, 0.5);
+}
+
+.cell-warning.warning {
+  border: 4px rgb(255, 251, 0) solid;
+  background-color: rgba(255, 251, 0, 0.5);
+}
+
+/* debug */
+.cell-num {
+  border: 1px black solid;
+  /* background-color: #eee; */
+}

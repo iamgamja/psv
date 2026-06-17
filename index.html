@@ -2,12 +2,51 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="
+        width=device-width,
+        initial-scale=1,
+        maximum-scale=1,
+        user-scalable=no
+      "
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>psv</title>
   </head>
   <body>
-    <div id="app">hello</div>
+    <div id="app">
+      <div id="board">
+        <div id="board-container"></div>
+      </div>
+      <div id="input">
+        <button id="input-number-1" class="input-number">1</button>
+        <button id="input-number-2" class="input-number">2</button>
+        <button id="input-number-3" class="input-number">3</button>
+        <button id="input-mode-num" class="active">Num</button>
+        <div></div>
+        <button id="input-info">Info</button>
+        <button id="input-number-4" class="input-number">4</button>
+        <button id="input-number-5" class="input-number">5</button>
+        <button id="input-number-6" class="input-number">6</button>
+        <button id="input-mode-memo">Memo</button>
+        <div></div>
+        <button id="input-undo">Undo</button>
+        <button id="input-number-7" class="input-number">7</button>
+        <button id="input-number-8" class="input-number">8</button>
+        <button id="input-number-9" class="input-number">9</button>
+        <button id="input-mode-color">Color</button>
+        <div></div>
+        <button id="input-redo">Redo</button>
+        <button id="input-select">Select</button>
+        <button id="input-auto">Auto</button>
+        <button id="input-delete">Delete</button>
+        <button id="input-branch">Branch</button>
+        <div></div>
+        <button id="input-setting">Setting</button>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
