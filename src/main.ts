@@ -13,10 +13,3 @@ const gameState: GameState = {
 
 const board = initBoard()
 initInput(board, gameState)
-
-// debug
-board.cells[0][0].selected_element.addEventListener('click', () => {
-  if (board.selected.has(board.cells[3][3])) board.selected.delete(board.cells[3][3])
-  else board.selected.add(board.cells[3][3])
-  board.render()
-})
