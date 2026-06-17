@@ -20,7 +20,6 @@ export type Cell = {
   color_element: HTMLDivElement
   num_element: HTMLDivElement
   memo_element: HTMLDivElement
-  memos: Record<type_V, HTMLDivElement>
   error_element: HTMLDivElement
   warning_element: HTMLDivElement
   selected_element: HTMLDivElement

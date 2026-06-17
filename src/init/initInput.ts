@@ -1,22 +1,20 @@
+import { color_map } from '../const'
 import type { Board, Cell, GameState, type_V } from '../types'
-
-function entries<T extends object>(obj: T) {
-  return Object.entries(obj) as [keyof T, T[keyof T]][]
-}
+import { entries } from '../util/entries'
 
 const input_element = document.querySelector<HTMLDivElement>('#input')!
 
 const buttons = {
   number: {
-    '1': input_element.querySelector<HTMLButtonElement>('#input-number-1')!,
-    '2': input_element.querySelector<HTMLButtonElement>('#input-number-2')!,
-    '3': input_element.querySelector<HTMLButtonElement>('#input-number-3')!,
-    '4': input_element.querySelector<HTMLButtonElement>('#input-number-4')!,
-    '5': input_element.querySelector<HTMLButtonElement>('#input-number-5')!,
-    '6': input_element.querySelector<HTMLButtonElement>('#input-number-6')!,
-    '7': input_element.querySelector<HTMLButtonElement>('#input-number-7')!,
-    '8': input_element.querySelector<HTMLButtonElement>('#input-number-8')!,
-    '9': input_element.querySelector<HTMLButtonElement>('#input-number-9')!,
+    1: input_element.querySelector<HTMLButtonElement>('#input-number-1')!,
+    2: input_element.querySelector<HTMLButtonElement>('#input-number-2')!,
+    3: input_element.querySelector<HTMLButtonElement>('#input-number-3')!,
+    4: input_element.querySelector<HTMLButtonElement>('#input-number-4')!,
+    5: input_element.querySelector<HTMLButtonElement>('#input-number-5')!,
+    6: input_element.querySelector<HTMLButtonElement>('#input-number-6')!,
+    7: input_element.querySelector<HTMLButtonElement>('#input-number-7')!,
+    8: input_element.querySelector<HTMLButtonElement>('#input-number-8')!,
+    9: input_element.querySelector<HTMLButtonElement>('#input-number-9')!,
   },
 
   mode1: {
@@ -114,6 +112,11 @@ export function initInput(board: Board, gameState: GameState) {
     buttons.mode2.select.disabled = gameState.mode2 === 'branch'
     buttons.auto.disabled = gameState.mode2 === 'branch'
     buttons.delete.disabled = gameState.mode2 === 'branch'
+
+    // if color mode, set bg-color of number buttons
+    entries(buttons.number).forEach(([key, button]) => {
+      button.style.backgroundColor = gameState.mode1 === 'color' ? color_map[key] : ''
+    })
   }
 
   render()
@@ -124,12 +127,12 @@ function attachDragSelection(board: Board, gameState: GameState) {
   let pointerId: number | null = null
 
   function parseCellElement(el: Element): Cell | null {
-    const cell_el = el.closest('.cell')
+    const cell_el = el.closest('.cell') as HTMLDivElement
     if (!cell_el) return null
 
-    const rAttr = cell_el.getAttribute('r')
-    const cAttr = cell_el.getAttribute('c')
-    if (rAttr == null || cAttr == null) return null
+    const rAttr = cell_el.dataset.r
+    const cAttr = cell_el.dataset.c
+    if (!rAttr || !cAttr) return null
 
     const r = Number(rAttr)
     const c = Number(cAttr)

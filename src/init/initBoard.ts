@@ -1,54 +1,6 @@
-import type { Cell, Board, type_IDX, type_V } from '../types'
-
-const SIZE_CELL = 32
-
-/** r, c: 0-index. 1-9 is in-board, 0 and 10 are out-of-board */
-function create_element(className: string, r: number, c: number): HTMLDivElement {
-  const element = document.createElement('div')
-  element.classList.add('cell', className)
-  element.style.left = `${c * SIZE_CELL}px`
-  element.style.top = `${r * SIZE_CELL}px`
-  element.setAttribute('r', r.toString())
-  element.setAttribute('c', c.toString())
-  return element
-}
-
-const container_element = document.querySelector<HTMLDivElement>('#board-container')!
-
-const cells: Cell[][] = Array.from({ length: 9 }, (_, r) =>
-  Array.from({ length: 9 }, (_, c) => {
-    const color_element = container_element.appendChild(create_element('cell-color', r + 1, c + 1))
-    const num_element = container_element.appendChild(create_element('cell-num', r + 1, c + 1))
-    const memo_element = container_element.appendChild(create_element('cell-memo', r + 1, c + 1))
-    const error_element = container_element.appendChild(create_element('cell-error', r + 1, c + 1))
-    const warning_element = container_element.appendChild(create_element('cell-warning', r + 1, c + 1))
-    const selected_element = container_element.appendChild(create_element('cell-selected', r + 1, c + 1))
-
-    const memos = {} as Record<type_V, HTMLDivElement>
-    for (let i = 1; i <= 9; i++) {
-      const ele = document.createElement('div')
-      ele.classList.add('memo', `memo-${i}`)
-      ele.textContent = i.toString()
-      memo_element.appendChild(ele)
-
-      memos[i as type_V] = ele
-    }
-
-    return {
-      r: (r + 1) as type_IDX,
-      c: (c + 1) as type_IDX,
-      memo: new Set(),
-      color: new Set(),
-      color_element: color_element,
-      num_element: num_element,
-      memo_element: memo_element,
-      memos: memos,
-      error_element: error_element,
-      warning_element: warning_element,
-      selected_element: selected_element,
-    }
-  }),
-)
+import type { Cell, Board, type_V } from '../types'
+import { cells } from './initCells'
+import { renderColor } from './renderColor'
 
 export function initBoard(): Board {
   const board: Board = {
@@ -75,7 +27,7 @@ export function initBoard(): Board {
     },
 
     toggle_digit(digit: type_V) {
-      if ([...this.selected.values()].every((cell) => cell.digit === digit)) {
+      if (Array.from(this.selected).every((cell) => cell.digit === digit)) {
         this.set_digit()
       } else {
         this.set_digit(digit)
@@ -96,7 +48,7 @@ export function initBoard(): Board {
       this.render()
     },
     toggle_memo(digit: type_V) {
-      if ([...this.selected.values()].every((cell) => cell.memo.has(digit))) {
+      if (Array.from(this.selected).every((cell) => cell.memo.has(digit))) {
         this.remove_memo(digit)
       } else {
         this.add_memo(digit)
@@ -123,7 +75,7 @@ export function initBoard(): Board {
       this.render()
     },
     toggle_color(digit: type_V) {
-      if ([...this.selected.values()].every((cell) => cell.color.has(digit))) {
+      if (Array.from(this.selected).every((cell) => cell.color.has(digit))) {
         this.remove_color(digit)
       } else {
         this.add_color(digit)
@@ -206,10 +158,10 @@ export function initBoard(): Board {
     render() {
       this.cells.forEach((row) =>
         row.forEach((cell) => {
-          // @todo color
+          renderColor(cell.color, cell.color_element)
           cell.num_element.textContent = cell.digit?.toString() ?? ''
           for (let i = 1; i <= 9; i++) {
-            cell.memos[i as type_V].classList.toggle('hide', !(cell.digit === undefined && cell.memo.has(i as type_V)))
+            cell.memo_element.children[i - 1].classList.toggle('hide', !(cell.digit === undefined && cell.memo.has(i as type_V)))
           }
 
           cell.selected_element.classList.toggle('selected', this.selected.has(cell))
@@ -219,11 +171,9 @@ export function initBoard(): Board {
       )
     },
 
-    container_element: container_element,
+    container_element: document.querySelector<HTMLDivElement>('#board-container')!,
   }
 
   board.render()
   return board
 }
-
-
