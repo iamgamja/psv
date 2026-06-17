@@ -3,6 +3,11 @@
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.5rem;
   padding: 0.5rem;
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 #input > button {
@@ -22,11 +27,6 @@
   justify-content: center;
 
   transition: background-color 0.2s ease;
-
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 
 #input > button.input-number {

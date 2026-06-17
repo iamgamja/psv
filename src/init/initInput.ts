@@ -86,10 +86,19 @@ export function initInput(board: Board, gameState: GameState) {
     }
   })
 
+  entries(buttons.number).forEach(([key_, button]) => {
+    const key = parseInt(key_) as type_V
+
+    enableLongPress(button)
+    button.addEventListener('longpress', () => {
+      board.set_selected_by_candidate(key)
+    })
+  })
+
   // @todo: auto
   // @todo: info, undo, redo, setting
 
-  // @todo: long press: number, select, auto
+  // @todo: long press: select, auto
 
   // @todo: in branch mode, replace mode1 buttons
 
@@ -211,4 +220,58 @@ function attachDragSelection(board: Board, gameState: GameState) {
   board.container_element.addEventListener('lostpointercapture', () => {
     if (dragging_mode) endDrag()
   })
+}
+
+type LongPressOptions = {
+  duration?: number
+}
+
+function enableLongPress(element: HTMLElement, options: LongPressOptions = {}) {
+  const duration = options.duration ?? 300
+
+  let timer: number | undefined
+  let pointerId: number | undefined
+
+  const start = (event: PointerEvent) => {
+    // 다른 pointer 무시
+    if (pointerId !== undefined) return
+
+    pointerId = event.pointerId
+
+    timer = window.setTimeout(() => {
+      element.dispatchEvent(
+        new CustomEvent('longpress', {
+          detail: {
+            pointerEvent: event,
+          },
+        }),
+      )
+
+      timer = undefined
+    }, duration)
+  }
+
+  const cancel = (event: PointerEvent) => {
+    if (event.pointerId !== pointerId) return
+
+    if (timer !== undefined) {
+      clearTimeout(timer)
+      timer = undefined
+    }
+
+    pointerId = undefined
+  }
+
+  element.addEventListener('pointerdown', start)
+  element.addEventListener('pointerup', cancel)
+  element.addEventListener('pointercancel', cancel)
+  element.addEventListener('pointerleave', cancel)
+}
+
+declare global {
+  interface HTMLElementEventMap {
+    longpress: CustomEvent<{
+      pointerEvent: PointerEvent
+    }>
+  }
 }

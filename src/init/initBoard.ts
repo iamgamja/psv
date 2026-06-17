@@ -132,7 +132,7 @@ export function initBoard(): Board {
       this.selected.clear()
       this.cells.forEach((row) =>
         row.forEach((cell) => {
-          if (cell.digit === null && cell.memo.has(digit)) {
+          if (cell.digit === undefined && cell.memo.has(digit)) {
             this.selected.add(cell)
           }
         }),
