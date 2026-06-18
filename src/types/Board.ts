@@ -5,7 +5,7 @@ import type { Groups, Rule } from './Rule'
 export type Board = {
   cells: Cell[][] // 9x9
   flat_cells: Cell[]
-  empty_cells: Cell[]
+  get empty_cells(): Cell[]
 
   create_digit_arr(): (V | undefined)[][] // 9x9
 
@@ -13,7 +13,7 @@ export type Board = {
   all_groups: Groups
 
   selected: Set<Cell>
-  empty_selected: Cell[]
+  get empty_selected(): Cell[]
   errors: Set<Cell>
   warnings: Set<Cell>
 
