@@ -1,5 +1,5 @@
 import { IDX0, type V } from './types/base'
-import type { POS } from './types/Rule'
+import type { Groups } from './types/Rule'
 
 export const SIZE_CELL = 32
 
@@ -15,11 +15,11 @@ export const color_map: Record<V, string> = {
   9: 'rgba(63, 63, 63, 0.3)',
 }
 
-export const GROUPS_R: POS[][] = Array.from({ length: 9 }, () => [])
+export const GROUPS_R: Groups = Array.from({ length: 9 }, () => [])
 for (const r of IDX0) for (const c of IDX0) GROUPS_R[r].push([r, c])
 
-export const GROUPS_C: POS[][] = Array.from({ length: 9 }, () => [])
+export const GROUPS_C: Groups = Array.from({ length: 9 }, () => [])
 for (const r of IDX0) for (const c of IDX0) GROUPS_C[c].push([r, c])
 
-export const GROUPS_B: POS[][] = Array.from({ length: 9 }, () => [])
+export const GROUPS_B: Groups = Array.from({ length: 9 }, () => [])
 for (const r of IDX0) for (const c of IDX0) GROUPS_B[Math.floor(r / 3) * 3 + Math.floor(c / 3)].push([r, c])

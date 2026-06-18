@@ -1,13 +1,17 @@
 import { check_error } from '../check/error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
+import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
+import type { Rule } from '../types/Rule'
 import { V } from '../types/base'
 import { cells } from './initCells'
 import { renderColor } from './renderColor'
 
 export function initBoard(): Board {
+  const rules: Rule[] = [{ id: '[R]' }, { id: '[C]' }, { id: '[B]' }]
+
   const board: Board = {
     cells,
     flat_cells: cells.flat(),
@@ -19,7 +23,11 @@ export function initBoard(): Board {
       return Array.from({ length: 9 }, (_, r) => Array.from({ length: 9 }, (_, c) => this.cells[r][c].digit))
     },
 
-    rules: [{ id: '[R]' }, { id: '[C]' }, { id: '[B]' }],
+    rules: rules,
+    all_groups: rules
+      .filter((rule) => rule.id === '[R]' || rule.id === '[C]' || rule.id === '[B]' || rule.id === '[SG]')
+      .map((rule) => (rule.id === '[R]' ? GROUPS_R : rule.id === '[C]' ? GROUPS_C : rule.id === '[B]' ? GROUPS_B : rule.render_state.regions))
+      .flat(),
 
     selected: new Set(),
     get empty_selected() {

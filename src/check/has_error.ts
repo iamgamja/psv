@@ -1,8 +1,8 @@
 import { GROUPS_B, GROUPS_C, GROUPS_R } from '../const'
 import { V } from '../types/base'
-import type { POS, Rule } from '../types/Rule'
+import type { Groups, Rule } from '../types/Rule'
 
-function has_dup(digit_arr: (V | undefined)[][], groups: POS[][]): boolean {
+function has_dup(digit_arr: (V | undefined)[][], groups: Groups): boolean {
   for (const group of groups) {
     const visit = new Set<V>()
 

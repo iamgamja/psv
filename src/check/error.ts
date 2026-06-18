@@ -2,9 +2,9 @@ import { GROUPS_B, GROUPS_C, GROUPS_R } from '../const'
 import { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import type { POS } from '../types/Rule'
+import type { Groups } from '../types/Rule'
 
-function check_dup(board: Board, groups: POS[][]): Set<Cell> {
+function check_dup(board: Board, groups: Groups): Set<Cell> {
   const res = new Set<Cell>()
 
   for (const group of groups) {

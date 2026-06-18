@@ -7,6 +7,8 @@ export type Rule_ID = (typeof Rule_ID)[number]
 
 export type POS = [IDX0, IDX0]
 
+export type Groups = POS[][]
+
 // export type Side = 'left' | 'right' | 'top' | 'bottom'
 // export type PositionExtended = POS | [Side, IDX0]
 
@@ -17,7 +19,7 @@ type RenderStateMap = {
   '[R]': null
   '[C]': null
   '[B]': null
-  '[SG]': { regions: POS[][] }
+  '[SG]': { regions: Groups }
 }
 
 export type RuleObject<K extends Rule_ID> = { id: K } & (RenderStateMap[K] extends null ? {} : { render_state: RenderStateMap[K] })
