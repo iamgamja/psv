@@ -1,16 +1,23 @@
-import type { Cell, Board, type_V } from '../types'
+import { check_error } from '../check/error'
+import type { Board } from '../types/Board'
+import type { Cell } from '../types/Cell'
+import { V } from '../types/base'
 import { cells } from './initCells'
 import { renderColor } from './renderColor'
 
 export function initBoard(): Board {
   const board: Board = {
     cells,
-    rules: [],
+    rules: [
+      {id: '[R]'},
+      {id: '[C]'},
+      {id: '[B]'}
+    ],
     selected: new Set(),
     errors: new Set(),
     warnings: new Set(),
 
-    set_digit(digit?: type_V) {
+    set_digit(digit?: V) {
       this.selected.forEach((cell) => {
         cell.digit = digit
       })
@@ -18,7 +25,7 @@ export function initBoard(): Board {
       this._check_warnings()
       this.render()
     },
-    add_memo(digit: type_V) {
+    add_memo(digit: V) {
       this.selected.forEach((cell) => {
         cell.memo.add(digit)
       })
@@ -26,14 +33,14 @@ export function initBoard(): Board {
       this.render()
     },
 
-    toggle_digit(digit: type_V) {
+    toggle_digit(digit: V) {
       if (Array.from(this.selected).every((cell) => cell.digit === digit)) {
         this.set_digit()
       } else {
         this.set_digit(digit)
       }
     },
-    remove_memo(digit: type_V) {
+    remove_memo(digit: V) {
       this.selected.forEach((cell) => {
         cell.memo.delete(digit)
       })
@@ -47,7 +54,7 @@ export function initBoard(): Board {
       this._check_warnings()
       this.render()
     },
-    toggle_memo(digit: type_V) {
+    toggle_memo(digit: V) {
       if (Array.from(this.selected).every((cell) => cell.memo.has(digit))) {
         this.remove_memo(digit)
       } else {
@@ -55,13 +62,13 @@ export function initBoard(): Board {
       }
     },
 
-    add_color(digit: type_V) {
+    add_color(digit: V) {
       this.selected.forEach((cell) => {
         cell.color.add(digit)
       })
       this.render()
     },
-    remove_color(digit: type_V) {
+    remove_color(digit: V) {
       this.selected.forEach((cell) => {
         cell.color.delete(digit)
       })
@@ -74,7 +81,7 @@ export function initBoard(): Board {
       this._check_warnings()
       this.render()
     },
-    toggle_color(digit: type_V) {
+    toggle_color(digit: V) {
       if (Array.from(this.selected).every((cell) => cell.color.has(digit))) {
         this.remove_color(digit)
       } else {
@@ -95,7 +102,7 @@ export function initBoard(): Board {
       this.render()
     },
 
-    set_selected_by_digit(digit: type_V) {
+    set_selected_by_digit(digit: V) {
       this.selected.clear()
       this.cells.forEach((row) =>
         row.forEach((cell) => {
@@ -106,7 +113,7 @@ export function initBoard(): Board {
       )
       this.render()
     },
-    set_selected_by_memo(digit: type_V) {
+    set_selected_by_memo(digit: V) {
       this.selected.clear()
       this.cells.forEach((row) =>
         row.forEach((cell) => {
@@ -117,7 +124,7 @@ export function initBoard(): Board {
       )
       this.render()
     },
-    set_selected_by_color(digit: type_V) {
+    set_selected_by_color(digit: V) {
       this.selected.clear()
       this.cells.forEach((row) =>
         row.forEach((cell) => {
@@ -128,7 +135,7 @@ export function initBoard(): Board {
       )
       this.render()
     },
-    set_selected_by_candidate(digit: type_V) {
+    set_selected_by_candidate(digit: V) {
       this.selected.clear()
       this.cells.forEach((row) =>
         row.forEach((cell) => {
@@ -147,7 +154,9 @@ export function initBoard(): Board {
     _check_errors() {
       this.errors.clear()
 
-      // @todo
+      for (const rule of this.rules) {
+        check_error(this, rule).forEach((cell) => this.errors.add(cell))
+      }
     },
     _check_warnings() {
       this.warnings.clear()
@@ -160,8 +169,8 @@ export function initBoard(): Board {
         row.forEach((cell) => {
           renderColor(cell.color, cell.color_element)
           cell.num_element.textContent = cell.digit?.toString() ?? ''
-          for (let i = 1; i <= 9; i++) {
-            cell.memo_element.children[i - 1].classList.toggle('hide', !(cell.digit === undefined && cell.memo.has(i as type_V)))
+          for (const v of V) {
+            cell.memo_element.children[v - 1].classList.toggle('hide', !(cell.digit === undefined && cell.memo.has(v)))
           }
 
           cell.selected_element.classList.toggle('selected', this.selected.has(cell))

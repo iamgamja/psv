@@ -1,4 +1,4 @@
-import type { type_V } from '../types'
+import type { V } from '../types/base'
 import { color_map, SIZE_CELL } from '../const'
 
 const CX = SIZE_CELL / 2
@@ -32,7 +32,7 @@ export function initColor(color_element: HTMLDivElement) {
   color_element.appendChild(svg)
 }
 
-export function renderColor(color: Set<type_V>, color_element: HTMLDivElement): void {
+export function renderColor(color: Set<V>, color_element: HTMLDivElement): void {
   let svg = color_element.firstChild!
 
   while (svg.firstChild) {

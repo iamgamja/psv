@@ -1,4 +1,7 @@
-import type { Board, Cell, GameState, type_V } from '../types'
+import type { Board } from '../types/Board'
+import type { Cell } from '../types/Cell'
+import type { GameState } from '../types/GameState'
+import type { V } from '../types/base'
 import { color_map } from '../const'
 import { entries } from '../util/entries'
 import { enableLongPress } from '../util/enableLongPress'
@@ -55,7 +58,7 @@ export function initInput(board: Board, gameState: GameState) {
 
   // event listner for board
   entries(buttons.number).forEach(([key_, button]) => {
-    const key = parseInt(key_) as type_V
+    const key = parseInt(key_) as V
     button.addEventListener('click', () => {
       if (gameState.mode2 === null || gameState.mode2 === 'select') {
         if (gameState.mode1 === 'num') {
@@ -88,7 +91,7 @@ export function initInput(board: Board, gameState: GameState) {
   })
 
   entries(buttons.number).forEach(([key_, button]) => {
-    const key = parseInt(key_) as type_V
+    const key = parseInt(key_) as V
 
     enableLongPress(button)
     button.addEventListener('longpress', () => {
