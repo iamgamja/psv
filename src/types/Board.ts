@@ -7,6 +7,8 @@ export type Board = {
   flat_cells: Cell[]
   empty_cells: Cell[]
 
+  create_digit_arr(): (V | undefined)[][] // 9x9
+
   rules: Rule[]
 
   selected: Set<Cell>
@@ -40,6 +42,7 @@ export type Board = {
 
   _check_errors(): void
   _check_warnings(): void
+  _induct(cell?: Cell): void
 
   render(): void
 

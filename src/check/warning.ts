@@ -5,10 +5,10 @@ import type { Cell } from '../types/Cell'
 
 export function check_warning(board: Board): Set<Cell> {
   const res = new Set<Cell>()
-  
+
   // 1. one cell, no memo
   board.empty_cells.forEach((cell) => {
-    if (cell.memo.size === 0) res.add(cell)
+    if (cell.valid_memo.size === 0) res.add(cell)
   })
 
   // 2. one group, one digit, no memo
@@ -20,7 +20,7 @@ export function check_warning(board: Board): Set<Cell> {
     for (const cells of cell_groups) {
       const empty_cells = cells.filter((cell) => !cell.digit)
       for (const digit of V) {
-        if (cells.every((cell) => cell.digit !== digit) && empty_cells.every((cell) => !cell.memo.has(digit))) {
+        if (cells.every((cell) => cell.digit !== digit) && empty_cells.every((cell) => !cell.valid_memo.has(digit))) {
           empty_cells.forEach((cell) => res.add(cell))
         }
       }

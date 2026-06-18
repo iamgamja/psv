@@ -58,6 +58,10 @@
   visibility: hidden;
 }
 
+.memo.invalid {
+  color: #cdcdcd;
+}
+
 .cell-selected.selected {
   border: 4px rgba(150, 227, 255, 0.5) solid;
 }
