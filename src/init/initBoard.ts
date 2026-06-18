@@ -9,11 +9,7 @@ import { renderColor } from './renderColor'
 export function initBoard(): Board {
   const board: Board = {
     cells,
-    rules: [
-      {id: '[R]'},
-      {id: '[C]'},
-      {id: '[B]'}
-    ],
+    rules: [{ id: '[R]' }, { id: '[C]' }, { id: '[B]' }],
     selected: new Set(),
     errors: new Set(),
     warnings: new Set(),
@@ -43,6 +39,7 @@ export function initBoard(): Board {
     },
     remove_memo(digit: V) {
       this.selected.forEach((cell) => {
+        if (cell.digit) return
         cell.memo.delete(digit)
       })
       this._check_warnings()
@@ -50,13 +47,18 @@ export function initBoard(): Board {
     },
     clear_memo() {
       this.selected.forEach((cell) => {
+        if (cell.digit) return
         cell.memo.clear()
       })
       this._check_warnings()
       this.render()
     },
     toggle_memo(digit: V) {
-      if (Array.from(this.selected).every((cell) => cell.memo.has(digit))) {
+      if (
+        Array.from(this.selected)
+          .filter((cell) => cell.digit === undefined)
+          .every((cell) => cell.memo.has(digit))
+      ) {
         this.remove_memo(digit)
       } else {
         this.add_memo(digit)
