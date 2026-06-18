@@ -49,6 +49,11 @@ export type Board = {
   _induct(cell?: Cell): void
 
   render(): void
+  commit(): void
+  get can_undo(): boolean
+  undo(): void
+  get can_redo(): boolean
+  redo(): void
 
   container_element: HTMLDivElement
 }

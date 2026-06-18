@@ -111,7 +111,16 @@ export function initInput(board: Board, gameState: GameState) {
     board.set_selected_by_selected_scope()
   })
 
-  // @todo: info, undo, redo, setting
+  buttons.undo.addEventListener('click', () => {
+    board.undo()
+    render()
+  })
+  buttons.redo.addEventListener('click', () => {
+    board.redo()
+    render()
+  })
+
+  // @todo: info, setting
 
   // @todo: in branch mode, replace mode1 buttons
 
@@ -133,8 +142,9 @@ export function initInput(board: Board, gameState: GameState) {
     buttons.mode1.color.disabled = gameState.mode2 === 'branch'
     buttons.mode2.select.disabled = gameState.mode2 === 'branch'
     buttons.auto.disabled = gameState.mode2 === 'branch' || !board.can_auto
-
     buttons.delete.disabled = gameState.mode2 === 'branch'
+    buttons.undo.disabled = gameState.mode2 === 'branch' || !board.can_undo
+    buttons.redo.disabled = gameState.mode2 === 'branch' || !board.can_redo
 
     // if color mode, set bg-color of number buttons
     entries(buttons.number).forEach(([key, button]) => {

@@ -2,6 +2,7 @@ import { check_error } from '../check/error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
 import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const'
+import { HistoryManager } from '../save/HistoryManager'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import type { Rule } from '../types/Rule'
@@ -44,6 +45,7 @@ export function initBoard(): Board {
       this._induct()
       this._check_warnings()
       this.render()
+      this.commit()
     },
     toggle_digit(digit: V) {
       if (Array.from(this.selected).every((cell) => cell.digit === digit)) {
@@ -60,6 +62,7 @@ export function initBoard(): Board {
       })
       this._check_warnings()
       this.render()
+      this.commit()
     },
     remove_memo(digit: V) {
       this.empty_selected.forEach((cell) => {
@@ -68,6 +71,7 @@ export function initBoard(): Board {
       })
       this._check_warnings()
       this.render()
+      this.commit()
     },
     clear_memo() {
       this.empty_selected.forEach((cell) => {
@@ -76,6 +80,7 @@ export function initBoard(): Board {
       })
       this._check_warnings()
       this.render()
+      this.commit()
     },
     toggle_memo(digit: V) {
       if (this.empty_selected.every((cell) => cell.candidate_memo.has(digit))) {
@@ -90,18 +95,21 @@ export function initBoard(): Board {
         cell.color.add(digit)
       })
       this.render()
+      this.commit()
     },
     remove_color(digit: V) {
       this.selected.forEach((cell) => {
         cell.color.delete(digit)
       })
       this.render()
+      this.commit()
     },
     clear_color() {
       this.selected.forEach((cell) => {
         cell.color.clear()
       })
       this.render()
+      this.commit()
     },
     toggle_color(digit: V) {
       if (Array.from(this.selected).every((cell) => cell.color.has(digit))) {
@@ -217,6 +225,7 @@ export function initBoard(): Board {
       this._induct()
       this._check_warnings()
       this.render()
+      this.commit()
     },
 
     _check_errors() {
@@ -265,11 +274,32 @@ export function initBoard(): Board {
       })
     },
 
+    commit() {
+      history_manager.commit()
+    },
+    get can_undo() {
+      return history_manager.canUndo
+    },
+    undo() {
+      history_manager.undo()
+      this.render()
+    },
+    get can_redo() {
+      return history_manager.canRedo
+    },
+    redo() {
+      history_manager.redo()
+      this.render()
+    },
+
     container_element: document.querySelector<HTMLDivElement>('#board-container')!,
   }
 
   board._check_errors()
   board._check_warnings()
   board.render()
+
+  const history_manager = new HistoryManager(board)
+
   return board
 }

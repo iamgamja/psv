@@ -13,3 +13,4 @@ const gameState: GameState = {
 
 const board = initBoard()
 initInput(board, gameState)
+
