@@ -1,4 +1,5 @@
 import { check_error } from '../check/error'
+import { check_warning } from '../check/warning'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import { V } from '../types/base'
@@ -161,7 +162,7 @@ export function initBoard(): Board {
     _check_warnings() {
       this.warnings.clear()
 
-      // @todo
+      board.warnings = check_warning(board)
     },
 
     render() {
@@ -183,6 +184,8 @@ export function initBoard(): Board {
     container_element: document.querySelector<HTMLDivElement>('#board-container')!,
   }
 
+  board._check_errors()
+  board._check_warnings()
   board.render()
   return board
 }
