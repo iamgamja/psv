@@ -168,12 +168,12 @@ export function initBoard(): Board {
       if (last_selected.length === 0) return
 
       this.selected.clear()
-      for (const group of board.all_groups) {
+      for (const group of this.all_groups) {
         const is_target_group = last_selected.every((selected_cell) => group.some(([r, c]) => r === selected_cell.r - 1 && c === selected_cell.c - 1))
 
         if (is_target_group) {
           for (const [r, c] of group) {
-            const cell = board.cells[r][c]
+            const cell = this.cells[r][c]
             if (cell) {
               this.selected.add(cell)
             }
@@ -182,7 +182,41 @@ export function initBoard(): Board {
       }
 
       last_selected.forEach((cell) => this.selected.delete(cell))
-      board.render()
+      this.render()
+    },
+
+    get can_auto() {
+      return (
+        this.empty_cells.some((cell) => cell.valid_memo.size === 1) ||
+        this.all_groups.some((group) => V.some((digit) => group.map(([r, c]) => this.cells[r][c]).filter((cell) => !cell.digit && cell.valid_memo.has(digit)).length === 1))
+      )
+    },
+
+    auto() {
+      // 1. one cell, one memo
+      const targets = this.empty_cells.filter((cell) => cell.valid_memo.size === 1)
+
+      targets.forEach((cell) => {
+        cell.digit = cell.valid_memo.values().next().value
+      })
+
+      // 2. one group, one digit, one memo
+      for (const group of this.all_groups) {
+        const cells = group.map(([r, c]) => this.cells[r][c])
+        const empty_cells = cells.filter((cell) => !cell.digit)
+
+        for (const digit of V) {
+          const targets = empty_cells.filter((cell) => cell.valid_memo.has(digit))
+          if (targets.length !== 1) continue
+
+          targets[0].digit = digit
+        }
+      }
+
+      this._check_errors()
+      this._induct()
+      this._check_warnings()
+      this.render()
     },
 
     _check_errors() {
@@ -231,7 +265,7 @@ export function initBoard(): Board {
       })
     },
 
-    container_element: document.querySelector<HTMLDivElement>('#board-container')!,
+    container_element: document.querySelector<HTMLDivElement>('#this-container')!,
   }
 
   board._check_errors()

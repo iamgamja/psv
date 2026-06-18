@@ -102,37 +102,7 @@ export function initInput(board: Board, gameState: GameState) {
   })
 
   buttons.auto.addEventListener('click', () => {
-    let flag = false
-
-    // 1. one cell, one memo
-    const targets = board.empty_cells.filter((cell) => cell.valid_memo.size === 1)
-    if (targets.length > 0) flag = true
-
-    targets.forEach((cell) => {
-      cell.digit = cell.valid_memo.values().next().value
-    })
-
-    // 2. one group, one digit, one memo
-    for (const group of board.all_groups) {
-      const cells = group.map(([r, c]) => board.cells[r][c])
-      const empty_cells = cells.filter((cell) => !cell.digit)
-
-      for (const digit of V) {
-        const targets = empty_cells.filter((cell) => cell.valid_memo.has(digit))
-        if (targets.length !== 1) continue
-
-        flag = true
-        targets[0].digit = digit
-      }
-    }
-
-    if (flag) {
-      board._check_errors()
-      board._induct()
-      board._check_warnings()
-      board.render()
-    }
-
+    board.auto()
     render()
   })
 
@@ -162,12 +132,7 @@ export function initInput(board: Board, gameState: GameState) {
     buttons.mode1.memo.disabled = gameState.mode2 === 'branch'
     buttons.mode1.color.disabled = gameState.mode2 === 'branch'
     buttons.mode2.select.disabled = gameState.mode2 === 'branch'
-    buttons.auto.disabled =
-      gameState.mode2 === 'branch' ||
-      !(
-        board.empty_cells.some((cell) => cell.valid_memo.size === 1) ||
-        board.all_groups.some((group) => V.some((digit) => group.map(([r, c]) => board.cells[r][c]).filter((cell) => !cell.digit && cell.valid_memo.has(digit)).length === 1))
-      )
+    buttons.auto.disabled = gameState.mode2 === 'branch' || !board.can_auto
 
     buttons.delete.disabled = gameState.mode2 === 'branch'
 

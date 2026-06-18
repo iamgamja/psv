@@ -41,6 +41,9 @@ export type Board = {
 
   set_selected_by_selected_scope(): void
 
+  get can_auto(): boolean
+  auto(): void
+
   _check_errors(): void
   _check_warnings(): void
   _induct(cell?: Cell): void
