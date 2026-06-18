@@ -9,8 +9,17 @@ import { renderColor } from './renderColor'
 export function initBoard(): Board {
   const board: Board = {
     cells,
+    flat_cells: cells.flat(),
+    get empty_cells() {
+      return this.flat_cells.filter((cell) => !cell.digit)
+    },
+
     rules: [{ id: '[R]' }, { id: '[C]' }, { id: '[B]' }],
+
     selected: new Set(),
+    get empty_selected() {
+      return Array.from(this.selected).filter((cell) => !cell.digit)
+    },
     errors: new Set(),
     warnings: new Set(),
 
@@ -22,14 +31,6 @@ export function initBoard(): Board {
       this._check_warnings()
       this.render()
     },
-    add_memo(digit: V) {
-      this.selected.forEach((cell) => {
-        cell.memo.add(digit)
-      })
-      this._check_warnings()
-      this.render()
-    },
-
     toggle_digit(digit: V) {
       if (Array.from(this.selected).every((cell) => cell.digit === digit)) {
         this.set_digit()
@@ -37,28 +38,30 @@ export function initBoard(): Board {
         this.set_digit(digit)
       }
     },
+
+    add_memo(digit: V) {
+      this.empty_selected.forEach((cell) => {
+        cell.memo.add(digit)
+      })
+      this._check_warnings()
+      this.render()
+    },
     remove_memo(digit: V) {
-      this.selected.forEach((cell) => {
-        if (cell.digit) return
+      this.empty_selected.forEach((cell) => {
         cell.memo.delete(digit)
       })
       this._check_warnings()
       this.render()
     },
     clear_memo() {
-      this.selected.forEach((cell) => {
-        if (cell.digit) return
+      this.empty_selected.forEach((cell) => {
         cell.memo.clear()
       })
       this._check_warnings()
       this.render()
     },
     toggle_memo(digit: V) {
-      if (
-        Array.from(this.selected)
-          .filter((cell) => cell.digit === undefined)
-          .every((cell) => cell.memo.has(digit))
-      ) {
+      if (this.empty_selected.every((cell) => cell.memo.has(digit))) {
         this.remove_memo(digit)
       } else {
         this.add_memo(digit)
@@ -81,7 +84,6 @@ export function initBoard(): Board {
       this.selected.forEach((cell) => {
         cell.color.clear()
       })
-      this._check_warnings()
       this.render()
     },
     toggle_color(digit: V) {
@@ -107,46 +109,38 @@ export function initBoard(): Board {
 
     set_selected_by_digit(digit: V) {
       this.selected.clear()
-      this.cells.forEach((row) =>
-        row.forEach((cell) => {
-          if (cell.digit === digit) {
-            this.selected.add(cell)
-          }
-        }),
-      )
+      this.flat_cells.forEach((cell) => {
+        if (cell.digit === digit) {
+          this.selected.add(cell)
+        }
+      })
       this.render()
     },
     set_selected_by_memo(digit: V) {
       this.selected.clear()
-      this.cells.forEach((row) =>
-        row.forEach((cell) => {
-          if (cell.memo.has(digit)) {
-            this.selected.add(cell)
-          }
-        }),
-      )
+      this.empty_cells.forEach((cell) => {
+        if (cell.memo.has(digit)) {
+          this.selected.add(cell)
+        }
+      })
       this.render()
     },
     set_selected_by_color(digit: V) {
       this.selected.clear()
-      this.cells.forEach((row) =>
-        row.forEach((cell) => {
-          if (cell.color.has(digit)) {
-            this.selected.add(cell)
-          }
-        }),
-      )
+      this.flat_cells.forEach((cell) => {
+        if (cell.color.has(digit)) {
+          this.selected.add(cell)
+        }
+      })
       this.render()
     },
     set_selected_by_candidate(digit: V) {
       this.selected.clear()
-      this.cells.forEach((row) =>
-        row.forEach((cell) => {
-          if (cell.digit === undefined && cell.memo.has(digit)) {
-            this.selected.add(cell)
-          }
-        }),
-      )
+      this.empty_cells.forEach((cell) => {
+        if (cell.memo.has(digit)) {
+          this.selected.add(cell)
+        }
+      })
       this.render()
     },
 
@@ -168,19 +162,17 @@ export function initBoard(): Board {
     },
 
     render() {
-      this.cells.forEach((row) =>
-        row.forEach((cell) => {
-          renderColor(cell.color, cell.color_element)
-          cell.num_element.textContent = cell.digit?.toString() ?? ''
-          for (const v of V) {
-            cell.memo_element.children[v - 1].classList.toggle('hide', !(cell.digit === undefined && cell.memo.has(v)))
-          }
+      this.flat_cells.forEach((cell) => {
+        renderColor(cell.color, cell.color_element)
+        cell.num_element.textContent = cell.digit?.toString() ?? ''
+        for (const v of V) {
+          cell.memo_element.children[v - 1].classList.toggle('hide', !(!cell.digit && cell.memo.has(v)))
+        }
 
-          cell.selected_element.classList.toggle('selected', this.selected.has(cell))
-          cell.error_element.classList.toggle('error', this.errors.has(cell))
-          cell.warning_element.classList.toggle('warning', this.warnings.has(cell))
-        }),
-      )
+        cell.selected_element.classList.toggle('selected', this.selected.has(cell))
+        cell.error_element.classList.toggle('error', this.errors.has(cell))
+        cell.warning_element.classList.toggle('warning', this.warnings.has(cell))
+      })
     },
 
     container_element: document.querySelector<HTMLDivElement>('#board-container')!,

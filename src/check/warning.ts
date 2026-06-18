@@ -6,10 +6,8 @@ import type { Cell } from '../types/Cell'
 export function check_warning(board: Board): Set<Cell> {
   const res = new Set<Cell>()
   // 1. one cell, no memo
-  board.cells.forEach((row) => {
-    row.forEach((cell) => {
-      if (cell.digit === undefined && cell.memo.size === 0) res.add(cell)
-    })
+  board.empty_cells.forEach((cell) => {
+    if (cell.memo.size === 0) res.add(cell)
   })
 
   // 2. one group, one digit, no memo
@@ -19,10 +17,10 @@ export function check_warning(board: Board): Set<Cell> {
     const cell_groups = groups.map((group) => group.map(([r, c]) => board.cells[r][c]))
 
     for (const cells of cell_groups) {
-      const cells_empty = cells.filter((cell) => cell.digit === undefined)
+      const empty_cells = cells.filter((cell) => !cell.digit)
       for (const digit of V) {
-        if (cells.every((cell) => cell.digit !== digit) && cells_empty.every((cell) => !cell.memo.has(digit))) {
-          cells_empty.forEach((cell) => res.add(cell))
+        if (cells.every((cell) => cell.digit !== digit) && empty_cells.every((cell) => !cell.memo.has(digit))) {
+          empty_cells.forEach((cell) => res.add(cell))
         }
       }
     }

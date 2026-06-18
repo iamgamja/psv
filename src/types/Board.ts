@@ -4,9 +4,13 @@ import type { Rule } from './Rule'
 
 export type Board = {
   cells: Cell[][] // 9x9
+  flat_cells: Cell[]
+  empty_cells: Cell[]
+
   rules: Rule[]
 
   selected: Set<Cell>
+  empty_selected: Cell[]
   errors: Set<Cell>
   warnings: Set<Cell>
 
