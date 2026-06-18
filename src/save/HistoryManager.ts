@@ -1,142 +1,146 @@
-import type { IDX, V } from '../types/base'
+import { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 
-export type SnapCell = {
-  r: IDX
-  c: IDX
-  digit: V | null
-  candidate_memo: V[]
-  valid_memo: V[]
-  color: V[]
-}
-
-export type Snap = {
-  v: 1
-  cells: SnapCell[]
-  errors: number[]
-  warnings: number[]
-}
+const CELL_COUNT = 81
+const GROUP_BITS = 9
+const GROUP_MASK = (1 << GROUP_BITS) - 1
 
 /**
- * 저장 포맷(JSON 문자열)
+ * 저장 형식
  *
- * {
- *   "v": 1,
- *   "cells": [
- *     {
- *       "r": 1,
- *       "c": 1,
- *       "digit": 5 | null,
- *       "candidate_memo": [1,2,3],
- *       "valid_memo": [4,5],
- *       "color": [1]
- *     }
- *   ],
- *   "errors": [0, 9, ...],
- *   "warnings": [4, 8, ...]
- * }
+ * 최종 문자열:
+ *   cell 81개를 ","로 연결한 문자열
  *
- * 규칙
- * - cells는 row-major 순서로 81개
- * - valid_memo는 항상 저장
- * - digit이 없으면 null로 저장
- * - errors/warnings는 flat_cells 기준 0~80 인덱스로 저장
- * - decode는 기존 cell 객체를 유지하고, 저장된 필드만 덮어씀
+ * 각 cell 문자열:
+ *   ${d}${x}${h}
+ *
+ *   d: digit
+ *      - 1~9
+ *      - undefined이면 0
+ *
+ *   x: error/warning bitset (2비트)
+ *      - error = 2
+ *      - warning = 1
+ *      - 따라서 0~3
+ *
+ *   h: 27비트 bitset을 hex로 표기한 값
+ *      - [color 9비트][valid_memo 9비트][candidate_memo 9비트]
+ *      - 각 9비트 그룹은 digit 1~9를 bit 0~8에 대응
+ *      - 0x 접두사 없음, leading zero 없음
+ *
+ * 예:
+ *   "103f2a,000,..."
  */
 
-function sorted(set: Set<V>) {
-  return Array.from(set).sort((a, b) => a - b)
-}
-
-function sortedIndices(set: Set<Cell>): number[] {
-  return Array.from(set)
-    .map((cell) => (cell.r - 1) * 9 + (cell.c - 1))
-    .sort((a, b) => a - b)
-}
-
-function isV(x: unknown): x is V {
-  return typeof x === 'number' && Number.isInteger(x) && x >= 1 && x <= 9
-}
-
-function isCellIndex(x: unknown): x is number {
-  return typeof x === 'number' && Number.isInteger(x) && x >= 0 && x < 81
-}
-
-function readDigits(value: unknown, name: string): V[] {
-  if (!Array.isArray(value)) {
-    throw new Error(`${name} must be an array`)
+function setTo9BitMask(set: Set<V>): number {
+  let mask = 0
+  for (const v of set) {
+    mask |= 1 << (v - 1)
   }
-  const out: V[] = []
-  for (const x of value) {
-    if (!isV(x)) {
-      throw new Error(`${name} contains invalid digit`)
+  return mask
+}
+
+function maskToSet(mask: number): Set<V> {
+  const out = new Set<V>()
+  for (const v of V) {
+    if (mask & (1 << (v - 1))) {
+      out.add(v)
     }
-    out.push(x)
   }
   return out
 }
 
-function toSet(value: unknown, name: string): Set<V> {
-  return new Set(readDigits(value, name))
+function encodeH(cell: Cell): number {
+  const color = setTo9BitMask(cell.color)
+  const valid = setTo9BitMask(cell.valid_memo)
+  const candidate = setTo9BitMask(cell.candidate_memo)
+
+  return (color << 18) | (valid << 9) | candidate
 }
 
-function snapshotCell(cell: Cell): SnapCell {
+function decodeH(hex: string): {
+  color: Set<V>
+  valid_memo: Set<V>
+  candidate_memo: Set<V>
+} {
+  if (!/^[0-9a-fA-F]+$/.test(hex)) {
+    throw new Error('invalid h field')
+  }
+
+  const value = parseInt(hex, 16)
+  if (!Number.isSafeInteger(value) || value < 0 || value > 0x7ffffff) {
+    throw new Error('invalid h field')
+  }
+
+  const color = (value >> 18) & GROUP_MASK
+  const valid = (value >> 9) & GROUP_MASK
+  const candidate = value & GROUP_MASK
+
   return {
-    r: cell.r,
-    c: cell.c,
-    digit: cell.digit ?? null,
-    candidate_memo: sorted(cell.candidate_memo),
-    valid_memo: sorted(cell.valid_memo),
-    color: sorted(cell.color),
+    color: maskToSet(color),
+    valid_memo: maskToSet(valid),
+    candidate_memo: maskToSet(candidate),
   }
 }
 
-function snapshotCells(set: Set<Cell>): number[] {
-  return sortedIndices(set)
+function encodeCell(cell: Cell, board: Board): string {
+  const d = cell.digit ?? 0
+  const x = (board.errors.has(cell) ? 2 : 0) | (board.warnings.has(cell) ? 1 : 0)
+  const h = encodeH(cell).toString(16)
+
+  return `${d}${x}${h}`
 }
 
-function restoreCells(indices: unknown, board: Board, name: string): Set<Cell> {
-  if (!Array.isArray(indices)) {
-    throw new Error(`${name} must be an array`)
+function parseCellString(
+  raw: unknown,
+  index: number,
+): {
+  digit: V | undefined
+  error: boolean
+  warning: boolean
+  color: Set<V>
+  valid_memo: Set<V>
+  candidate_memo: Set<V>
+} {
+  if (typeof raw !== 'string') {
+    throw new Error(`cells[${index}] must be a string`)
   }
 
-  const restored = new Set<Cell>()
-  for (const index of indices) {
-    if (!isCellIndex(index)) {
-      throw new Error(`${name} contains invalid cell index`)
-    }
-
-    const cell = board.flat_cells[index]
-    if (!cell) {
-      throw new Error(`${name} contains invalid cell index`)
-    }
-
-    restored.add(cell)
+  const m = raw.match(/^([0-9])([0-3])([0-9a-fA-F]+)$/)
+  if (!m) {
+    throw new Error(`cells[${index}] is invalid`)
   }
 
-  return restored
+  const d = Number(m[1])
+  const x = Number(m[2])
+  const h = m[3]
+
+  const digit = d === 0 ? undefined : (d as V)
+  const error = (x & 2) !== 0
+  const warning = (x & 1) !== 0
+  const decoded = decodeH(h)
+
+  return {
+    digit,
+    error,
+    warning,
+    color: decoded.color,
+    valid_memo: decoded.valid_memo,
+    candidate_memo: decoded.candidate_memo,
+  }
 }
 
-function applyCellPatch(target: Cell, src: SnapCell): void {
+function applyCellPatch(target: Cell, src: ReturnType<typeof parseCellString>): void {
   // 외부 속성은 건드리지 않음. 저장된 필드만 덮어씀.
-  target.r = src.r
-  target.c = src.c
-  target.digit = src.digit === null ? undefined : src.digit
-  target.candidate_memo = toSet(src.candidate_memo, 'candidate_memo')
-  target.valid_memo = toSet(src.valid_memo, 'valid_memo')
-  target.color = toSet(src.color, 'color')
+  target.digit = src.digit
+  target.candidate_memo = src.candidate_memo
+  target.valid_memo = src.valid_memo
+  target.color = src.color
 }
 
 export function encode(board: Board): string {
-  const cells: SnapCell[] = board.flat_cells.map(snapshotCell)
-  const snap: Snap = {
-    v: 1,
-    cells,
-    errors: snapshotCells(board.errors),
-    warnings: snapshotCells(board.warnings),
-  }
-  return JSON.stringify(snap)
+  return board.flat_cells.map((cell) => encodeCell(cell, board)).join(',')
 }
 
 /**
@@ -144,63 +148,26 @@ export function encode(board: Board): string {
  * 새 셀을 만들지 않고, 기존 cell 객체의 저장된 필드만 덮어쓴다.
  */
 export function decode(snapshot: string, board: Board): Board {
-  const raw: unknown = JSON.parse(snapshot)
-  if (typeof raw !== 'object' || raw === null || !('v' in raw) || (raw as { v?: unknown }).v !== 1 || !('cells' in raw)) {
-    throw new Error('invalid snapshot')
+  const cells = snapshot.split(',')
+  if (cells.length !== CELL_COUNT) {
+    throw new Error(`snapshot must contain exactly ${CELL_COUNT} cells`)
   }
 
-  const snap = raw as { cells: unknown; errors?: unknown; warnings?: unknown }
-  const cells = snap.cells
-  if (!Array.isArray(cells) || cells.length !== 81) {
-    throw new Error('snapshot must contain exactly 81 cells')
-  }
+  const nextErrors = new Set<Cell>()
+  const nextWarnings = new Set<Cell>()
 
   cells.forEach((item, i) => {
-    if (typeof item !== 'object' || item === null) {
-      throw new Error(`cells[${i}] is invalid`)
-    }
+    const parsed = parseCellString(item, i)
+    const target = board.flat_cells[i]
 
-    const cell = item as Record<string, unknown>
-    const r = cell.r
-    const c = cell.c
+    applyCellPatch(target, parsed)
 
-    if (!isV(r) || !isV(c)) {
-      throw new Error(`cells[${i}].r/c is invalid`)
-    }
-
-    const expectedR = (Math.floor(i / 9) + 1) as IDX
-    const expectedC = ((i % 9) + 1) as IDX
-    if (r !== expectedR || c !== expectedC) {
-      throw new Error(`cells[${i}] must be stored in row-major order`)
-    }
-
-    if (cell.digit !== null && cell.digit !== undefined && !isV(cell.digit)) {
-      throw new Error(`cells[${i}].digit is invalid`)
-    }
-
-    if (!Array.isArray(cell.candidate_memo)) {
-      throw new Error(`cells[${i}].candidate_memo must be an array`)
-    }
-    if (!Array.isArray(cell.valid_memo)) {
-      throw new Error(`cells[${i}].valid_memo must be an array`)
-    }
-    if (!Array.isArray(cell.color)) {
-      throw new Error(`cells[${i}].color must be an array`)
-    }
-
-    const target = board.cells[expectedR - 1][expectedC - 1]
-    applyCellPatch(target, {
-      r,
-      c,
-      digit: cell.digit === undefined ? null : cell.digit,
-      candidate_memo: readDigits(cell.candidate_memo, `cells[${i}].candidate_memo`),
-      valid_memo: readDigits(cell.valid_memo, `cells[${i}].valid_memo`),
-      color: readDigits(cell.color, `cells[${i}].color`),
-    })
+    if (parsed.error) nextErrors.add(target)
+    if (parsed.warning) nextWarnings.add(target)
   })
 
-  board.errors = restoreCells(snap.errors ?? [], board, 'errors')
-  board.warnings = restoreCells(snap.warnings ?? [], board, 'warnings')
+  board.errors = nextErrors
+  board.warnings = nextWarnings
 
   return board
 }
