@@ -162,7 +162,27 @@ export function initBoard(): Board {
     },
 
     set_selected_by_selected_scope() {
-      // @todo
+      // 현재 선택된 셀들이 모두 같은 그룹에 포함되어 있을 때, 그 그룹의 셀을 선택한다.
+      // 단, 원래 선택되어 있던 셀들은 제외한다.
+      const last_selected = Array.from(this.selected)
+      if (last_selected.length === 0) return
+
+      this.selected.clear()
+      for (const group of board.all_groups) {
+        const is_target_group = last_selected.every((selected_cell) => group.some(([r, c]) => r === selected_cell.r - 1 && c === selected_cell.c - 1))
+
+        if (is_target_group) {
+          for (const [r, c] of group) {
+            const cell = board.cells[r][c]
+            if (cell) {
+              this.selected.add(cell)
+            }
+          }
+        }
+      }
+
+      last_selected.forEach((cell) => this.selected.delete(cell))
+      board.render()
     },
 
     _check_errors() {

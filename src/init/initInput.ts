@@ -136,9 +136,12 @@ export function initInput(board: Board, gameState: GameState) {
     render()
   })
 
-  // @todo: info, undo, redo, setting
+  enableLongPress(buttons.mode2.select)
+  buttons.mode2.select.addEventListener('longpress', () => {
+    board.set_selected_by_selected_scope()
+  })
 
-  // @todo: long press: select, auto
+  // @todo: info, undo, redo, setting
 
   // @todo: in branch mode, replace mode1 buttons
 
