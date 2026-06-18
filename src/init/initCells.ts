@@ -39,7 +39,7 @@ export const cells: Cell[][] = Array.from({ length: 9 }, (_, r) =>
     return {
       r: (r + 1) as IDX,
       c: (c + 1) as IDX,
-      memo: new Set(),
+      memo: new Set(V),
       color: new Set(),
       color_element: color_element,
       num_element: num_element,
