@@ -265,7 +265,7 @@ export function initBoard(): Board {
       })
     },
 
-    container_element: document.querySelector<HTMLDivElement>('#this-container')!,
+    container_element: document.querySelector<HTMLDivElement>('#board-container')!,
   }
 
   board._check_errors()
