@@ -5,6 +5,7 @@ import type { Cell } from '../types/Cell'
 
 export function check_warning(board: Board): Set<Cell> {
   const res = new Set<Cell>()
+  
   // 1. one cell, no memo
   board.empty_cells.forEach((cell) => {
     if (cell.memo.size === 0) res.add(cell)

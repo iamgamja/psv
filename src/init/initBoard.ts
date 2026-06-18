@@ -149,16 +149,10 @@ export function initBoard(): Board {
     },
 
     _check_errors() {
-      this.errors.clear()
-
-      for (const rule of this.rules) {
-        check_error(this, rule).forEach((cell) => this.errors.add(cell))
-      }
+      this.errors = check_error(this)
     },
     _check_warnings() {
-      this.warnings.clear()
-
-      board.warnings = check_warning(board)
+      this.warnings = check_warning(this)
     },
 
     render() {

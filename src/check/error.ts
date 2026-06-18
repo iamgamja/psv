@@ -2,7 +2,7 @@ import { GROUPS_B, GROUPS_C, GROUPS_R } from '../const'
 import { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import type { POS, Rule } from '../types/Rule'
+import type { POS } from '../types/Rule'
 
 function check_dup(board: Board, groups: POS[][]): Set<Cell> {
   const res = new Set<Cell>()
@@ -26,23 +26,31 @@ function check_dup(board: Board, groups: POS[][]): Set<Cell> {
   return res
 }
 
-export function check_error(board: Board, rule: Rule): Set<Cell> {
-  switch (rule.id) {
-    case '[R]': {
-      return check_dup(board, GROUPS_R)
+export function check_error(board: Board): Set<Cell> {
+  const res = new Set<Cell>()
+
+  for (const rule of board.rules)
+    switch (rule.id) {
+      case '[R]': {
+        check_dup(board, GROUPS_R).forEach((cell) => res.add(cell))
+        break
+      }
+      case '[C]': {
+        check_dup(board, GROUPS_C).forEach((cell) => res.add(cell))
+        break
+      }
+      case '[B]': {
+        check_dup(board, GROUPS_B).forEach((cell) => res.add(cell))
+        break
+      }
+      case '[SG]': {
+        check_dup(board, rule.render_state.regions).forEach((cell) => res.add(cell))
+        break
+      }
+      default: {
+        // ignore unknown rule
+      }
     }
-    case '[C]': {
-      return check_dup(board, GROUPS_C)
-    }
-    case '[B]': {
-      return check_dup(board, GROUPS_B)
-    }
-    case '[SG]': {
-      return check_dup(board, rule.render_state.regions)
-    }
-    default: {
-      // ignore unknown rule
-      return new Set<Cell>()
-    }
-  }
+
+  return res
 }
