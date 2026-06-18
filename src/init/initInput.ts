@@ -5,6 +5,7 @@ import { V } from '../types/base'
 import { color_map } from '../const'
 import { entries } from '../util/entries'
 import { enableLongPress } from '../util/enableLongPress'
+import { Modal } from '../util/modal'
 
 const input_element = document.querySelector<HTMLDivElement>('#input')!
 
@@ -39,6 +40,15 @@ const buttons = {
   redo: input_element.querySelector<HTMLButtonElement>('#input-redo')!,
   setting: input_element.querySelector<HTMLButtonElement>('#input-setting')!,
 }
+
+const info_modal = new Modal({
+  title: 'Info',
+  content: 'todo',
+})
+const setting_modal = new Modal({
+  title: 'Setting',
+  content: 'todo',
+})
 
 export function initInput(board: Board, gameState: GameState) {
   // eventlistner for mode
@@ -120,7 +130,12 @@ export function initInput(board: Board, gameState: GameState) {
     render()
   })
 
-  // @todo: info, setting
+  buttons.info.addEventListener('click', () => {
+    info_modal.open()
+  })
+  buttons.setting.addEventListener('click', () => {
+    setting_modal.open()
+  })
 
   // @todo: in branch mode, replace mode1 buttons
 

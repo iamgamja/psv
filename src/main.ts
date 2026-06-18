@@ -1,6 +1,7 @@
 import './styles/main.css'
 import './styles/board.css'
 import './styles/input.css'
+import './styles/modal.css'
 
 import type { GameState } from './types/GameState'
 import { initBoard } from './init/initBoard'
