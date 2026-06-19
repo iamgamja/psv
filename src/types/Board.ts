@@ -59,5 +59,12 @@ export type Board = {
   get can_redo(): boolean
   redo(): void
 
+  create_branch(): void
+  create_branch_with_digit(cell: Cell, digit: V): void
+  get can_reject_branch(): boolean
+  reject_branch(): void
+  get can_cancel_branch(): boolean
+  cancel_branch(): void
+
   reset(): void
 }

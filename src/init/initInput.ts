@@ -32,6 +32,12 @@ const buttons = {
     branch: input_element.querySelector<HTMLButtonElement>('#input-branch')!,
   },
 
+  branch_sub: {
+    create_without_digit: input_element.querySelector<HTMLButtonElement>('#input-branch-create-without-digit')!,
+    reject: input_element.querySelector<HTMLButtonElement>('#input-branch-reject')!,
+    cancel: input_element.querySelector<HTMLButtonElement>('#input-branch-cancel')!,
+  },
+
   auto: input_element.querySelector<HTMLButtonElement>('#input-auto')!,
   delete: input_element.querySelector<HTMLButtonElement>('#input-delete')!,
 
@@ -78,7 +84,14 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
         }
       } else {
         // branch
-        // @todo
+        if (board.selected.size !== 1) return
+
+        const cell = board.selected.values().next().value!
+        if (cell.is_static) return
+        if (cell.digit) return
+
+        board.create_branch_with_digit(cell, key)
+        gameState.mode2 = null
       }
       render()
     })
@@ -124,14 +137,31 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
     render()
   })
 
+  buttons.branch_sub.create_without_digit.addEventListener('click', () => {
+    board.create_branch()
+    board.render()
+    gameState.mode2 = null
+    render()
+  })
+  buttons.branch_sub.reject.addEventListener('click', () => {
+    board.reject_branch()
+    board.render()
+    gameState.mode2 = null
+    render()
+  })
+  buttons.branch_sub.cancel.addEventListener('click', () => {
+    board.cancel_branch()
+    board.render()
+    gameState.mode2 = null
+    render()
+  })
+
   buttons.info.addEventListener('click', () => {
     info_modal.open()
   })
   buttons.setting.addEventListener('click', () => {
     setting_modal.open()
   })
-
-  // @todo: in branch mode, replace mode1 buttons
 
   attachDragSelection(board, gameState)
 
@@ -146,19 +176,26 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
     })
 
     // set disabled state
-    buttons.mode1.num.disabled = gameState.mode2 === 'branch'
-    buttons.mode1.memo.disabled = gameState.mode2 === 'branch'
-    buttons.mode1.color.disabled = gameState.mode2 === 'branch'
     buttons.mode2.select.disabled = gameState.mode2 === 'branch'
     buttons.auto.disabled = gameState.mode2 === 'branch' || !board.can_auto
     buttons.delete.disabled = gameState.mode2 === 'branch'
     buttons.undo.disabled = gameState.mode2 === 'branch' || !board.can_undo
     buttons.redo.disabled = gameState.mode2 === 'branch' || !board.can_redo
+    buttons.branch_sub.reject.disabled = !board.can_reject_branch
+    buttons.branch_sub.cancel.disabled = !board.can_cancel_branch
 
     // if color mode, set bg-color of number buttons
     entries(buttons.number).forEach(([key, button]) => {
       button.style.backgroundColor = gameState.mode1 === 'color' ? color_map[key] : ''
     })
+
+    // in branch mode, replace mode1 buttons
+    buttons.mode1.num.classList.toggle('hide', gameState.mode2 === 'branch')
+    buttons.mode1.memo.classList.toggle('hide', gameState.mode2 === 'branch')
+    buttons.mode1.color.classList.toggle('hide', gameState.mode2 === 'branch')
+    buttons.branch_sub.create_without_digit.classList.toggle('hide', gameState.mode2 !== 'branch')
+    buttons.branch_sub.reject.classList.toggle('hide', gameState.mode2 !== 'branch')
+    buttons.branch_sub.cancel.classList.toggle('hide', gameState.mode2 !== 'branch')
   }
 
   render()

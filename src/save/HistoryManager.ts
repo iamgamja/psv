@@ -204,10 +204,18 @@ export function decode(snapshot: string, board: Board): Board {
   return board
 }
 
+type BranchFrame = {
+  baseIndex: number
+  cell: Cell | null
+  digit: V | null
+}
+
 export class HistoryManager {
   public readonly board: Board
   private snapshots: string[] = []
   private currentSnapshotIndex = 0
+
+  private branchStack: BranchFrame[] = []
 
   constructor(board: Board) {
     this.board = board
@@ -217,19 +225,35 @@ export class HistoryManager {
       this.snapshots = loadedSnapshots
       this.currentSnapshotIndex = this.snapshots.length - 1
       decode(this.snapshot, this.board)
-      return
-    }
+    } else {
+      // no save
+      this.board._check_errors()
+      this.board._induct()
+      this.board._check_warnings()
 
-    this.snapshots = [encode(board)]
-    this.currentSnapshotIndex = 0
+      this.snapshots = [encode(board)]
+      this.currentSnapshotIndex = 0
+    }
+  }
+
+  private get branchBaseIndex(): number | null {
+    return this.branchStack.length > 0 ? this.branchStack[this.branchStack.length - 1].baseIndex : null
   }
 
   get canUndo(): boolean {
-    return this.currentSnapshotIndex > 0
+    return this.currentSnapshotIndex > (this.branchBaseIndex ?? -1) + 1
   }
 
   get canRedo(): boolean {
     return this.currentSnapshotIndex < this.snapshots.length - 1
+  }
+
+  get canRejectBranch(): boolean {
+    return this.branchStack.length > 0 && this.branchStack[this.branchStack.length - 1].digit !== null
+  }
+
+  get canCancelBranch(): boolean {
+    return this.branchStack.length > 0
   }
 
   get snapshot(): string {
@@ -240,9 +264,9 @@ export class HistoryManager {
    * board를 바꾼 뒤 호출한다.
    * 여러 셀을 한 번에 바꿨다면, 전부 끝난 다음 한 번만 호출하면 된다.
    */
-  commit(): void {
+  commit(force?: boolean): void {
     const next = encode(this.board)
-    if (next === this.snapshot) return
+    if (!force && next === this.snapshot) return
 
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
     this.snapshots.push(next)
@@ -268,7 +292,64 @@ export class HistoryManager {
     return true
   }
 
+  /**
+   * 아무것도 바꾸지 않고 분기를 생성한다.
+   */
+  createBranch(): void {
+    this.commit(true)
+
+    this.branchStack.push({
+      baseIndex: this.currentSnapshotIndex - 1,
+      cell: null,
+      digit: null,
+    })
+  }
+
+  /**
+   * cell.digit = digit 을 하고 분기를 생성한다.
+   */
+  createBranchWithDigit(cell: Cell, digit: V): void {
+    this.board.set_digit(digit)
+
+    this.branchStack.push({
+      baseIndex: this.currentSnapshotIndex - 1,
+      cell,
+      digit,
+    })
+  }
+
+  rejectBranch(): boolean {
+    const branch = this.branchStack.pop()
+    if (!branch) return false
+
+    this.currentSnapshotIndex = branch.baseIndex
+    this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
+    decode(this.snapshot, this.board)
+
+    if (branch.cell && branch.digit !== null) {
+      branch.cell.candidate_memo.delete(branch.digit)
+      branch.cell.valid_memo.delete(branch.digit)
+      this.commit()
+    }
+
+    return true
+  }
+
+  cancelBranch(): boolean {
+    const branch = this.branchStack.pop()
+    if (!branch) return false
+
+    this.currentSnapshotIndex = branch.baseIndex
+    this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
+    decode(this.snapshot, this.board)
+
+    return true
+  }
+
   reset(): void {
     removeSnaphsots(this.board.level.id)
+    this.branchStack = []
   }
 }
+
+/** @todo 분기도 저장하기 */

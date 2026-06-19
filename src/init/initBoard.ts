@@ -310,6 +310,29 @@ export function initBoard(level: LevelData): Board {
       this.render()
     },
 
+    create_branch() {
+      history_manager.createBranch()
+      this.render()
+    },
+    create_branch_with_digit(cell, digit) {
+      history_manager.createBranchWithDigit(cell, digit)
+      this.render()
+    },
+    get can_reject_branch() {
+      return history_manager.canRejectBranch
+    },
+    reject_branch() {
+      history_manager.rejectBranch()
+      this.render()
+    },
+    get can_cancel_branch() {
+      return history_manager.canCancelBranch
+    },
+    cancel_branch() {
+      history_manager.cancelBranch()
+      this.render()
+    },
+
     reset() {
       history_manager.reset()
       location.reload()
@@ -318,9 +341,6 @@ export function initBoard(level: LevelData): Board {
 
   const history_manager = new HistoryManager(board)
 
-  board._check_errors()
-  board._induct()
-  board._check_warnings()
   board.render()
 
   return board
