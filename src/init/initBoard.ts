@@ -1,4 +1,4 @@
-import { check_error } from '../check/error'
+import { check_error } from '../check/check_error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
 import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const/const'

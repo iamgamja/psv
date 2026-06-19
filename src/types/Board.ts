@@ -4,12 +4,14 @@ import type { ToggleMode } from './GameState'
 import type { LevelData } from './LevelData'
 import type { Groups, Rule } from './Rule'
 
+export type DigitArr = (V | undefined)[][]
+
 export type Board = {
   cells: Cell[][] // 9x9
   flat_cells: Cell[]
   get empty_cells(): Cell[]
 
-  create_digit_arr(): (V | undefined)[][] // 9x9
+  create_digit_arr(): DigitArr // 9x9
 
   level: LevelData
   rules: Rule[]
