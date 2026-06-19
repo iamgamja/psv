@@ -1,4 +1,4 @@
-type LongPressOptions = {
+interface LongPressOptions {
   duration?: number
 }
 

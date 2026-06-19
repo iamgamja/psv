@@ -1,5 +1,6 @@
 import type { V } from './base'
 import type { Cell } from './Cell'
+import type { LevelData } from './LevelData'
 import type { Groups, Rule } from './Rule'
 
 export type Board = {
@@ -9,6 +10,7 @@ export type Board = {
 
   create_digit_arr(): (V | undefined)[][] // 9x9
 
+  level: LevelData
   rules: Rule[]
   all_groups: Groups
 
@@ -54,6 +56,4 @@ export type Board = {
   undo(): void
   get can_redo(): boolean
   redo(): void
-
-  container_element: HTMLDivElement
 }

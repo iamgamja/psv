@@ -1,4 +1,4 @@
-import { GROUPS_B, GROUPS_C, GROUPS_R } from '../const'
+import { GROUPS_B, GROUPS_C, GROUPS_R } from '../const/const'
 import { V } from '../types/base'
 import type { Groups, Rule } from '../types/Rule'
 

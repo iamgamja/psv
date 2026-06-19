@@ -1,18 +1,16 @@
 import { check_error } from '../check/error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
-import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const'
+import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const/const'
 import { HistoryManager } from '../save/HistoryManager'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import type { Rule } from '../types/Rule'
+import type { LevelData } from '../types/LevelData'
 import { V } from '../types/base'
 import { cells } from './initCells'
-import { renderColor } from './renderColor'
+import { renderColor } from '../util/renderColor'
 
-export function initBoard(): Board {
-  const rules: Rule[] = [{ id: '[R]' }, { id: '[C]' }, { id: '[B]' }]
-
+export function initBoard(level: LevelData): Board {
   const board: Board = {
     cells,
     flat_cells: cells.flat(),
@@ -24,8 +22,9 @@ export function initBoard(): Board {
       return Array.from({ length: 9 }, (_, r) => Array.from({ length: 9 }, (_, c) => this.cells[r][c].digit))
     },
 
-    rules: rules,
-    all_groups: rules
+    level,
+    rules: level.rules,
+    all_groups: level.rules
       .filter((rule) => rule.id === '[R]' || rule.id === '[C]' || rule.id === '[B]' || rule.id === '[SG]')
       .map((rule) => (rule.id === '[R]' ? GROUPS_R : rule.id === '[C]' ? GROUPS_C : rule.id === '[B]' ? GROUPS_B : rule.render_state.regions))
       .flat(),
@@ -291,8 +290,6 @@ export function initBoard(): Board {
       history_manager.redo()
       this.render()
     },
-
-    container_element: document.querySelector<HTMLDivElement>('#board-container')!,
   }
 
   board._check_errors()

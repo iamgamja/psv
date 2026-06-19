@@ -1,12 +1,12 @@
 import type { Cell } from '../types/Cell'
 import { V, type IDX } from '../types/base'
-import { SIZE_CELL } from '../const'
-import { initColor } from './renderColor'
+import { SIZE_CELL } from '../const/const'
+import { initColor } from '../util/renderColor'
+import { createElement } from '../util/createElement'
 
 /** r, c: 0-index. 1-9 is in-board, 0 and 10 are out-of-board */
-function create_element(className: string, r: IDX, c: IDX): HTMLDivElement {
-  const element = document.createElement('div')
-  element.classList.add('cell', className)
+function create_cell_element(className: string, r: IDX, c: IDX): HTMLDivElement {
+  const element = createElement('div', {className: ['cell', className]})
   element.style.left = `${c * SIZE_CELL}px`
   element.style.top = `${r * SIZE_CELL}px`
   element.dataset.r = r.toString()
@@ -18,12 +18,12 @@ const container_element = document.querySelector<HTMLDivElement>('#board-contain
 
 export const cells: Cell[][] = Array.from({ length: 9 }, (_, r) =>
   Array.from({ length: 9 }, (_, c) => {
-    const color_element = container_element.appendChild(create_element('cell-color', (r + 1) as IDX, (c + 1) as IDX))
-    const num_element = container_element.appendChild(create_element('cell-num', (r + 1) as IDX, (c + 1) as IDX))
-    const memo_element = container_element.appendChild(create_element('cell-memo', (r + 1) as IDX, (c + 1) as IDX))
-    const error_element = container_element.appendChild(create_element('cell-error', (r + 1) as IDX, (c + 1) as IDX))
-    const warning_element = container_element.appendChild(create_element('cell-warning', (r + 1) as IDX, (c + 1) as IDX))
-    const selected_element = container_element.appendChild(create_element('cell-selected', (r + 1) as IDX, (c + 1) as IDX))
+    const color_element = container_element.appendChild(create_cell_element('cell-color', (r + 1) as IDX, (c + 1) as IDX))
+    const num_element = container_element.appendChild(create_cell_element('cell-num', (r + 1) as IDX, (c + 1) as IDX))
+    const memo_element = container_element.appendChild(create_cell_element('cell-memo', (r + 1) as IDX, (c + 1) as IDX))
+    const error_element = container_element.appendChild(create_cell_element('cell-error', (r + 1) as IDX, (c + 1) as IDX))
+    const warning_element = container_element.appendChild(create_cell_element('cell-warning', (r + 1) as IDX, (c + 1) as IDX))
+    const selected_element = container_element.appendChild(create_cell_element('cell-selected', (r + 1) as IDX, (c + 1) as IDX))
 
     // init memo
     for (const v of V) {

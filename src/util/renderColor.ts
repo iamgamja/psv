@@ -1,5 +1,6 @@
 import type { V } from '../types/base'
-import { color_map, SIZE_CELL } from '../const'
+import { SIZE_CELL } from '../const/const'
+import { color_map } from '../const/color_map'
 
 const CX = SIZE_CELL / 2
 const CY = SIZE_CELL / 2

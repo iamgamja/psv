@@ -1,48 +1,30 @@
-export interface ModalOptions {
-  title?: string
-  content?: string | Node
-}
-
+/**
+ * ```
+ * div.modal-overlay
+ *   div.modal-container
+ *     div.modal-header
+ *       div.modal-title
+ *       button.modal-close-btn
+ *     div.modal-body
+ * ```
+ */
 export class Modal {
   private overlay: HTMLDivElement
   private container: HTMLDivElement
-  private body: HTMLDivElement
+  body: HTMLDivElement
+  private closeBtn: HTMLButtonElement
   private isOpen = false
   private closeTimer: number | null = null
-  private options: Required<ModalOptions>
 
-  constructor(options: ModalOptions = {}) {
-    this.options = {
-      title: '',
-      content: '',
-      ...options,
-    }
+  constructor(overlay: HTMLDivElement) {
+    this.overlay = overlay
+    this.container = this.overlay.querySelector('.modal-container') as HTMLDivElement
+    this.body = this.container.querySelector('.modal-body') as HTMLDivElement
+    this.closeBtn = this.container.querySelector('.modal-close-btn') as HTMLButtonElement
 
-    this.overlay = document.createElement('div')
-    this.overlay.classList.add('modal-overlay')
     this.overlay.addEventListener('click', this.handleOverlayClick)
-
-    this.container = document.createElement('div')
-    this.container.classList.add('modal-container')
     this.container.addEventListener('click', (event) => event.stopPropagation())
-
-    if (this.options.title) {
-      const header = document.createElement('div')
-      header.classList.add('modal-header')
-
-      const title = document.createElement('div')
-      title.textContent = this.options.title
-      title.classList.add('modal-title')
-      header.appendChild(title)
-
-      this.container.appendChild(header)
-    }
-
-    this.body = document.createElement('div')
-    this.body.classList.add('modal-body')
-    this.setContent(this.options.content)
-    this.container.appendChild(this.body)
-    this.overlay.appendChild(this.container)
+    this.closeBtn.addEventListener('click', this.handleOverlayClick)
   }
 
   open(): void {
@@ -83,15 +65,6 @@ export class Modal {
       this.close()
     } else {
       this.open()
-    }
-  }
-
-  setContent(content: string | Node): void {
-    this.body.innerHTML = ''
-    if (typeof content === 'string') {
-      this.body.innerHTML = content
-    } else if (content instanceof Node) {
-      this.body.appendChild(content)
     }
   }
 
