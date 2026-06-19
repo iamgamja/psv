@@ -281,7 +281,7 @@ export function initBoard(level: LevelData): Board {
       }
     },
     _check_completed() {
-      if (!this.completed && this.flat_cells.every((cell) => cell.digit)) {
+      if (!this.completed && this.errors.size === 0 && this.warnings.size === 0 && this.flat_cells.every((cell) => cell.digit)) {
         const res = this.flat_cells.map((cell) => cell.digit).join('')
         navigator.clipboard.writeText(res)
         this.completed = true
