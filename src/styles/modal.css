@@ -89,11 +89,17 @@
   border: 1px black solid;
 }
 
+.modal-body .list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .modal-body button {
   all: unset;
 
-  background-color: #f0f0f0;
   padding: 0.5rem;
+  background-color: #f0f0f0;
   border-radius: 4px;
 
   transition: background-color 0.2s ease;
