@@ -6,7 +6,7 @@ import { HistoryManager } from '../save/HistoryManager'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import type { LevelData } from '../types/LevelData'
-import { V } from '../types/base'
+import { IDX0, V } from '../types/base'
 import { initCells } from './initCells'
 import { renderColor } from '../util/renderColor'
 
@@ -21,7 +21,7 @@ export function initBoard(level: LevelData): Board {
     },
 
     create_digit_arr() {
-      return Array.from({ length: 9 }, (_, r) => Array.from({ length: 9 }, (_, c) => this.cells[r][c].digit))
+      return IDX0.map((r) => IDX0.map((c) => this.cells[r][c].digit))
     },
 
     level,
@@ -41,7 +41,7 @@ export function initBoard(level: LevelData): Board {
     errors: new Set(),
     warnings: new Set(),
 
-    set_digit(digit?: V) {
+    set_digit(digit) {
       this.nonstatic_selected.forEach((cell) => {
         cell.digit = digit
       })
@@ -51,15 +51,18 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    toggle_digit(digit: V) {
-      if (Array.from(this.nonstatic_selected).every((cell) => cell.digit === digit)) {
+    toggle_digit(digit, mode) {
+      if (this.nonstatic_selected.every((cell) => cell.digit === digit)) {
         this.set_digit()
-      } else {
+      } else if (this.nonstatic_selected.every((cell) => cell.digit !== digit)) {
         this.set_digit(digit)
+      } else {
+        if (mode === 'add_prefer') this.set_digit(digit)
+        else this.set_digit()
       }
     },
 
-    add_memo(digit: V) {
+    add_memo(digit) {
       this.empty_selected.forEach((cell) => {
         cell.candidate_memo.add(digit)
         this._induct(cell)
@@ -68,7 +71,7 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    remove_memo(digit: V) {
+    remove_memo(digit) {
       this.empty_selected.forEach((cell) => {
         cell.candidate_memo.delete(digit)
         this._induct(cell)
@@ -86,22 +89,25 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    toggle_memo(digit: V) {
+    toggle_memo(digit, mode) {
       if (this.empty_selected.every((cell) => cell.candidate_memo.has(digit))) {
         this.remove_memo(digit)
-      } else {
+      } else if (this.empty_selected.every((cell) => !cell.candidate_memo.has(digit))) {
         this.add_memo(digit)
+      } else {
+        if (mode === 'add_prefer') this.add_memo(digit)
+        else this.remove_memo(digit)
       }
     },
 
-    add_color(digit: V) {
+    add_color(digit) {
       this.selected.forEach((cell) => {
         cell.color.add(digit)
       })
       this.render()
       this.commit()
     },
-    remove_color(digit: V) {
+    remove_color(digit) {
       this.selected.forEach((cell) => {
         cell.color.delete(digit)
       })
@@ -115,19 +121,22 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    toggle_color(digit: V) {
+    toggle_color(digit, mode) {
       if (Array.from(this.selected).every((cell) => cell.color.has(digit))) {
         this.remove_color(digit)
-      } else {
+      } else if (Array.from(this.selected).every((cell) => !cell.color.has(digit))) {
         this.add_color(digit)
+      } else {
+        if (mode === 'add_prefer') this.add_color(digit)
+        else this.remove_color(digit)
       }
     },
 
-    add_selected(cell: Cell) {
+    add_selected(cell) {
       this.selected.add(cell)
       this.render()
     },
-    remove_selected(cell: Cell) {
+    remove_selected(cell) {
       this.selected.delete(cell)
       this.render()
     },
@@ -136,7 +145,7 @@ export function initBoard(level: LevelData): Board {
       this.render()
     },
 
-    set_selected_by_digit(digit: V) {
+    set_selected_by_digit(digit) {
       this.selected.clear()
       this.flat_cells.forEach((cell) => {
         if (cell.digit === digit) {
@@ -145,7 +154,7 @@ export function initBoard(level: LevelData): Board {
       })
       this.render()
     },
-    set_selected_by_memo(digit: V) {
+    set_selected_by_memo(digit) {
       this.selected.clear()
       this.empty_cells.forEach((cell) => {
         if (cell.candidate_memo.has(digit)) {
@@ -154,7 +163,7 @@ export function initBoard(level: LevelData): Board {
       })
       this.render()
     },
-    set_selected_by_color(digit: V) {
+    set_selected_by_color(digit) {
       this.selected.clear()
       this.flat_cells.forEach((cell) => {
         if (cell.color.has(digit)) {
@@ -163,7 +172,7 @@ export function initBoard(level: LevelData): Board {
       })
       this.render()
     },
-    set_selected_by_candidate(digit: V) {
+    set_selected_by_candidate(digit) {
       this.selected.clear()
       this.empty_cells.forEach((cell) => {
         if (cell.valid_memo.has(digit)) {

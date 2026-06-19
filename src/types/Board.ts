@@ -1,5 +1,6 @@
 import type { V } from './base'
 import type { Cell } from './Cell'
+import type { ToggleMode } from './GameState'
 import type { LevelData } from './LevelData'
 import type { Groups, Rule } from './Rule'
 
@@ -21,17 +22,17 @@ export type Board = {
   warnings: Set<Cell>
 
   set_digit(digit?: V): void
-  toggle_digit(digit: V): void
+  toggle_digit(digit: V, mode: ToggleMode): void
 
   add_memo(digit: V): void
   remove_memo(digit: V): void
   clear_memo(): void
-  toggle_memo(digit: V): void
+  toggle_memo(digit: V, mode: ToggleMode): void
 
   add_color(digit: V): void
   remove_color(digit: V): void
   clear_color(): void
-  toggle_color(digit: V): void
+  toggle_color(digit: V, mode: ToggleMode): void
 
   add_selected(cell: Cell): void
   remove_selected(cell: Cell): void

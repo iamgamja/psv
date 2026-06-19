@@ -1,4 +1,4 @@
-import type { GameState } from './types/GameState'
+import type { GameState, SettingState } from './types/GameState'
 import { initBoard } from './init/initBoard'
 import { initInput } from './init/initInput'
 import { loadLevel } from './init/loadLevel'
@@ -13,5 +13,9 @@ const gameState: GameState = {
   mode2: null,
 }
 
+const settingState: SettingState = {
+  toggleMode: 'remove_prefer',
+}
+
 const board = initBoard(level)
-initInput(board, gameState)
+initInput(board, gameState, settingState)

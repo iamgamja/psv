@@ -1,5 +1,5 @@
 import type { Board } from '../types/Board'
-import type { GameState } from '../types/GameState'
+import type { GameState, SettingState } from '../types/GameState'
 import { V } from '../types/base'
 import { color_map } from '../const/color_map'
 import { entries } from '../util/entries'
@@ -41,7 +41,7 @@ const buttons = {
   setting: input_element.querySelector<HTMLButtonElement>('#input-setting')!,
 }
 
-export function initInput(board: Board, gameState: GameState) {
+export function initInput(board: Board, gameState: GameState, settingState: SettingState) {
   const info_modal = initInfoModal(board)
   const setting_modal = initSettingModal(board)
 
@@ -67,14 +67,14 @@ export function initInput(board: Board, gameState: GameState) {
       if (gameState.mode2 === null || gameState.mode2 === 'select') {
         if (gameState.mode1 === 'num') {
           if (board.selected.size === 0) board.set_selected_by_digit(key)
-          else board.toggle_digit(key)
+          else board.toggle_digit(key, settingState.toggleMode)
         } else if (gameState.mode1 === 'memo') {
           if (board.selected.size === 0) board.set_selected_by_memo(key)
-          else board.toggle_memo(key) // @todo: add/remove 우선 기능
+          else board.toggle_memo(key, settingState.toggleMode)
         } else {
           // color
           if (board.selected.size === 0) board.set_selected_by_color(key)
-          else board.toggle_color(key) // @todo: add/remove 우선 기능
+          else board.toggle_color(key, settingState.toggleMode)
         }
       } else {
         // branch
