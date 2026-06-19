@@ -1,4 +1,4 @@
-import { V } from '../types/base'
+import { IDX, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 
@@ -7,31 +7,45 @@ const GROUP_BITS = 9
 const GROUP_MASK = (1 << GROUP_BITS) - 1
 const STORAGE_KEY_PREFIX = 'psv:history:'
 
+type StoredHistory = {
+  board: string[]
+  branch: string
+}
+
 /**
- * 저장 형식
+ * 저장 형식: JSON.stringify({ board, branch })
  *
- * 최종 문자열:
- *   cell 81개를 ","로 연결한 문자열
+ * board: cell 81개를 ","로 연결한 문자열들의 배열
  *
- * 각 cell 문자열:
- *   ${d}${x}${h}
+ *   각 cell 문자열: `${d}${x}${h}`
  *
- *   d: digit
- *      - 1~9
- *      - undefined이면 0
+ *     d: digit
+ *       - 1~9
+ *       - undefined이면 0
  *
- *   x: error/warning bitset (2비트)
- *      - error = 2
- *      - warning = 1
- *      - 따라서 0~3
+ *     x: error/warning bitset (2비트)
+ *       - error = 2
+ *       - warning = 1
+ *       - 따라서 0~3
  *
- *   h: 27비트 bitset을 hex로 표기한 값
- *      - [color 9비트][valid_memo 9비트][candidate_memo 9비트]
- *      - 각 9비트 그룹은 digit 1~9를 bit 0~8에 대응
- *      - 0x 접두사 없음, leading zero 없음
+ *     h: 27비트 bitset을 hex로 표기한 값
+ *       - [color 9비트][valid_memo 9비트][candidate_memo 9비트]
+ *       - 각 9비트 그룹은 digit 1~9를 bit 0~8에 대응
  *
- * 예:
- *   "103f2a,000,..."
+ * branch: branch frame들을 ","로 연결한 문자열
+ *
+ *   각 branch frame 문자열: `${digit}${cell}${baseIndex}`
+ *
+ *     digit:
+ *       - 1~9
+ *       - null이면 0
+ *
+ *     cell:
+ *       - r, c를 2글자 문자열로 저장
+ *       - null이면 '00'
+ *
+ *     baseIndex:
+ *       - 16진법
  */
 
 function setTo9BitMask(set: Set<V>): number {
@@ -133,14 +147,13 @@ function parseCellString(
 }
 
 function applyCellPatch(target: Cell, src: ReturnType<typeof parseCellString>): void {
-  // 외부 속성은 건드리지 않음. 저장된 필드만 덮어씀.
   target.digit = src.digit
   target.candidate_memo = src.candidate_memo
   target.valid_memo = src.valid_memo
   target.color = src.color
 }
 
-function loadSnapshots(board: Board): string[] | null {
+function readHistoryRaw(board: Board): StoredHistory | null {
   const storage = globalThis.localStorage
   if (!storage) return null
 
@@ -149,37 +162,38 @@ function loadSnapshots(board: Board): string[] | null {
 
   try {
     const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed) || parsed.length === 0) return null
-    if (!parsed.every((item) => typeof item === 'string')) return null
-    return parsed
+
+    if (!parsed || typeof parsed !== 'object') return null
+
+    const obj = parsed as Partial<StoredHistory>
+    if (!Array.isArray(obj.board) || obj.board.length === 0) return null
+    if (!obj.board.every((item) => typeof item === 'string')) return null
+    if (typeof obj.branch !== 'string') return null
+    return { board: obj.board, branch: obj.branch }
   } catch {
     return null
   }
 }
 
-function saveSnapshots(id: string, snapshots: string[]): void {
+function saveHistory(id: string, history: StoredHistory): void {
   const storage = globalThis.localStorage
   if (!storage) return
 
-  storage.setItem(`${STORAGE_KEY_PREFIX}${id}`, JSON.stringify(snapshots))
+  storage.setItem(`${STORAGE_KEY_PREFIX}${id}`, JSON.stringify(history))
 }
 
-function removeSnaphsots(id: string) {
+function removeHistory(id: string) {
   const storage = globalThis.localStorage
   if (!storage) return
 
   storage.removeItem(`${STORAGE_KEY_PREFIX}${id}`)
 }
 
-export function encode(board: Board): string {
+export function encodeSnapshot(board: Board): string {
   return board.flat_cells.map((cell) => encodeCell(cell, board)).join(',')
 }
 
-/**
- * snapshot 문자열을 기존 board에 반영한다.
- * 새 셀을 만들지 않고, 기존 cell 객체의 저장된 필드만 덮어쓴다.
- */
-export function decode(snapshot: string, board: Board): Board {
+export function decodeSnapshot(snapshot: string, board: Board) {
   const cells = snapshot.split(',')
   if (cells.length !== CELL_COUNT) {
     throw new Error(`snapshot must contain exactly ${CELL_COUNT} cells`)
@@ -200,14 +214,69 @@ export function decode(snapshot: string, board: Board): Board {
 
   board.errors = nextErrors
   board.warnings = nextWarnings
-
-  return board
 }
 
 type BranchFrame = {
   baseIndex: number
   cell: Cell | null
   digit: V | null
+}
+
+function encodeBranchFrame(frame: BranchFrame): string {
+  const digit = frame.digit ?? 0
+  const cell = frame.cell === null ? '00' : `${frame.cell.r}${frame.cell.c}`
+  const baseIndex = frame.baseIndex.toString(16)
+
+  return `${digit}${cell}${baseIndex}`
+}
+
+function decodeBranchFrame(raw: string, board: Board, index: number): BranchFrame {
+  if (raw.length < 3) {
+    throw new Error(`branch[${index}] is invalid`)
+  }
+
+  const digitRaw = raw[0]
+  const cellRaw = raw.slice(1, 3)
+  const baseIndexRaw = raw.slice(3)
+
+  if (!/^[0-9]$/.test(digitRaw)) {
+    throw new Error(`branch[${index}].digit is invalid`)
+  }
+  if (!/^[0-9]{2}$/.test(cellRaw)) {
+    throw new Error(`branch[${index}].cell is invalid`)
+  }
+  if (!/^[0-9a-fA-F]+$/.test(baseIndexRaw)) {
+    throw new Error(`branch[${index}].baseIndex is invalid`)
+  }
+
+  const digitNum = parseInt(digitRaw)
+  const digit = digitNum === 0 ? null : (digitNum as V)
+
+  const r = parseInt(cellRaw[0]) as IDX | 0
+  const c = parseInt(cellRaw[1]) as IDX | 0
+  let cell = r === 0 && c === 0 ? null : board.cells[r - 1][c - 1]
+
+  const baseIndex = parseInt(baseIndexRaw, 16)
+  if (!Number.isSafeInteger(baseIndex) || baseIndex < 0) {
+    throw new Error(`branch[${index}].baseIndex is invalid`)
+  }
+
+  return {
+    digit,
+    cell,
+    baseIndex,
+  }
+}
+
+function encodeBranchStack(branchStack: BranchFrame[]): string {
+  return branchStack.map((frame) => encodeBranchFrame(frame)).join(',')
+}
+
+function decodeBranchStack(raw: string, board: Board): BranchFrame[] {
+  if (raw.trim() === '') return []
+
+  const items = raw.split(',')
+  return items.map((item, i) => decodeBranchFrame(item, board, i))
 }
 
 export class HistoryManager {
@@ -220,24 +289,37 @@ export class HistoryManager {
   constructor(board: Board) {
     this.board = board
 
-    const loadedSnapshots = loadSnapshots(board)
-    if (loadedSnapshots) {
-      this.snapshots = loadedSnapshots
+    const loaded = readHistoryRaw(board)
+    if (loaded) {
+      this.snapshots = loaded.board
       this.currentSnapshotIndex = this.snapshots.length - 1
-      decode(this.snapshot, this.board)
+      decodeSnapshot(this.snapshot, this.board)
+      this.branchStack = decodeBranchStack(loaded.branch, this.board)
     } else {
       // no save
       this.board._check_errors()
       this.board._induct()
       this.board._check_warnings()
 
-      this.snapshots = [encode(board)]
+      this.snapshots = [encodeSnapshot(board)]
       this.currentSnapshotIndex = 0
+      this.branchStack = []
+      saveHistory(this.board.level.id, {
+        board: this.snapshots,
+        branch: encodeBranchStack(this.branchStack),
+      })
     }
   }
 
   private get branchBaseIndex(): number | null {
     return this.branchStack.length > 0 ? this.branchStack[this.branchStack.length - 1].baseIndex : null
+  }
+
+  private persist(): void {
+    saveHistory(this.board.level.id, {
+      board: this.snapshots,
+      branch: encodeBranchStack(this.branchStack),
+    })
   }
 
   get canUndo(): boolean {
@@ -265,21 +347,21 @@ export class HistoryManager {
    * 여러 셀을 한 번에 바꿨다면, 전부 끝난 다음 한 번만 호출하면 된다.
    */
   commit(force?: boolean): void {
-    const next = encode(this.board)
+    const next = encodeSnapshot(this.board)
     if (!force && next === this.snapshot) return
 
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
     this.snapshots.push(next)
     this.currentSnapshotIndex = this.snapshots.length - 1
-    saveSnapshots(this.board.level.id, this.snapshots)
+    this.persist()
   }
 
   undo(): boolean {
     if (!this.canUndo) return false
 
     this.currentSnapshotIndex -= 1
-    decode(this.snapshot, this.board)
-    saveSnapshots(this.board.level.id, this.snapshots)
+    decodeSnapshot(this.snapshot, this.board)
+    this.persist()
     return true
   }
 
@@ -287,8 +369,8 @@ export class HistoryManager {
     if (!this.canRedo) return false
 
     this.currentSnapshotIndex += 1
-    decode(this.snapshot, this.board)
-    saveSnapshots(this.board.level.id, this.snapshots)
+    decodeSnapshot(this.snapshot, this.board)
+    this.persist()
     return true
   }
 
@@ -303,19 +385,23 @@ export class HistoryManager {
       cell: null,
       digit: null,
     })
+
+    this.persist()
   }
 
   /**
    * cell.digit = digit 을 하고 분기를 생성한다.
    */
   createBranchWithDigit(cell: Cell, digit: V): void {
-    this.board.set_digit(digit)
+    this.board.set_digit(digit) // commit은 set_digit이 하므로 생략
 
     this.branchStack.push({
       baseIndex: this.currentSnapshotIndex - 1,
       cell,
       digit,
     })
+
+    this.persist()
   }
 
   rejectBranch(): boolean {
@@ -324,14 +410,16 @@ export class HistoryManager {
 
     this.currentSnapshotIndex = branch.baseIndex
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
-    decode(this.snapshot, this.board)
+    decodeSnapshot(this.snapshot, this.board)
 
     if (branch.cell && branch.digit !== null) {
       branch.cell.candidate_memo.delete(branch.digit)
       branch.cell.valid_memo.delete(branch.digit)
       this.commit()
+      return true
     }
 
+    this.persist()
     return true
   }
 
@@ -341,15 +429,14 @@ export class HistoryManager {
 
     this.currentSnapshotIndex = branch.baseIndex
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
-    decode(this.snapshot, this.board)
+    decodeSnapshot(this.snapshot, this.board)
+    this.persist()
 
     return true
   }
 
   reset(): void {
-    removeSnaphsots(this.board.level.id)
+    removeHistory(this.board.level.id)
     this.branchStack = []
   }
 }
-
-/** @todo 분기도 저장하기 */
