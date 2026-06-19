@@ -200,7 +200,10 @@ export function initBoard(level: LevelData): Board {
     get can_auto() {
       return (
         this.empty_cells.some((cell) => cell.valid_memo.size === 1) ||
-        this.all_groups.some((group) => V.some((digit) => group.map(([r, c]) => this.cells[r][c]).filter((cell) => !cell.digit && cell.valid_memo.has(digit)).length === 1))
+        this.all_groups.some((group) => {
+          const digits = new Set(group.map(([r, c]) => this.cells[r][c].digit))
+          return V.some((digit) => !digits.has(digit) && group.map(([r, c]) => this.cells[r][c]).filter((cell) => !cell.digit && cell.valid_memo.has(digit)).length === 1)
+        })
       )
     },
 
@@ -218,6 +221,8 @@ export function initBoard(level: LevelData): Board {
         const empty_cells = cells.filter((cell) => !cell.digit)
 
         for (const digit of V) {
+          if (cells.some((cell) => cell.digit === digit)) continue
+
           const targets = empty_cells.filter((cell) => cell.valid_memo.has(digit))
           if (targets.length !== 1) continue
 
