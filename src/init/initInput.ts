@@ -7,7 +7,7 @@ import { enableLongPress } from '../util/enableLongPress'
 import { attachDragSelection } from '../util/attachDragSelection'
 import { initInfoModal, initSettingModal } from './initModal'
 
-const input_element = document.querySelector<HTMLDivElement>('#input')!
+const input_element = document.querySelector('#input')!
 
 const buttons = {
   number: {

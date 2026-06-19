@@ -22,12 +22,12 @@ export function initCells(level: LevelData): Cell[][] {
     IDX.map((c) => {
       const is_static = level.board[r - 1][c - 1] !== 0
 
-      const color_element = container_element.appendChild(create_cell_element('cell-color', r as IDX, c as IDX))
-      const num_element = container_element.appendChild(create_cell_element('cell-num', r as IDX, c as IDX))
-      const memo_element = container_element.appendChild(create_cell_element('cell-memo', r as IDX, c as IDX))
-      const error_element = container_element.appendChild(create_cell_element('cell-error', r as IDX, c as IDX))
-      const warning_element = container_element.appendChild(create_cell_element('cell-warning', r as IDX, c as IDX))
-      const selected_element = container_element.appendChild(create_cell_element('cell-selected', r as IDX, c as IDX))
+      const color_element = container_element.appendChild(create_cell_element('cell-color', r, c))
+      const num_element = container_element.appendChild(create_cell_element('cell-num', r, c))
+      const memo_element = container_element.appendChild(create_cell_element('cell-memo', r, c))
+      const error_element = container_element.appendChild(create_cell_element('cell-error', r, c))
+      const warning_element = container_element.appendChild(create_cell_element('cell-warning', r, c))
+      const selected_element = container_element.appendChild(create_cell_element('cell-selected', r, c))
 
       // num color
       if (is_static) num_element.classList.add('static')

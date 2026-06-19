@@ -18,9 +18,9 @@ export class Modal {
 
   constructor(overlay: HTMLDivElement) {
     this.overlay = overlay
-    this.container = this.overlay.querySelector('.modal-container') as HTMLDivElement
-    this.body = this.container.querySelector('.modal-body') as HTMLDivElement
-    this.closeBtn = this.container.querySelector('.modal-close-btn') as HTMLButtonElement
+    this.container = this.overlay.querySelector('.modal-container')!
+    this.body = this.container.querySelector('.modal-body')!
+    this.closeBtn = this.container.querySelector('.modal-close-btn')!
 
     this.overlay.addEventListener('click', this.handleOverlayClick)
     this.container.addEventListener('click', (event) => event.stopPropagation())

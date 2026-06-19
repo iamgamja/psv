@@ -75,7 +75,7 @@ export function attachDragSelection(board: Board, gameState: GameState) {
     updateCellAtPoint(e.clientX, e.clientY)
   })
 
-  const container_element = document.querySelector('#board-container') as HTMLDivElement
+  const container_element = document.querySelector<HTMLDivElement>('#board-container')!
 
   container_element.addEventListener('pointermove', (e: PointerEvent) => {
     if (!dragging_mode || pointerId !== e.pointerId) return

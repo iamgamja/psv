@@ -5,7 +5,7 @@ import { createElement } from '../util/createElement'
 import { Modal } from '../util/Modal'
 
 export function initInfoModal(board: Board) {
-  const info_modal = new Modal(document.querySelector('#info-modal') as HTMLDivElement)
+  const info_modal = new Modal(document.querySelector('#info-modal')!)
 
   let elapsed_timer_span: HTMLSpanElement | null = null
   let base64_input: HTMLInputElement | null = null
@@ -96,6 +96,6 @@ export function initInfoModal(board: Board) {
 }
 
 export function initSettingModal(board: Board) {
-  const setting_modal = new Modal(document.querySelector('#setting-modal') as HTMLDivElement)
+  const setting_modal = new Modal(document.querySelector('#setting-modal')!)
   return setting_modal
 }
