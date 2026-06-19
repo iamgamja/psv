@@ -174,25 +174,25 @@ export function decode(snapshot: string, board: Board): Board {
 
 export class HistoryManager {
   public readonly board: Board
-  private undoStack: string[] = []
-  private redoStack: string[] = []
-  private currentSnapshot: string
+  private snapshots: string[] = []
+  private currentSnapshotIndex = 0
 
   constructor(board: Board) {
     this.board = board
-    this.currentSnapshot = encode(board)
+    this.snapshots = [encode(board)]
+    this.currentSnapshotIndex = 0
   }
 
   get canUndo(): boolean {
-    return this.undoStack.length > 0
+    return this.currentSnapshotIndex > 0
   }
 
   get canRedo(): boolean {
-    return this.redoStack.length > 0
+    return this.currentSnapshotIndex < this.snapshots.length - 1
   }
 
   get snapshot(): string {
-    return this.currentSnapshot
+    return this.snapshots[this.currentSnapshotIndex]
   }
 
   /**
@@ -201,36 +201,31 @@ export class HistoryManager {
    */
   commit(): void {
     const next = encode(this.board)
-    if (next === this.currentSnapshot) return
+    if (next === this.snapshot) return
 
-    this.undoStack.push(this.currentSnapshot)
-    this.currentSnapshot = next
-    this.redoStack.length = 0
+    this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
+    this.snapshots.push(next)
+    this.currentSnapshotIndex = this.snapshots.length - 1
   }
 
   undo(): boolean {
-    if (this.undoStack.length === 0) return false
+    if (!this.canUndo) return false
 
-    this.redoStack.push(this.currentSnapshot)
-    const prev = this.undoStack.pop()!
-    this.currentSnapshot = prev
-    decode(prev, this.board)
+    this.currentSnapshotIndex -= 1
+    decode(this.snapshot, this.board)
     return true
   }
 
   redo(): boolean {
-    if (this.redoStack.length === 0) return false
+    if (!this.canRedo) return false
 
-    this.undoStack.push(this.currentSnapshot)
-    const next = this.redoStack.pop()!
-    this.currentSnapshot = next
-    decode(next, this.board)
+    this.currentSnapshotIndex += 1
+    decode(this.snapshot, this.board)
     return true
   }
 
   reset(): void {
-    this.undoStack.length = 0
-    this.redoStack.length = 0
-    this.currentSnapshot = encode(this.board)
+    this.snapshots = [encode(this.board)]
+    this.currentSnapshotIndex = 0
   }
 }
