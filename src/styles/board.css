@@ -30,6 +30,13 @@
   align-items: center;
 }
 
+.cell-num {
+  color: #2298ff;
+}
+.cell-num.static {
+  color: #000000;
+}
+
 .cell-color {
   overflow: hidden;
 }

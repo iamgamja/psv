@@ -9,6 +9,8 @@ export type Cell = {
   candidate_memo: Set<V>
   color: Set<V>
 
+  is_static: boolean
+
   color_element: HTMLDivElement
   num_element: HTMLDivElement
   memo_element: HTMLDivElement

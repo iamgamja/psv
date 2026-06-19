@@ -16,6 +16,7 @@ export type Board = {
 
   selected: Set<Cell>
   get empty_selected(): Cell[]
+  get nonstatic_selected(): Cell[]
   errors: Set<Cell>
   warnings: Set<Cell>
 

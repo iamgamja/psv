@@ -59,8 +59,7 @@
 }
 
 .modal-body {
-  padding: 8px 0;
-  padding-right: 16px;
+  padding: 8px 16px;
   overflow-y: auto;
   max-height: calc(90vh - 72px);
   box-sizing: border-box;
@@ -74,6 +73,31 @@
   gap: 8px;
 }
 
+.modal-body > ul {
+  padding-left: 20px;
+}
+
 .modal-body li {
   list-style-type: '✓ ';
+}
+
+.modal-body input {
+  all: unset;
+
+  display: inline;
+  width: 50px;
+  border: 1px black solid;
+}
+
+.modal-body button {
+  all: unset;
+
+  background-color: #f0f0f0;
+  padding: 0.5rem;
+  border-radius: 4px;
+
+  transition: background-color 0.2s ease;
+}
+.modal-body button:hover {
+  background-color: #e0e0e0;
 }

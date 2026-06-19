@@ -7,10 +7,12 @@ import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import type { LevelData } from '../types/LevelData'
 import { V } from '../types/base'
-import { cells } from './initCells'
+import { initCells } from './initCells'
 import { renderColor } from '../util/renderColor'
 
 export function initBoard(level: LevelData): Board {
+  const cells = initCells(level)
+
   const board: Board = {
     cells,
     flat_cells: cells.flat(),
@@ -33,11 +35,14 @@ export function initBoard(level: LevelData): Board {
     get empty_selected() {
       return Array.from(this.selected).filter((cell) => !cell.digit)
     },
+    get nonstatic_selected() {
+      return Array.from(this.selected).filter((cell) => !cell.is_static)
+    },
     errors: new Set(),
     warnings: new Set(),
 
     set_digit(digit?: V) {
-      this.selected.forEach((cell) => {
+      this.nonstatic_selected.forEach((cell) => {
         cell.digit = digit
       })
       this._check_errors()
@@ -47,7 +52,7 @@ export function initBoard(level: LevelData): Board {
       this.commit()
     },
     toggle_digit(digit: V) {
-      if (Array.from(this.selected).every((cell) => cell.digit === digit)) {
+      if (Array.from(this.nonstatic_selected).every((cell) => cell.digit === digit)) {
         this.set_digit()
       } else {
         this.set_digit(digit)
@@ -293,6 +298,7 @@ export function initBoard(level: LevelData): Board {
   }
 
   board._check_errors()
+  board._induct()
   board._check_warnings()
   board.render()
 
