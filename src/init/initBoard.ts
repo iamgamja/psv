@@ -10,6 +10,7 @@ import { IDX0, V } from '../types/base'
 import { initCells } from './initCells'
 import { renderColor } from '../util/renderColor'
 import { isKnown } from '../types/Rule'
+import { showToast } from '../util/toast'
 
 export function initBoard(level: LevelData): Board {
   const cells = initCells(level)
@@ -284,7 +285,7 @@ export function initBoard(level: LevelData): Board {
         const res = this.flat_cells.map((cell) => cell.digit).join('')
         navigator.clipboard.writeText(res)
         this.completed = true
-        console.log(res)
+        showToast('정답이 클립보드에 복사되었습니다.', 'success')
       }
     },
     completed: false,

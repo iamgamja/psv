@@ -54,7 +54,7 @@
   all: unset;
 }
 .modal-close-btn::after {
-  content: '×';
+  content: '✕';
   font-size: 1rem;
 }
 

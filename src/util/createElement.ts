@@ -1,6 +1,7 @@
 import { entries } from './entries'
 
 interface CreateElementOptions {
+  id?: string
   className?: string | string[]
   content?: string | Node | (string | Node)[]
 
@@ -11,6 +12,10 @@ interface CreateElementOptions {
 
 export function createElement<K extends keyof HTMLElementTagNameMap>(tag: K, options?: CreateElementOptions) {
   const ele = document.createElement(tag)
+
+  if (options?.id) {
+    ele.id = options.id
+  }
 
   if (options?.className) {
     if (Array.isArray(options.className)) ele.classList.add(...options.className)
