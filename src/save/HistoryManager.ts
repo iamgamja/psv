@@ -5,6 +5,7 @@ import type { Cell } from '../types/Cell'
 const CELL_COUNT = 81
 const GROUP_BITS = 9
 const GROUP_MASK = (1 << GROUP_BITS) - 1
+const STORAGE_KEY_PREFIX = 'psv:history:'
 
 /**
  * 저장 형식
@@ -139,6 +140,37 @@ function applyCellPatch(target: Cell, src: ReturnType<typeof parseCellString>): 
   target.color = src.color
 }
 
+function loadSnapshots(board: Board): string[] | null {
+  const storage = globalThis.localStorage
+  if (!storage) return null
+
+  const raw = storage.getItem(`${STORAGE_KEY_PREFIX}${board.level.id}`)
+  if (raw === null) return null
+
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    if (!parsed.every((item) => typeof item === 'string')) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function saveSnapshots(id: string, snapshots: string[]): void {
+  const storage = globalThis.localStorage
+  if (!storage) return
+
+  storage.setItem(`${STORAGE_KEY_PREFIX}${id}`, JSON.stringify(snapshots))
+}
+
+function removeSnaphsots(id: string) {
+  const storage = globalThis.localStorage
+  if (!storage) return
+
+  storage.removeItem(`${STORAGE_KEY_PREFIX}${id}`)
+}
+
 export function encode(board: Board): string {
   return board.flat_cells.map((cell) => encodeCell(cell, board)).join(',')
 }
@@ -179,6 +211,15 @@ export class HistoryManager {
 
   constructor(board: Board) {
     this.board = board
+
+    const loadedSnapshots = loadSnapshots(board)
+    if (loadedSnapshots) {
+      this.snapshots = loadedSnapshots
+      this.currentSnapshotIndex = this.snapshots.length - 1
+      decode(this.snapshot, this.board)
+      return
+    }
+
     this.snapshots = [encode(board)]
     this.currentSnapshotIndex = 0
   }
@@ -206,6 +247,7 @@ export class HistoryManager {
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
     this.snapshots.push(next)
     this.currentSnapshotIndex = this.snapshots.length - 1
+    saveSnapshots(this.board.level.id, this.snapshots)
   }
 
   undo(): boolean {
@@ -213,6 +255,7 @@ export class HistoryManager {
 
     this.currentSnapshotIndex -= 1
     decode(this.snapshot, this.board)
+    saveSnapshots(this.board.level.id, this.snapshots)
     return true
   }
 
@@ -221,11 +264,11 @@ export class HistoryManager {
 
     this.currentSnapshotIndex += 1
     decode(this.snapshot, this.board)
+    saveSnapshots(this.board.level.id, this.snapshots)
     return true
   }
 
   reset(): void {
-    this.snapshots = [encode(this.board)]
-    this.currentSnapshotIndex = 0
+    removeSnaphsots(this.board.level.id)
   }
 }

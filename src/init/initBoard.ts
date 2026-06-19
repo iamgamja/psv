@@ -309,14 +309,19 @@ export function initBoard(level: LevelData): Board {
       history_manager.redo()
       this.render()
     },
+
+    reset() {
+      history_manager.reset()
+      location.reload()
+    },
   }
+
+  const history_manager = new HistoryManager(board)
 
   board._check_errors()
   board._induct()
   board._check_warnings()
   board.render()
-
-  const history_manager = new HistoryManager(board)
 
   return board
 }

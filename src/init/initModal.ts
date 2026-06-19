@@ -28,23 +28,35 @@ export function initInfoModal(board: Board) {
       ],
     }),
     createElement('hr'),
-    createElement('label', {
-      content: [
-        'base64 코드: ',
-        (base64_input = createElement('input')),
-        createElement('button', {
-          content: 'load',
-          eventlistner: {
-            click: () => {
-              const url = new URL(window.location.href)
-              url.searchParams.set('data', base64_input!.value)
+    createElement('div', {
+      content: createElement('label', {
+        content: [
+          'base64 코드: ',
+          (base64_input = createElement('input')),
+          createElement('button', {
+            content: 'load',
+            eventlistner: {
+              click: () => {
+                const url = new URL(window.location.href)
+                url.searchParams.set('data', base64_input!.value)
 
-              history.pushState(null, '', url.toString())
-              location.reload()
+                history.pushState(null, '', url.toString())
+                location.reload()
+              },
             },
-          },
-        }),
-      ],
+          }),
+        ],
+      }),
+    }),
+
+    createElement('button', {
+      className: 'red',
+      content: 'reset',
+      eventlistner: {
+        click: () => {
+          board.reset()
+        },
+      },
     }),
   )
 

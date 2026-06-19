@@ -101,3 +101,7 @@
 .modal-body button:hover {
   background-color: #e0e0e0;
 }
+
+.modal-body button.red {
+  color: red;
+}

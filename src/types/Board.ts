@@ -58,4 +58,6 @@ export type Board = {
   undo(): void
   get can_redo(): boolean
   redo(): void
+
+  reset(): void
 }
