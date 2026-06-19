@@ -1,5 +1,6 @@
 import { RuleText } from '../const/rule_text'
 import type { Board } from '../types/Board'
+import { isKnown } from '../types/Rule'
 import { createElement } from '../util/createElement'
 import { Modal } from '../util/Modal'
 
@@ -18,7 +19,7 @@ export function initInfoModal(board: Board) {
           content: [
             '규칙:',
             createElement('ul', {
-              content: board.rules.map((rule) => createElement('li', { content: RuleText[rule.id] ?? rule.id })),
+              content: board.rules.map((rule) => createElement('li', { content: isKnown(rule) ? RuleText[rule.id] : rule.id })),
             }),
           ],
         }),

@@ -9,6 +9,7 @@ import type { LevelData } from '../types/LevelData'
 import { IDX0, V } from '../types/base'
 import { initCells } from './initCells'
 import { renderColor } from '../util/renderColor'
+import { isKnown } from '../types/Rule'
 
 export function initBoard(level: LevelData): Board {
   const cells = initCells(level)
@@ -27,8 +28,8 @@ export function initBoard(level: LevelData): Board {
     level,
     rules: level.rules,
     all_groups: level.rules
-      .filter((rule) => rule.id === '[R]' || rule.id === '[C]' || rule.id === '[B]' || rule.id === '[SG]')
-      .map((rule) => (rule.id === '[R]' ? GROUPS_R : rule.id === '[C]' ? GROUPS_C : rule.id === '[B]' ? GROUPS_B : rule.render_state.regions))
+      .filter(isKnown)
+      .map((rule) => (rule.id === '[R]' ? GROUPS_R : rule.id === '[C]' ? GROUPS_C : rule.id === '[B]' ? GROUPS_B : rule.id === '[SG]' ? rule.render_state.regions : []))
       .flat(),
 
     selected: new Set(),

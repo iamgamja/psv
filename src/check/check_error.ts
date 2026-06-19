@@ -2,7 +2,7 @@ import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const/const'
 import type { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import type { Rule_ID, RuleObject, Groups } from '../types/Rule'
+import { type Rule_ID, type RuleObject, type Groups, isKnown } from '../types/Rule'
 
 type ErrorChecker<T extends Rule_ID> = (board: Board, rule: RuleObject<T>) => Set<Cell>
 type ErrorCheckers = {
@@ -41,7 +41,7 @@ const ErrorCheckers: ErrorCheckers = {
 export function check_error(board: Board): Set<Cell> {
   const res = new Set<Cell>()
 
-  for (const rule of board.rules) {
+  for (const rule of board.rules.filter(isKnown)) {
     // @ts-ignore
     ErrorCheckers[rule.id](board, rule).forEach((cell) => res.add(cell))
   }

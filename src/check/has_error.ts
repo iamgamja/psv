@@ -1,7 +1,7 @@
 import { GROUPS_B, GROUPS_C, GROUPS_R } from '../const/const'
 import { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import type { Groups, Rule, Rule_ID, RuleObject } from '../types/Rule'
+import { isKnown, type Groups, type Rule, type Rule_ID, type RuleObject, type UnknownRule } from '../types/Rule'
 
 type HasErrorChecker<T extends Rule_ID> = (digit_arr: DigitArr, rule: RuleObject<T>) => boolean
 type HasErrorCheckers = {
@@ -33,8 +33,8 @@ const HasErrorCheckers: HasErrorCheckers = {
   '[SG]': (digit_arr, rule) => has_dup(digit_arr, rule.render_state.regions),
 }
 
-export function has_error(digit_arr: DigitArr, rules: Rule[]): boolean {
-  for (const rule of rules) {
+export function has_error(digit_arr: DigitArr, rules: (Rule | UnknownRule)[]): boolean {
+  for (const rule of rules.filter(isKnown)) {
     // @ts-ignore
     if (HasErrorCheckers[rule.id](digit_arr, rule)) return true
   }

@@ -27,3 +27,11 @@ export type RuleObject<K extends Rule_ID> = { id: K } & (RenderStateMap[K] exten
 export type Rule = {
   [K in Rule_ID]: RuleObject<K>
 }[Rule_ID]
+
+export type UnknownRule = {
+  id: Exclude<string, Rule_ID>
+}
+
+export function isKnown(rule: Rule | UnknownRule): rule is Rule {
+  return Rule_ID.includes(rule.id as Rule_ID)
+}

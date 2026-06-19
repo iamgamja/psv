@@ -2,7 +2,7 @@ import type { V } from './base'
 import type { Cell } from './Cell'
 import type { ToggleMode } from './GameState'
 import type { LevelData } from './LevelData'
-import type { Groups, Rule } from './Rule'
+import type { Groups, Rule, UnknownRule } from './Rule'
 
 export type DigitArr = (V | undefined)[][]
 
@@ -14,7 +14,7 @@ export type Board = {
   create_digit_arr(): DigitArr // 9x9
 
   level: LevelData
-  rules: Rule[]
+  rules: (Rule | UnknownRule)[]
   all_groups: Groups
 
   selected: Set<Cell>
