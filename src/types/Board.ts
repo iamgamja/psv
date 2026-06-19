@@ -53,6 +53,8 @@ export type Board = {
   _check_errors(): void
   _check_warnings(): void
   _induct(cell?: Cell): void
+  _check_completed(): void
+  completed: boolean
 
   render(): void
   commit(): void

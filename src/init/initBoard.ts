@@ -51,6 +51,7 @@ export function initBoard(level: LevelData): Board {
       this._check_warnings()
       this.render()
       this.commit()
+      this._check_completed()
     },
     toggle_digit(digit, mode) {
       if (this.nonstatic_selected.every((cell) => cell.digit === digit)) {
@@ -245,6 +246,7 @@ export function initBoard(level: LevelData): Board {
       this._check_warnings()
       this.render()
       this.commit()
+      this._check_completed()
     },
 
     _check_errors() {
@@ -277,6 +279,15 @@ export function initBoard(level: LevelData): Board {
         digit_arr[cell.r - 1][cell.c - 1] = undefined
       }
     },
+    _check_completed() {
+      if (!this.completed && this.flat_cells.every((cell) => cell.digit)) {
+        const res = this.flat_cells.map((cell) => cell.digit).join('')
+        navigator.clipboard.writeText(res)
+        this.completed = true
+        console.log(res)
+      }
+    },
+    completed: false,
 
     render() {
       this.flat_cells.forEach((cell) => {
