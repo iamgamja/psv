@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="
+        width=device-width,
+        initial-scale=1,
+        maximum-scale=1,
+        user-scalable=no
+      "
+    />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>psv</title>
+
+    <script type="module" crossorigin src="./assets/index-DXjqpJeK.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DJ8CkQ4m.css">
+  </head>
+  <body>
+    <div id="app">
+      <div id="board">
+        <div id="board-container">
+          <svg id="rule-render-svg"></svg>
+        </div>
+      </div>
+      <div id="input">
+        <button id="input-number-1" class="input-number">1</button>
+        <button id="input-number-2" class="input-number">2</button>
+        <button id="input-number-3" class="input-number">3</button>
+        <button id="input-mode-num" class="active">Num</button>
+        <button id="input-branch-create-without-digit" class="hide">가정 없이 분기 생성</button>
+        <div></div>
+        <button id="input-info">Info</button>
+
+        <button id="input-number-4" class="input-number">4</button>
+        <button id="input-number-5" class="input-number">5</button>
+        <button id="input-number-6" class="input-number">6</button>
+        <button id="input-mode-memo">Memo</button>
+        <button id="input-branch-reject" class="hide">기각하고 돌아가기</button>
+        <div></div>
+        <button id="input-undo">Undo</button>
+
+        <button id="input-number-7" class="input-number">7</button>
+        <button id="input-number-8" class="input-number">8</button>
+        <button id="input-number-9" class="input-number">9</button>
+        <button id="input-mode-color">Color</button>
+        <button id="input-branch-cancel" class="hide">기각하지 않고 돌아가기</button>
+        <div></div>
+        <button id="input-redo">Redo</button>
+
+        <button id="input-select">Select</button>
+        <button id="input-auto">Auto</button>
+        <button id="input-delete">Delete</button>
+        <button id="input-branch">Branch</button>
+        <div></div>
+        <button id="input-setting">Setting</button>
+      </div>
+
+      <code><output id="branch-history"></output></code>
+    </div>
+  </body>
+</html>
