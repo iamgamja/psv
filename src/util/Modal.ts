@@ -38,14 +38,14 @@ export class Modal {
                   },
                 }),
               ],
-              eventlistner: {
-                click: (event) => event.stopPropagation(),
-              },
             }),
             (this.body = createElement('div', {
               className: 'modal-body',
             })),
           ],
+          eventlistner: {
+            click: (event) => event.stopPropagation(),
+          },
         }),
         eventlistner: {
           click: this.handleOverlayClick,
