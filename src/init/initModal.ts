@@ -8,7 +8,7 @@ import { Modal } from '../util/Modal'
 import { saveSetting } from './saveloadSetting'
 
 export function initInfoModal(board: Board) {
-  const info_modal = new Modal(document.querySelector('#info-modal')!)
+  const info_modal = new Modal('info-modal', 'Info')
 
   let elapsed_timer_span: HTMLSpanElement | null = null
   let base64_input: HTMLInputElement | null = null
@@ -99,7 +99,7 @@ export function initInfoModal(board: Board) {
 }
 
 export function initSettingModal({ Setting }: State) {
-  const setting_modal = new Modal(document.querySelector('#setting-modal')!)
+  const setting_modal = new Modal('setting-modal', 'Setting')
 
   type ButtonMap = {
     [K in keyof SettingState]: Record<SettingState[K], HTMLButtonElement | null>

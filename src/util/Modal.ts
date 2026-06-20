@@ -1,3 +1,5 @@
+import { createElement } from './createElement'
+
 /**
  * ```
  * div.modal-overlay
@@ -10,21 +12,46 @@
  */
 export class Modal {
   private overlay: HTMLDivElement
-  private container: HTMLDivElement
   body: HTMLDivElement
-  private closeBtn: HTMLButtonElement
   private isOpen = false
   private closeTimer: number | null = null
 
-  constructor(overlay: HTMLDivElement) {
-    this.overlay = overlay
-    this.container = this.overlay.querySelector('.modal-container')!
-    this.body = this.container.querySelector('.modal-body')!
-    this.closeBtn = this.container.querySelector('.modal-close-btn')!
-
-    this.overlay.addEventListener('click', this.handleOverlayClick)
-    this.container.addEventListener('click', (event) => event.stopPropagation())
-    this.closeBtn.addEventListener('click', this.handleOverlayClick)
+  constructor(id: string, title?: string) {
+    document.body.append(
+      (this.overlay = createElement('div', {
+        id,
+        className: 'modal-overlay',
+        content: createElement('div', {
+          className: 'modal-container',
+          content: [
+            createElement('div', {
+              className: 'modal-header',
+              content: [
+                createElement('div', {
+                  className: 'modal-title',
+                  content: title,
+                }),
+                createElement('button', {
+                  className: 'modal-close-button',
+                  eventlistner: {
+                    click: this.handleOverlayClick,
+                  },
+                }),
+              ],
+              eventlistner: {
+                click: (event) => event.stopPropagation(),
+              },
+            }),
+            (this.body = createElement('div', {
+              className: 'modal-body',
+            })),
+          ],
+        }),
+        eventlistner: {
+          click: this.handleOverlayClick,
+        },
+      })),
+    )
   }
 
   open(): void {
@@ -38,18 +65,15 @@ export class Modal {
     document.body.appendChild(this.overlay)
     requestAnimationFrame(() => {
       this.overlay.classList.add('open')
-      this.container.classList.add('open')
     })
     document.addEventListener('keydown', this.handleKeyDown)
     this.isOpen = true
   }
 
   close(): void {
-    if (!this.isOpen) {
-      return
-    }
+    if (!this.isOpen) return
+
     this.overlay.classList.remove('open')
-    this.container.classList.remove('open')
     document.removeEventListener('keydown', this.handleKeyDown)
     this.closeTimer = window.setTimeout(() => {
       if (this.overlay.parentElement) {

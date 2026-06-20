@@ -32,7 +32,7 @@
     transform 0.2s ease;
 }
 
-.modal-container.open {
+.modal-overlay.open > .modal-container {
   opacity: 1;
   transform: translateY(0);
 }
@@ -50,10 +50,10 @@
   font-weight: 600;
 }
 
-.modal-close-btn {
+.modal-close-button {
   all: unset;
 }
-.modal-close-btn::after {
+.modal-close-button::after {
   content: '✕';
   font-size: 1rem;
 }
