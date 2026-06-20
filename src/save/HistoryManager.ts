@@ -122,9 +122,9 @@ function getSnapshot(board: Board): SnapShot {
     digit: cell.digit,
     error: board.errors.has(cell),
     warning: board.warnings.has(cell),
-    color: cell.color,
-    valid_memo: cell.valid_memo,
-    candidate_memo: cell.candidate_memo,
+    color: new Set(cell.color),
+    valid_memo: new Set(cell.valid_memo),
+    candidate_memo: new Set(cell.candidate_memo),
   }))
 }
 
@@ -175,9 +175,9 @@ function applySnapshot(board: Board, snapshot: SnapShot) {
 
   for (let i = 0; i < 81; i++) {
     board.flat_cells[i].digit = snapshot[i].digit
-    board.flat_cells[i].color = snapshot[i].color
-    board.flat_cells[i].valid_memo = snapshot[i].valid_memo
-    board.flat_cells[i].candidate_memo = snapshot[i].candidate_memo
+    board.flat_cells[i].color = new Set(snapshot[i].color)
+    board.flat_cells[i].valid_memo = new Set(snapshot[i].valid_memo)
+    board.flat_cells[i].candidate_memo = new Set(snapshot[i].candidate_memo)
 
     if (snapshot[i].error) board.errors.add(board.flat_cells[i])
     if (snapshot[i].warning) board.warnings.add(board.flat_cells[i])
