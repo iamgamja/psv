@@ -1,16 +1,67 @@
+import { z } from 'zod'
 import { IDX, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 
-const CELL_COUNT = 81
 const GROUP_BITS = 9
 const GROUP_MASK = (1 << GROUP_BITS) - 1
+const MAX_H_LENGTH = ((1 << (3 * GROUP_BITS)) - 1).toString(16).length
 const STORAGE_KEY_PREFIX = 'psv:history:'
 
-type StoredHistory = {
-  board: string[]
-  branch: string
-}
+const SnapShotCellSchema = z
+  .string()
+  .min(3)
+  .regex(new RegExp(`^[0-9][0-3][0-9a-fA-F]{1,${MAX_H_LENGTH}}$`))
+  .transform((s) => {
+    const first = parseInt(s[0]) as V | 0
+    const x = parseInt(s[1])
+    const h = parseInt(s.slice(2), 16)
+
+    return {
+      digit: first === 0 ? undefined : first,
+      error: (x & 2) !== 0,
+      warning: (x & 1) !== 0,
+      color: maskToSet((h >> (2 * GROUP_BITS)) & GROUP_MASK),
+      valid_memo: maskToSet((h >> GROUP_BITS) & GROUP_MASK),
+      candidate_memo: maskToSet(h & GROUP_MASK),
+    }
+  })
+
+const SnapShotSchema = z
+  .string()
+  .transform((s) => s.split(','))
+  .pipe(z.array(SnapShotCellSchema).length(81))
+
+type SnapShot = z.infer<typeof SnapShotSchema>
+
+const BranchFrameSchema = z
+  .string()
+  .regex(/^[0-9](?:00|[1-9][1-9])[0-9a-fA-F]{1,4}$/)
+  .transform((s) => {
+    const d = parseInt(s[0]) as V | 0
+    const r = parseInt(s[1]) as IDX | 0
+    const c = parseInt(s[2]) as IDX | 0
+    const i = parseInt(s.slice(3), 16)
+
+    return {
+      digit: d === 0 ? null : d,
+      r,
+      c,
+      baseIndex: i,
+    }
+  })
+
+const BranchStackSchema = z
+  .string()
+  .transform((s) => (s === '' ? [] : s.split(',')))
+  .pipe(z.array(BranchFrameSchema))
+type BranchStack = z.infer<typeof BranchStackSchema>
+
+const storedHistorySchema = z.object({
+  board: z.array(SnapShotSchema).min(1),
+  branch: BranchStackSchema,
+})
+type History = z.infer<typeof storedHistorySchema>
 
 /**
  * 저장 형식: JSON.stringify({ board, branch })
@@ -34,17 +85,17 @@ type StoredHistory = {
  *
  * branch: branch frame들을 ","로 연결한 문자열
  *
- *   각 branch frame 문자열: `${digit}${cell}${baseIndex}`
+ *   각 branch frame 문자열: `${d}${r}${c}${i}`
  *
- *     digit:
+ *     d: digit
  *       - 1~9
  *       - null이면 0
  *
- *     cell:
- *       - r, c를 2글자 문자열로 저장
- *       - null이면 '00'
+ *     r, c: cell
+ *       - 각각 1~9
+ *       - null이면 r=c=0
  *
- *     baseIndex:
+ *     i: baseIndex
  *       - 16진법
  */
 
@@ -66,248 +117,103 @@ function maskToSet(mask: number): Set<V> {
   return out
 }
 
-function encodeH(cell: Cell): number {
-  const color = setTo9BitMask(cell.color)
-  const valid = setTo9BitMask(cell.valid_memo)
-  const candidate = setTo9BitMask(cell.candidate_memo)
-
-  return (color << 18) | (valid << 9) | candidate
+function getSnapshot(board: Board): SnapShot {
+  return board.flat_cells.map((cell) => ({
+    digit: cell.digit,
+    error: board.errors.has(cell),
+    warning: board.warnings.has(cell),
+    color: cell.color,
+    valid_memo: cell.valid_memo,
+    candidate_memo: cell.candidate_memo,
+  }))
 }
 
-function decodeH(hex: string): {
-  color: Set<V>
-  valid_memo: Set<V>
-  candidate_memo: Set<V>
-} {
-  if (!/^[0-9a-fA-F]+$/.test(hex)) {
-    throw new Error('invalid h field')
-  }
-
-  const value = parseInt(hex, 16)
-  if (!Number.isSafeInteger(value) || value < 0 || value > 0x7ffffff) {
-    throw new Error('invalid h field')
-  }
-
-  const color = (value >> 18) & GROUP_MASK
-  const valid = (value >> 9) & GROUP_MASK
-  const candidate = value & GROUP_MASK
-
-  return {
-    color: maskToSet(color),
-    valid_memo: maskToSet(valid),
-    candidate_memo: maskToSet(candidate),
-  }
-}
-
-function encodeCell(cell: Cell, board: Board): string {
-  const d = cell.digit ?? 0
-  const x = (board.errors.has(cell) ? 2 : 0) | (board.warnings.has(cell) ? 1 : 0)
-  const h = encodeH(cell).toString(16)
-
-  return `${d}${x}${h}`
-}
-
-function parseCellString(
-  raw: unknown,
-  index: number,
-): {
-  digit: V | undefined
-  error: boolean
-  warning: boolean
-  color: Set<V>
-  valid_memo: Set<V>
-  candidate_memo: Set<V>
-} {
-  if (typeof raw !== 'string') {
-    throw new Error(`cells[${index}] must be a string`)
-  }
-
-  const m = raw.match(/^([0-9])([0-3])([0-9a-fA-F]+)$/)
-  if (!m) {
-    throw new Error(`cells[${index}] is invalid`)
-  }
-
-  const d = Number(m[1])
-  const x = Number(m[2])
-  const h = m[3]
-
-  const digit = d === 0 ? undefined : (d as V)
-  const error = (x & 2) !== 0
-  const warning = (x & 1) !== 0
-  const decoded = decodeH(h)
-
-  return {
-    digit,
-    error,
-    warning,
-    color: decoded.color,
-    valid_memo: decoded.valid_memo,
-    candidate_memo: decoded.candidate_memo,
-  }
-}
-
-function applyCellPatch(target: Cell, src: ReturnType<typeof parseCellString>): void {
-  target.digit = src.digit
-  target.candidate_memo = src.candidate_memo
-  target.valid_memo = src.valid_memo
-  target.color = src.color
-}
-
-function readHistoryRaw(board: Board): StoredHistory | null {
-  const storage = globalThis.localStorage
-  if (!storage) return null
-
-  const raw = storage.getItem(`${STORAGE_KEY_PREFIX}${board.level.id}`)
-  if (raw === null) return null
-
+function loadHistory(id: string): History | null {
   try {
-    const parsed: unknown = JSON.parse(raw)
+    const raw = localStorage?.getItem(`${STORAGE_KEY_PREFIX}${id}`)
+    if (!raw) return null
 
-    if (!parsed || typeof parsed !== 'object') return null
-
-    const obj = parsed as Partial<StoredHistory>
-    if (!Array.isArray(obj.board) || obj.board.length === 0) return null
-    if (!obj.board.every((item) => typeof item === 'string')) return null
-    if (typeof obj.branch !== 'string') return null
-    return { board: obj.board, branch: obj.branch }
+    return storedHistorySchema.parse(JSON.parse(raw))
   } catch {
     return null
   }
 }
 
-function saveHistory(id: string, history: StoredHistory): void {
-  const storage = globalThis.localStorage
-  if (!storage) return
+function encode(history: History) {
+  return JSON.stringify({
+    board: history.board.map((snapshot) =>
+      snapshot
+        .map(({ digit, error, warning, color, valid_memo, candidate_memo }) => {
+          const d = digit ?? 0
+          const x = (error ? 2 : 0) | (warning ? 1 : 0)
+          const h = ((setTo9BitMask(color) << (2 * GROUP_BITS)) | (setTo9BitMask(valid_memo) << GROUP_BITS) | setTo9BitMask(candidate_memo)).toString(16)
+          return `${d}${x}${h}`
+        })
+        .join(','),
+    ),
+    branch: history.branch
+      .map(({ digit, r, c, baseIndex }) => {
+        const d = digit ?? 0
+        const i = baseIndex.toString(16)
+        return `${d}${r}${c}${i}`
+      })
+      .join(','),
+  })
+}
 
-  storage.setItem(`${STORAGE_KEY_PREFIX}${id}`, JSON.stringify(history))
+function saveHistory(id: string, history: History): void {
+  localStorage?.setItem(`${STORAGE_KEY_PREFIX}${id}`, encode(history))
 }
 
 function removeHistory(id: string) {
-  const storage = globalThis.localStorage
-  if (!storage) return
-
-  storage.removeItem(`${STORAGE_KEY_PREFIX}${id}`)
+  localStorage?.removeItem(`${STORAGE_KEY_PREFIX}${id}`)
 }
 
-export function encodeSnapshot(board: Board): string {
-  return board.flat_cells.map((cell) => encodeCell(cell, board)).join(',')
-}
+function applySnapshot(board: Board, snapshot: SnapShot) {
+  board.errors.clear()
+  board.warnings.clear()
 
-export function decodeSnapshot(snapshot: string, board: Board) {
-  const cells = snapshot.split(',')
-  if (cells.length !== CELL_COUNT) {
-    throw new Error(`snapshot must contain exactly ${CELL_COUNT} cells`)
+  for (let i = 0; i < 81; i++) {
+    board.flat_cells[i].digit = snapshot[i].digit
+    board.flat_cells[i].color = snapshot[i].color
+    board.flat_cells[i].valid_memo = snapshot[i].valid_memo
+    board.flat_cells[i].candidate_memo = snapshot[i].candidate_memo
+
+    if (snapshot[i].error) board.errors.add(board.flat_cells[i])
+    if (snapshot[i].warning) board.warnings.add(board.flat_cells[i])
   }
 
-  const nextErrors = new Set<Cell>()
-  const nextWarnings = new Set<Cell>()
-
-  cells.forEach((item, i) => {
-    const parsed = parseCellString(item, i)
-    const target = board.flat_cells[i]
-
-    applyCellPatch(target, parsed)
-
-    if (parsed.error) nextErrors.add(target)
-    if (parsed.warning) nextWarnings.add(target)
-  })
-
-  board.errors = nextErrors
-  board.warnings = nextWarnings
-}
-
-type BranchFrame = {
-  baseIndex: number
-  cell: Cell | null
-  digit: V | null
-}
-
-function encodeBranchFrame(frame: BranchFrame): string {
-  const digit = frame.digit ?? 0
-  const cell = frame.cell === null ? '00' : `${frame.cell.r}${frame.cell.c}`
-  const baseIndex = frame.baseIndex.toString(16)
-
-  return `${digit}${cell}${baseIndex}`
-}
-
-function decodeBranchFrame(raw: string, board: Board, index: number): BranchFrame {
-  if (raw.length < 3) {
-    throw new Error(`branch[${index}] is invalid`)
-  }
-
-  const digitRaw = raw[0]
-  const cellRaw = raw.slice(1, 3)
-  const baseIndexRaw = raw.slice(3)
-
-  if (!/^[0-9]$/.test(digitRaw)) {
-    throw new Error(`branch[${index}].digit is invalid`)
-  }
-  if (!/^[0-9]{2}$/.test(cellRaw)) {
-    throw new Error(`branch[${index}].cell is invalid`)
-  }
-  if (!/^[0-9a-fA-F]+$/.test(baseIndexRaw)) {
-    throw new Error(`branch[${index}].baseIndex is invalid`)
-  }
-
-  const digitNum = parseInt(digitRaw)
-  const digit = digitNum === 0 ? null : (digitNum as V)
-
-  const r = parseInt(cellRaw[0]) as IDX | 0
-  const c = parseInt(cellRaw[1]) as IDX | 0
-  let cell = r === 0 && c === 0 ? null : board.cells[r - 1][c - 1]
-
-  const baseIndex = parseInt(baseIndexRaw, 16)
-  if (!Number.isSafeInteger(baseIndex) || baseIndex < 0) {
-    throw new Error(`branch[${index}].baseIndex is invalid`)
-  }
-
-  return {
-    digit,
-    cell,
-    baseIndex,
-  }
-}
-
-function encodeBranchStack(branchStack: BranchFrame[]): string {
-  return branchStack.map((frame) => encodeBranchFrame(frame)).join(',')
-}
-
-function decodeBranchStack(raw: string, board: Board): BranchFrame[] {
-  if (raw.trim() === '') return []
-
-  const items = raw.split(',')
-  return items.map((item, i) => decodeBranchFrame(item, board, i))
+  board.render()
 }
 
 export class HistoryManager {
   public readonly board: Board
-  private snapshots: string[] = []
+  private snapshots: SnapShot[] = []
   private currentSnapshotIndex = 0
 
-  private branchStack: BranchFrame[] = []
+  private branchStack: BranchStack = []
 
   constructor(board: Board) {
     this.board = board
 
-    const loaded = readHistoryRaw(board)
-    if (loaded) {
-      this.snapshots = loaded.board
+    const history = loadHistory(this.board.level.id)
+    if (history) {
+      this.snapshots = history.board
       this.currentSnapshotIndex = this.snapshots.length - 1
-      decodeSnapshot(this.snapshot, this.board)
-      this.branchStack = decodeBranchStack(loaded.branch, this.board)
+      this.branchStack = history.branch
+
+      applySnapshot(board, this.snapshot)
     } else {
       // no save
       this.board._check_errors()
       this.board._induct()
       this.board._check_warnings()
 
-      this.snapshots = [encodeSnapshot(board)]
+      this.snapshots = [getSnapshot(board)]
       this.currentSnapshotIndex = 0
       this.branchStack = []
-      saveHistory(this.board.level.id, {
-        board: this.snapshots,
-        branch: encodeBranchStack(this.branchStack),
-      })
+
+      this.persist()
     }
   }
 
@@ -318,7 +224,7 @@ export class HistoryManager {
   private persist(): void {
     saveHistory(this.board.level.id, {
       board: this.snapshots,
-      branch: encodeBranchStack(this.branchStack),
+      branch: this.branchStack,
     })
   }
 
@@ -338,7 +244,7 @@ export class HistoryManager {
     return this.branchStack.length > 0
   }
 
-  get snapshot(): string {
+  get snapshot(): SnapShot {
     return this.snapshots[this.currentSnapshotIndex]
   }
 
@@ -347,7 +253,7 @@ export class HistoryManager {
    * 여러 셀을 한 번에 바꿨다면, 전부 끝난 다음 한 번만 호출하면 된다.
    */
   commit(force?: boolean): void {
-    const next = encodeSnapshot(this.board)
+    const next = getSnapshot(this.board)
     if (!force && next === this.snapshot) return
 
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
@@ -360,7 +266,7 @@ export class HistoryManager {
     if (!this.canUndo) return false
 
     this.currentSnapshotIndex -= 1
-    decodeSnapshot(this.snapshot, this.board)
+    applySnapshot(this.board, this.snapshot)
     this.persist()
     return true
   }
@@ -369,7 +275,7 @@ export class HistoryManager {
     if (!this.canRedo) return false
 
     this.currentSnapshotIndex += 1
-    decodeSnapshot(this.snapshot, this.board)
+    applySnapshot(this.board, this.snapshot)
     this.persist()
     return true
   }
@@ -382,7 +288,8 @@ export class HistoryManager {
 
     this.branchStack.push({
       baseIndex: this.currentSnapshotIndex - 1,
-      cell: null,
+      r: 0,
+      c: 0,
       digit: null,
     })
 
@@ -397,7 +304,8 @@ export class HistoryManager {
 
     this.branchStack.push({
       baseIndex: this.currentSnapshotIndex - 1,
-      cell,
+      r: cell.r,
+      c: cell.c,
       digit,
     })
 
@@ -410,11 +318,12 @@ export class HistoryManager {
 
     this.currentSnapshotIndex = branch.baseIndex
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
-    decodeSnapshot(this.snapshot, this.board)
+    applySnapshot(this.board, this.snapshot)
 
-    if (branch.cell && branch.digit !== null) {
-      branch.cell.candidate_memo.delete(branch.digit)
-      branch.cell.valid_memo.delete(branch.digit)
+    if (branch.r && branch.c && branch.digit !== null) {
+      const cell = this.board.cells[branch.r - 1][branch.c - 1]
+      cell.candidate_memo.delete(branch.digit)
+      cell.valid_memo.delete(branch.digit)
       this.commit()
       return true
     }
@@ -429,7 +338,7 @@ export class HistoryManager {
 
     this.currentSnapshotIndex = branch.baseIndex
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
-    decodeSnapshot(this.snapshot, this.board)
+    applySnapshot(this.board, this.snapshot)
     this.persist()
 
     return true

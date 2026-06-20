@@ -1,12 +1,16 @@
-import type { V } from './base'
-import type { Rule, UnknownRule } from './Rule'
+import { z } from 'zod'
+import { RuleSchema, UnknownRuleSchema } from './Rule'
+import { V } from './base'
 
-export type LevelData = {
-  id: string
-  difficulty: number
+const VSchema = z.union(V.map((v) => z.literal(v)))
 
-  board: (V | 0)[][]
-  rules: (Rule | UnknownRule)[]
+export const LevelDataSchema = z.object({
+  id: z.string(),
+  difficulty: z.number(),
 
-  published_at?: string
-}
+  board: z.array(z.array(z.union([VSchema, z.literal(0)])).length(9)).length(9),
+  rules: z.array(z.union([RuleSchema, UnknownRuleSchema])),
+
+  published_at: z.string().optional(),
+})
+export type LevelData = z.infer<typeof LevelDataSchema>
