@@ -1,21 +1,17 @@
-import type { GameState, SettingState } from './types/GameState'
 import { initBoard } from './init/initBoard'
 import { initInput } from './init/initInput'
-import { loadLevel } from './init/loadLevel'
-import { default_level } from './const/default_level'
+import { initLevel } from './init/initLevel'
+import { default_game_state, default_level, default_setting } from './const/default'
+import { loadSetting } from './init/saveloadSetting'
+import type { State } from './types/State'
 
 const params = new URLSearchParams(document.location.search)
+const level = initLevel(params.get('data') ?? '') ?? default_level
 
-const level = loadLevel(params.get('data') ?? '') ?? default_level
-
-const gameState: GameState = {
-  mode1: 'num',
-  mode2: null,
+const State: State = {
+  Game: default_game_state,
+  Setting: loadSetting() ?? default_setting,
 }
 
-const settingState: SettingState = {
-  toggleMode: 'remove_prefer',
-}
-
-const board = initBoard(level)
-initInput(board, gameState, settingState)
+const board = initBoard(level, State)
+initInput(board, State)

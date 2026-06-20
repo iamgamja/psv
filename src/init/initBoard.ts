@@ -2,7 +2,7 @@ import { check_error } from '../check/check_error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
 import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const/const'
-import { HistoryManager } from '../save/HistoryManager'
+import { HistoryManager } from '../util/HistoryManager'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import type { LevelData } from '../types/LevelData'
@@ -11,9 +11,10 @@ import { initCells } from './initCells'
 import { renderColor } from '../util/renderColor'
 import { isKnown } from '../types/Rule'
 import { showToast } from '../util/toast'
+import type { State } from '../types/State'
 
-export function initBoard(level: LevelData): Board {
-  const cells = initCells(level)
+export function initBoard(level: LevelData, State: State): Board {
+  const cells = initCells(level, State)
 
   const board: Board = {
     cells,

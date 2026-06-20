@@ -4,6 +4,7 @@ import { SIZE_CELL } from '../const/const'
 import { initColor } from '../util/renderColor'
 import { createElement } from '../util/createElement'
 import type { LevelData } from '../types/LevelData'
+import type { State } from '../types/State'
 
 /** r, c: 0-index. 1-9 is in-board, 0 and 10 are out-of-board */
 function create_cell_element(className: string, r: IDX, c: IDX): HTMLDivElement {
@@ -17,7 +18,7 @@ function create_cell_element(className: string, r: IDX, c: IDX): HTMLDivElement 
 
 const container_element = document.querySelector<HTMLDivElement>('#board-container')!
 
-export function initCells(level: LevelData): Cell[][] {
+export function initCells(level: LevelData, { Setting }: State): Cell[][] {
   return IDX.map((r) =>
     IDX.map((c) => {
       const is_static = level.board[r - 1][c - 1] !== 0
@@ -45,8 +46,8 @@ export function initCells(level: LevelData): Cell[][] {
         c,
 
         digit: level.board[r - 1][c - 1],
-        valid_memo: is_static ? new Set() : new Set(V),
-        candidate_memo: is_static ? new Set() : new Set(V),
+        valid_memo: Setting.fillMemoWhenInit === 'on' && !is_static ? new Set(V) : new Set(),
+        candidate_memo: Setting.fillMemoWhenInit === 'on' && !is_static ? new Set(V) : new Set(),
         color: new Set(),
         is_static,
 

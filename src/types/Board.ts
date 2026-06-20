@@ -1,6 +1,6 @@
 import type { V } from './base'
 import type { Cell } from './Cell'
-import type { ToggleMode } from './GameState'
+import type { ToggleMode } from './State'
 import type { LevelData } from './LevelData'
 import type { Groups, Rule, UnknownRule } from './Rule'
 

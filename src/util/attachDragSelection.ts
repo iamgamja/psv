@@ -1,6 +1,6 @@
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import type { GameState } from '../types/GameState'
+import type { GameState } from '../types/State'
 
 export function attachDragSelection(board: Board, gameState: GameState) {
   let dragging_mode: 'add' | 'remove' | null = null

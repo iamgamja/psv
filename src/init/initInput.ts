@@ -1,5 +1,5 @@
 import type { Board } from '../types/Board'
-import type { GameState, SettingState } from '../types/GameState'
+import type { State } from '../types/State'
 import { V } from '../types/base'
 import { color_map } from '../const/color_map'
 import { entries } from '../util/entries'
@@ -47,21 +47,23 @@ const buttons = {
   setting: input_element.querySelector<HTMLButtonElement>('#input-setting')!,
 }
 
-export function initInput(board: Board, gameState: GameState, settingState: SettingState) {
+export function initInput(board: Board, State: State) {
+  const { Game, Setting } = State
+
   const info_modal = initInfoModal(board)
-  const setting_modal = initSettingModal(board)
+  const setting_modal = initSettingModal(State)
 
   // eventlistner for mode
   entries(buttons.mode1).forEach(([key, button]) => {
     button.addEventListener('click', () => {
-      gameState.mode1 = key
+      Game.mode1 = key
       render()
     })
   })
 
   entries(buttons.mode2).forEach(([key, button]) => {
     button.addEventListener('click', () => {
-      gameState.mode2 = gameState.mode2 === key ? null : key
+      Game.mode2 = Game.mode2 === key ? null : key
       render()
     })
   })
@@ -70,17 +72,17 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
   entries(buttons.number).forEach(([key_, button]) => {
     const key = parseInt(key_) as V
     button.addEventListener('click', () => {
-      if (gameState.mode2 === null || gameState.mode2 === 'select') {
-        if (gameState.mode1 === 'num') {
+      if (Game.mode2 === null || Game.mode2 === 'select') {
+        if (Game.mode1 === 'num') {
           if (board.selected.size === 0) board.set_selected_by_digit(key)
-          else board.toggle_digit(key, settingState.toggleMode)
-        } else if (gameState.mode1 === 'memo') {
+          else board.toggle_digit(key, Setting.toggleMode)
+        } else if (Game.mode1 === 'memo') {
           if (board.selected.size === 0) board.set_selected_by_memo(key)
-          else board.toggle_memo(key, settingState.toggleMode)
+          else board.toggle_memo(key, Setting.toggleMode)
         } else {
           // color
           if (board.selected.size === 0) board.set_selected_by_color(key)
-          else board.toggle_color(key, settingState.toggleMode)
+          else board.toggle_color(key, Setting.toggleMode)
         }
       } else {
         // branch
@@ -91,16 +93,16 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
         if (cell.digit) return
 
         board.create_branch_with_digit(cell, key)
-        gameState.mode2 = null
+        Game.mode2 = null
       }
       render()
     })
   })
 
   buttons.delete.addEventListener('click', () => {
-    if (gameState.mode1 === 'num') {
+    if (Game.mode1 === 'num') {
       board.remove_digit()
-    } else if (gameState.mode1 === 'memo') {
+    } else if (Game.mode1 === 'memo') {
       board.clear_memo()
     } else {
       // color
@@ -139,17 +141,17 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
 
   buttons.branch_sub.create_without_digit.addEventListener('click', () => {
     board.create_branch()
-    gameState.mode2 = null
+    Game.mode2 = null
     render()
   })
   buttons.branch_sub.reject.addEventListener('click', () => {
     board.reject_branch()
-    gameState.mode2 = null
+    Game.mode2 = null
     render()
   })
   buttons.branch_sub.cancel.addEventListener('click', () => {
     board.cancel_branch()
-    gameState.mode2 = null
+    Game.mode2 = null
     render()
   })
 
@@ -160,39 +162,39 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
     setting_modal.open()
   })
 
-  attachDragSelection(board, gameState)
+  attachDragSelection(board, Game)
 
   // render
   function render() {
     // set active state
     entries(buttons.mode1).forEach(([key, button]) => {
-      button.classList.toggle('active', key === gameState.mode1)
+      button.classList.toggle('active', key === Game.mode1)
     })
     entries(buttons.mode2).forEach(([key, button]) => {
-      button.classList.toggle('active', key === gameState.mode2)
+      button.classList.toggle('active', key === Game.mode2)
     })
 
     // set disabled state
-    buttons.mode2.select.disabled = gameState.mode2 === 'branch'
-    buttons.auto.disabled = gameState.mode2 === 'branch' || !board.can_auto
-    buttons.delete.disabled = gameState.mode2 === 'branch'
-    buttons.undo.disabled = gameState.mode2 === 'branch' || !board.can_undo
-    buttons.redo.disabled = gameState.mode2 === 'branch' || !board.can_redo
+    buttons.mode2.select.disabled = Game.mode2 === 'branch'
+    buttons.auto.disabled = Game.mode2 === 'branch' || !board.can_auto
+    buttons.delete.disabled = Game.mode2 === 'branch'
+    buttons.undo.disabled = Game.mode2 === 'branch' || !board.can_undo
+    buttons.redo.disabled = Game.mode2 === 'branch' || !board.can_redo
     buttons.branch_sub.reject.disabled = !board.can_reject_branch
     buttons.branch_sub.cancel.disabled = !board.can_cancel_branch
 
     // if color mode, set bg-color of number buttons
     entries(buttons.number).forEach(([key, button]) => {
-      button.style.backgroundColor = gameState.mode1 === 'color' ? color_map[key] : ''
+      button.style.backgroundColor = Game.mode1 === 'color' ? color_map[key] : ''
     })
 
     // in branch mode, replace mode1 buttons
-    buttons.mode1.num.classList.toggle('hide', gameState.mode2 === 'branch')
-    buttons.mode1.memo.classList.toggle('hide', gameState.mode2 === 'branch')
-    buttons.mode1.color.classList.toggle('hide', gameState.mode2 === 'branch')
-    buttons.branch_sub.create_without_digit.classList.toggle('hide', gameState.mode2 !== 'branch')
-    buttons.branch_sub.reject.classList.toggle('hide', gameState.mode2 !== 'branch')
-    buttons.branch_sub.cancel.classList.toggle('hide', gameState.mode2 !== 'branch')
+    buttons.mode1.num.classList.toggle('hide', Game.mode2 === 'branch')
+    buttons.mode1.memo.classList.toggle('hide', Game.mode2 === 'branch')
+    buttons.mode1.color.classList.toggle('hide', Game.mode2 === 'branch')
+    buttons.branch_sub.create_without_digit.classList.toggle('hide', Game.mode2 !== 'branch')
+    buttons.branch_sub.reject.classList.toggle('hide', Game.mode2 !== 'branch')
+    buttons.branch_sub.cancel.classList.toggle('hide', Game.mode2 !== 'branch')
   }
 
   render()
