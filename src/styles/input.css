@@ -33,6 +33,10 @@
   display: none;
 }
 
+#input > button.invisible {
+  visibility: hidden;
+}
+
 #input > button.input-number {
   font-size: 2rem;
 }

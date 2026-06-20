@@ -98,8 +98,8 @@ export function initInfoModal(board: Board) {
   return info_modal
 }
 
-export function initSettingModal({ Setting }: State) {
-  const setting_modal = new Modal('setting-modal', 'Setting')
+export function initSettingModal(State: State) {
+  const setting_modal = new Modal('setting-modal', 'State.Setting')
 
   type ButtonMap = {
     [K in keyof SettingState]: Record<SettingState[K], HTMLButtonElement | null>
@@ -108,6 +108,7 @@ export function initSettingModal({ Setting }: State) {
   const button_map: ButtonMap = {
     toggleMode: { add_prefer: null, remove_prefer: null },
     fillMemoWhenInit: { on: null, off: null },
+    useAuto: { on: null, off: null },
   }
 
   setting_modal.body.append(
@@ -141,24 +142,41 @@ export function initSettingModal({ Setting }: State) {
             ],
           }),
         }),
+        createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              '자동 채우기 기능: ',
+              (button_map.useAuto.on = createElement('button', {
+                content: 'on',
+              })),
+              (button_map.useAuto.off = createElement('button', {
+                content: 'off',
+              })),
+            ],
+          }),
+        }),
       ],
     }),
   )
   ;(function initButton<K extends keyof SettingState>() {
     for (const [setting_key, buttons] of entries(button_map) as [K, ButtonMap[K]][]) {
       for (const [setting_value, button] of entries(buttons) as [keyof ButtonMap[K], HTMLButtonElement][]) {
-        button.classList.toggle('active', Setting[setting_key] === setting_value)
+        button.classList.toggle('active', State.Setting[setting_key] === setting_value)
         button.addEventListener('click', () => {
-          Setting[setting_key] = setting_value as SettingState[K]
+          State.Setting[setting_key] = setting_value as SettingState[K]
           for (const [v, b] of entries(buttons) as [keyof ButtonMap[K], HTMLButtonElement][]) {
-            b?.classList.toggle('active', v === Setting[setting_key])
+            b?.classList.toggle('active', v === State.Setting[setting_key])
           }
 
-          saveSetting(Setting)
+          saveSetting(State.Setting)
         })
       }
     }
   })()
+
+  button_map.useAuto.on.addEventListener('click', () => State.input?.render())
+  button_map.useAuto.off.addEventListener('click', () => State.input?.render())
 
   return setting_modal
 }

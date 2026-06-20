@@ -13,5 +13,5 @@ const State: State = {
   Setting: loadSetting(),
 }
 
-const board = initBoard(level, State)
-initInput(board, State)
+State.board = initBoard(level, State)
+State.input = initInput(State)

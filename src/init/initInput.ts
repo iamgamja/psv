@@ -1,4 +1,3 @@
-import type { Board } from '../types/Board'
 import type { State } from '../types/State'
 import { V } from '../types/base'
 import { color_map } from '../const/color_map'
@@ -6,6 +5,7 @@ import { entries } from '../util/entries'
 import { enableLongPress } from '../util/enableLongPress'
 import { attachDragSelection } from '../util/attachDragSelection'
 import { initInfoModal, initSettingModal } from './initModal'
+import type { Input } from '../types/Input'
 
 const input_element = document.querySelector('#input')!
 
@@ -47,24 +47,59 @@ const buttons = {
   setting: input_element.querySelector<HTMLButtonElement>('#input-setting')!,
 }
 
-export function initInput(board: Board, State: State) {
-  const { Game, Setting } = State
+export function initInput(State: State): Input {
+  const board = State.board!
 
-  const info_modal = initInfoModal(board)
-  const setting_modal = initSettingModal(State)
+  const input: Input = {
+    info_modal: initInfoModal(board),
+    setting_modal: initSettingModal(State),
+
+    render() {
+      // set active state
+      entries(buttons.mode1).forEach(([key, button]) => {
+        button.classList.toggle('active', key === State.Game.mode1)
+      })
+      entries(buttons.mode2).forEach(([key, button]) => {
+        button.classList.toggle('active', key === State.Game.mode2)
+      })
+
+      // set disabled state
+      buttons.mode2.select.disabled = State.Game.mode2 === 'branch'
+      buttons.auto.disabled = State.Setting.useAuto === 'off' || State.Game.mode2 === 'branch' || !board.can_auto
+      buttons.auto.classList.toggle('invisible', State.Setting.useAuto === 'off')
+      buttons.delete.disabled = State.Game.mode2 === 'branch'
+      buttons.undo.disabled = State.Game.mode2 === 'branch' || !board.can_undo
+      buttons.redo.disabled = State.Game.mode2 === 'branch' || !board.can_redo
+      buttons.branch_sub.reject.disabled = !board.can_reject_branch
+      buttons.branch_sub.cancel.disabled = !board.can_cancel_branch
+
+      // if color mode, set bg-color of number buttons
+      entries(buttons.number).forEach(([key, button]) => {
+        button.style.backgroundColor = State.Game.mode1 === 'color' ? color_map[key] : ''
+      })
+
+      // in branch mode, replace mode1 buttons
+      buttons.mode1.num.classList.toggle('hide', State.Game.mode2 === 'branch')
+      buttons.mode1.memo.classList.toggle('hide', State.Game.mode2 === 'branch')
+      buttons.mode1.color.classList.toggle('hide', State.Game.mode2 === 'branch')
+      buttons.branch_sub.create_without_digit.classList.toggle('hide', State.Game.mode2 !== 'branch')
+      buttons.branch_sub.reject.classList.toggle('hide', State.Game.mode2 !== 'branch')
+      buttons.branch_sub.cancel.classList.toggle('hide', State.Game.mode2 !== 'branch')
+    },
+  }
 
   // eventlistner for mode
   entries(buttons.mode1).forEach(([key, button]) => {
     button.addEventListener('click', () => {
-      Game.mode1 = key
-      render()
+      State.Game.mode1 = key
+      input.render()
     })
   })
 
   entries(buttons.mode2).forEach(([key, button]) => {
     button.addEventListener('click', () => {
-      Game.mode2 = Game.mode2 === key ? null : key
-      render()
+      State.Game.mode2 = State.Game.mode2 === key ? null : key
+      input.render()
     })
   })
 
@@ -72,17 +107,17 @@ export function initInput(board: Board, State: State) {
   entries(buttons.number).forEach(([key_, button]) => {
     const key = parseInt(key_) as V
     button.addEventListener('click', () => {
-      if (Game.mode2 === null || Game.mode2 === 'select') {
-        if (Game.mode1 === 'num') {
+      if (State.Game.mode2 === null || State.Game.mode2 === 'select') {
+        if (State.Game.mode1 === 'num') {
           if (board.selected.size === 0) board.set_selected_by_digit(key)
-          else board.toggle_digit(key, Setting.toggleMode)
-        } else if (Game.mode1 === 'memo') {
+          else board.toggle_digit(key, State.Setting.toggleMode)
+        } else if (State.Game.mode1 === 'memo') {
           if (board.selected.size === 0) board.set_selected_by_memo(key)
-          else board.toggle_memo(key, Setting.toggleMode)
+          else board.toggle_memo(key, State.Setting.toggleMode)
         } else {
           // color
           if (board.selected.size === 0) board.set_selected_by_color(key)
-          else board.toggle_color(key, Setting.toggleMode)
+          else board.toggle_color(key, State.Setting.toggleMode)
         }
       } else {
         // branch
@@ -93,22 +128,22 @@ export function initInput(board: Board, State: State) {
         if (cell.digit) return
 
         board.create_branch_with_digit(cell, key)
-        Game.mode2 = null
+        State.Game.mode2 = null
       }
-      render()
+      input.render()
     })
   })
 
   buttons.delete.addEventListener('click', () => {
-    if (Game.mode1 === 'num') {
+    if (State.Game.mode1 === 'num') {
       board.remove_digit()
-    } else if (Game.mode1 === 'memo') {
+    } else if (State.Game.mode1 === 'memo') {
       board.clear_memo()
     } else {
       // color
       board.clear_color()
     }
-    render()
+    input.render()
   })
 
   entries(buttons.number).forEach(([key_, button]) => {
@@ -122,7 +157,7 @@ export function initInput(board: Board, State: State) {
 
   buttons.auto.addEventListener('click', () => {
     board.auto()
-    render()
+    input.render()
   })
 
   enableLongPress(buttons.mode2.select)
@@ -132,70 +167,38 @@ export function initInput(board: Board, State: State) {
 
   buttons.undo.addEventListener('click', () => {
     board.undo()
-    render()
+    input.render()
   })
   buttons.redo.addEventListener('click', () => {
     board.redo()
-    render()
+    input.render()
   })
 
   buttons.branch_sub.create_without_digit.addEventListener('click', () => {
     board.create_branch()
-    Game.mode2 = null
-    render()
+    State.Game.mode2 = null
+    input.render()
   })
   buttons.branch_sub.reject.addEventListener('click', () => {
     board.reject_branch()
-    Game.mode2 = null
-    render()
+    State.Game.mode2 = null
+    input.render()
   })
   buttons.branch_sub.cancel.addEventListener('click', () => {
     board.cancel_branch()
-    Game.mode2 = null
-    render()
+    State.Game.mode2 = null
+    input.render()
   })
 
   buttons.info.addEventListener('click', () => {
-    info_modal.open()
+    input.info_modal.open()
   })
   buttons.setting.addEventListener('click', () => {
-    setting_modal.open()
+    input.setting_modal.open()
   })
 
-  attachDragSelection(board, Game)
+  attachDragSelection(board, State.Game)
 
-  // render
-  function render() {
-    // set active state
-    entries(buttons.mode1).forEach(([key, button]) => {
-      button.classList.toggle('active', key === Game.mode1)
-    })
-    entries(buttons.mode2).forEach(([key, button]) => {
-      button.classList.toggle('active', key === Game.mode2)
-    })
-
-    // set disabled state
-    buttons.mode2.select.disabled = Game.mode2 === 'branch'
-    buttons.auto.disabled = Game.mode2 === 'branch' || !board.can_auto
-    buttons.delete.disabled = Game.mode2 === 'branch'
-    buttons.undo.disabled = Game.mode2 === 'branch' || !board.can_undo
-    buttons.redo.disabled = Game.mode2 === 'branch' || !board.can_redo
-    buttons.branch_sub.reject.disabled = !board.can_reject_branch
-    buttons.branch_sub.cancel.disabled = !board.can_cancel_branch
-
-    // if color mode, set bg-color of number buttons
-    entries(buttons.number).forEach(([key, button]) => {
-      button.style.backgroundColor = Game.mode1 === 'color' ? color_map[key] : ''
-    })
-
-    // in branch mode, replace mode1 buttons
-    buttons.mode1.num.classList.toggle('hide', Game.mode2 === 'branch')
-    buttons.mode1.memo.classList.toggle('hide', Game.mode2 === 'branch')
-    buttons.mode1.color.classList.toggle('hide', Game.mode2 === 'branch')
-    buttons.branch_sub.create_without_digit.classList.toggle('hide', Game.mode2 !== 'branch')
-    buttons.branch_sub.reject.classList.toggle('hide', Game.mode2 !== 'branch')
-    buttons.branch_sub.cancel.classList.toggle('hide', Game.mode2 !== 'branch')
-  }
-
-  render()
+  input.render()
+  return input
 }

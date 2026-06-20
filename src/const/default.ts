@@ -16,4 +16,5 @@ export const default_game_state: GameState = {
 export const default_setting: SettingState = {
   toggleMode: 'remove_prefer',
   fillMemoWhenInit: 'on',
+  useAuto: 'on',
 }

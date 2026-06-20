@@ -18,7 +18,7 @@ function create_cell_element(className: string, r: IDX, c: IDX): HTMLDivElement 
 
 const container_element = document.querySelector<HTMLDivElement>('#board-container')!
 
-export function initCells(level: LevelData, { Setting }: State): Cell[][] {
+export function initCells(level: LevelData, State: State): Cell[][] {
   return IDX.map((r) =>
     IDX.map((c) => {
       const is_static = level.board[r - 1][c - 1] !== 0
@@ -46,8 +46,8 @@ export function initCells(level: LevelData, { Setting }: State): Cell[][] {
         c,
 
         digit: level.board[r - 1][c - 1],
-        valid_memo: Setting.fillMemoWhenInit === 'on' && !is_static ? new Set(V) : new Set(),
-        candidate_memo: Setting.fillMemoWhenInit === 'on' && !is_static ? new Set(V) : new Set(),
+        valid_memo: State.Setting.fillMemoWhenInit === 'on' && !is_static ? new Set(V) : new Set(),
+        candidate_memo: State.Setting.fillMemoWhenInit === 'on' && !is_static ? new Set(V) : new Set(),
         color: new Set(),
         is_static,
 

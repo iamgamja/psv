@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import type { Board } from './Board'
+import type { Input } from './Input'
 
 export type GameState = {
   mode1: 'num' | 'memo' | 'color'
@@ -8,10 +10,13 @@ export type GameState = {
 export const SettingStateSchema = z.object({
   toggleMode: z.enum(['add_prefer', 'remove_prefer']),
   fillMemoWhenInit: z.enum(['on', 'off']),
+  useAuto: z.enum(['on', 'off']),
 })
 export type SettingState = z.infer<typeof SettingStateSchema>
 
 export interface State {
   Game: GameState
   Setting: SettingState
+  board?: Board
+  input?: Input
 }
