@@ -356,6 +356,10 @@ export function initBoard(level: LevelData, State: State): Board {
       this.render()
     },
 
+    get branch_history() {
+      return history_manager.branchHistory
+    },
+
     reset() {
       history_manager.reset()
       location.reload()

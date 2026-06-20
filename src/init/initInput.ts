@@ -47,6 +47,8 @@ const buttons = {
   setting: input_element.querySelector<HTMLButtonElement>('#input-setting')!,
 }
 
+const branch_history_element = document.querySelector<HTMLOutputElement>('#branch-history')!
+
 export function initInput(State: State): Input {
   const board = State.board!
 
@@ -85,6 +87,9 @@ export function initInput(State: State): Input {
       buttons.branch_sub.create_without_digit.classList.toggle('hide', State.Game.mode2 !== 'branch')
       buttons.branch_sub.reject.classList.toggle('hide', State.Game.mode2 !== 'branch')
       buttons.branch_sub.cancel.classList.toggle('hide', State.Game.mode2 !== 'branch')
+
+      // branch history
+      branch_history_element.textContent = State.Game.mode2 === 'branch' ? board.branch_history : ''
     },
   }
 

@@ -70,5 +70,7 @@ export type Board = {
   get can_cancel_branch(): boolean
   cancel_branch(): void
 
+  get branch_history(): string
+
   reset(): void
 }

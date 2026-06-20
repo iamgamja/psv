@@ -246,6 +246,15 @@ export class HistoryManager {
     return this.snapshots[this.currentSnapshotIndex]
   }
 
+  get branchHistory(): string {
+    return this.branchStack
+      .map((frame) => {
+        if (frame.digit) return `[${frame.baseIndex}] R${frame.r}C${frame.c} = ${frame.digit}`
+        else return `[${frame.baseIndex}]`
+      })
+      .join(' - ')
+  }
+
   /**
    * board를 바꾼 뒤 호출한다.
    * 여러 셀을 한 번에 바꿨다면, 전부 끝난 다음 한 번만 호출하면 된다.
