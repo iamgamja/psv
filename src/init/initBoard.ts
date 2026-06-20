@@ -292,14 +292,12 @@ export function initBoard(level: LevelData, State: State): Board {
       }
     },
     _check_completed() {
-      if (!this.completed && this.errors.size === 0 && this.warnings.size === 0 && this.flat_cells.every((cell) => cell.digit)) {
+      if (this.errors.size === 0 && this.warnings.size === 0 && this.flat_cells.every((cell) => cell.digit)) {
         const res = this.flat_cells.map((cell) => cell.digit).join('')
         navigator.clipboard.writeText(res)
-        this.completed = true
         showToast('정답이 클립보드에 복사되었습니다.', 'success')
       }
     },
-    completed: false,
 
     render() {
       this.flat_cells.forEach((cell) => {
