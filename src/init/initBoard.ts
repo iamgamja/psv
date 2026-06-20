@@ -43,8 +43,8 @@ export function initBoard(level: LevelData): Board {
     errors: new Set(),
     warnings: new Set(),
 
-    set_digit(digit) {
-      this.nonstatic_selected.forEach((cell) => {
+    set_digit(digit, targets) {
+      ;(targets ?? this.nonstatic_selected).forEach((cell) => {
         cell.digit = digit
       })
       this._check_errors()
@@ -54,8 +54,8 @@ export function initBoard(level: LevelData): Board {
       this.commit()
       this._check_completed()
     },
-    remove_digit() {
-      this.nonstatic_selected.forEach((cell) => {
+    remove_digit(targets) {
+      ;(targets ?? this.nonstatic_selected).forEach((cell) => {
         cell.digit = 0
       })
       this._check_errors()
@@ -64,19 +64,19 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    toggle_digit(digit, mode) {
-      if (this.nonstatic_selected.every((cell) => cell.digit === digit)) {
-        this.remove_digit()
+    toggle_digit(digit, mode, targets) {
+      if ((targets ?? this.nonstatic_selected).every((cell) => cell.digit === digit)) {
+        this.remove_digit(targets)
       } else if (this.nonstatic_selected.every((cell) => cell.digit !== digit)) {
-        this.set_digit(digit)
+        this.set_digit(digit, targets)
       } else {
-        if (mode === 'add_prefer') this.set_digit(digit)
-        else this.remove_digit()
+        if (mode === 'add_prefer') this.set_digit(digit, targets)
+        else this.remove_digit(targets)
       }
     },
 
-    add_memo(digit) {
-      this.empty_selected.forEach((cell) => {
+    add_memo(digit, targets) {
+      ;(targets ?? this.empty_selected).forEach((cell) => {
         cell.candidate_memo.add(digit)
         this._induct(cell)
       })
@@ -84,8 +84,8 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    remove_memo(digit) {
-      this.empty_selected.forEach((cell) => {
+    remove_memo(digit, targets) {
+      ;(targets ?? this.empty_selected).forEach((cell) => {
         cell.candidate_memo.delete(digit)
         this._induct(cell)
       })
@@ -93,8 +93,8 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    clear_memo() {
-      this.empty_selected.forEach((cell) => {
+    clear_memo(targets) {
+      ;(targets ?? this.empty_selected).forEach((cell) => {
         cell.candidate_memo.clear()
         this._induct(cell)
       })
@@ -102,46 +102,46 @@ export function initBoard(level: LevelData): Board {
       this.render()
       this.commit()
     },
-    toggle_memo(digit, mode) {
-      if (this.empty_selected.every((cell) => cell.candidate_memo.has(digit))) {
-        this.remove_memo(digit)
-      } else if (this.empty_selected.every((cell) => !cell.candidate_memo.has(digit))) {
-        this.add_memo(digit)
+    toggle_memo(digit, mode, targets) {
+      if ((targets ?? this.empty_selected).every((cell) => cell.candidate_memo.has(digit))) {
+        this.remove_memo(digit, targets)
+      } else if ((targets ?? this.empty_selected).every((cell) => !cell.candidate_memo.has(digit))) {
+        this.add_memo(digit, targets)
       } else {
-        if (mode === 'add_prefer') this.add_memo(digit)
-        else this.remove_memo(digit)
+        if (mode === 'add_prefer') this.add_memo(digit, targets)
+        else this.remove_memo(digit, targets)
       }
     },
 
-    add_color(digit) {
-      this.selected.forEach((cell) => {
+    add_color(digit, targets) {
+      ;(targets ?? this.selected).forEach((cell) => {
         cell.color.add(digit)
       })
       this.render()
       this.commit()
     },
-    remove_color(digit) {
-      this.selected.forEach((cell) => {
+    remove_color(digit, targets) {
+      ;(targets ?? this.selected).forEach((cell) => {
         cell.color.delete(digit)
       })
       this.render()
       this.commit()
     },
-    clear_color() {
-      this.selected.forEach((cell) => {
+    clear_color(targets) {
+      ;(targets ?? this.selected).forEach((cell) => {
         cell.color.clear()
       })
       this.render()
       this.commit()
     },
-    toggle_color(digit, mode) {
-      if (Array.from(this.selected).every((cell) => cell.color.has(digit))) {
-        this.remove_color(digit)
-      } else if (Array.from(this.selected).every((cell) => !cell.color.has(digit))) {
-        this.add_color(digit)
+    toggle_color(digit, mode, targets) {
+      if (Array.from(targets ?? this.selected).every((cell) => cell.color.has(digit))) {
+        this.remove_color(digit, targets)
+      } else if (Array.from(targets ?? this.selected).every((cell) => !cell.color.has(digit))) {
+        this.add_color(digit, targets)
       } else {
-        if (mode === 'add_prefer') this.add_color(digit)
-        else this.remove_color(digit)
+        if (mode === 'add_prefer') this.add_color(digit, targets)
+        else this.remove_color(digit, targets)
       }
     },
 

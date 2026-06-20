@@ -23,19 +23,19 @@ export type Board = {
   errors: Set<Cell>
   warnings: Set<Cell>
 
-  set_digit(digit: V): void
-  remove_digit(): void
-  toggle_digit(digit: V, mode: ToggleMode): void
+  set_digit(digit: V, targets?: Cell[]): void
+  remove_digit(targets?: Cell[]): void
+  toggle_digit(digit: V, mode: ToggleMode, targets?: Cell[]): void
 
-  add_memo(digit: V): void
-  remove_memo(digit: V): void
-  clear_memo(): void
-  toggle_memo(digit: V, mode: ToggleMode): void
+  add_memo(digit: V, targets?: Cell[]): void
+  remove_memo(digit: V, targets?: Cell[]): void
+  clear_memo(targets?: Cell[]): void
+  toggle_memo(digit: V, mode: ToggleMode, targets?: Cell[]): void
 
-  add_color(digit: V): void
-  remove_color(digit: V): void
-  clear_color(): void
-  toggle_color(digit: V, mode: ToggleMode): void
+  add_color(digit: V, targets?: Cell[]): void
+  remove_color(digit: V, targets?: Cell[]): void
+  clear_color(targets?: Cell[]): void
+  toggle_color(digit: V, mode: ToggleMode, targets?: Cell[]): void
 
   add_selected(cell: Cell): void
   remove_selected(cell: Cell): void

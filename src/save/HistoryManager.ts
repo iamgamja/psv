@@ -298,7 +298,7 @@ export class HistoryManager {
    * cell.digit = digit 을 하고 분기를 생성한다.
    */
   createBranchWithDigit(cell: Cell, digit: V): void {
-    this.board.set_digit(digit) // commit은 set_digit이 하므로 생략
+    this.board.set_digit(digit, [cell])
 
     this.branchStack.push({
       digit,
@@ -320,10 +320,7 @@ export class HistoryManager {
 
     if (branch.r && branch.c && branch.digit) {
       const cell = this.board.cells[branch.r - 1][branch.c - 1]
-      cell.candidate_memo.delete(branch.digit)
-      cell.valid_memo.delete(branch.digit)
-      this.board._check_warnings()
-      this.commit()
+      this.board.remove_memo(branch.digit, [cell])
       return true
     }
 

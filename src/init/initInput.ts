@@ -139,19 +139,16 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
 
   buttons.branch_sub.create_without_digit.addEventListener('click', () => {
     board.create_branch()
-    board.render()
     gameState.mode2 = null
     render()
   })
   buttons.branch_sub.reject.addEventListener('click', () => {
     board.reject_branch()
-    board.render()
     gameState.mode2 = null
     render()
   })
   buttons.branch_sub.cancel.addEventListener('click', () => {
     board.cancel_branch()
-    board.render()
     gameState.mode2 = null
     render()
   })
