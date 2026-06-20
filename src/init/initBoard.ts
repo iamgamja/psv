@@ -296,7 +296,7 @@ export function initBoard(level: LevelData, State: State): Board {
       if (this.errors.size === 0 && this.warnings.size === 0 && this.flat_cells.every((cell) => cell.digit)) {
         const res = this.flat_cells.map((cell) => cell.digit).join('')
         navigator.clipboard.writeText(res)
-        showToast('정답이 클립보드에 복사되었습니다.', 'success')
+        showToast(`${this.level.id}번 정답이 복사되었습니다.`, 'success')
       }
     },
 
