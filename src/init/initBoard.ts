@@ -12,6 +12,7 @@ import { renderColor } from '../util/renderColor'
 import { isKnown } from '../types/Rule'
 import { showToast } from '../util/toast'
 import type { State } from '../types/State'
+import { renderRules } from './renderRules'
 
 export function initBoard(level: LevelData, State: State): Board {
   const cells = initCells(level, State)
@@ -363,7 +364,8 @@ export function initBoard(level: LevelData, State: State): Board {
 
   const history_manager = new HistoryManager(board)
 
-  board.render()
+  renderRules(board)
 
+  board.render()
   return board
 }

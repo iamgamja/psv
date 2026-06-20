@@ -11,6 +11,6 @@ export const LevelDataSchema = z.object({
   board: z.array(z.array(z.union([VSchema, z.literal(0)])).length(9)).length(9),
   rules: z.array(z.union([RuleSchema, UnknownRuleSchema])),
 
-  published_at: z.string().optional(),
+  published_at: z.union([z.string(), z.null()]).optional(),
 })
 export type LevelData = z.infer<typeof LevelDataSchema>

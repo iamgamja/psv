@@ -4,7 +4,7 @@ import { IDX0 } from './base'
 
 const IDX0Schema = z.union(IDX0.map((i) => z.literal(i)))
 
-export const Rule_ID = ['[R]', '[C]', '[B]', '[SG]'] as const
+export const Rule_ID = ['[Sudoku]', '[R]', '[C]', '[B]', '[SG]'] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
 
@@ -14,30 +14,34 @@ export type POS = z.infer<typeof POSSchema>
 export const GroupsSchema = z.array(z.array(POSSchema))
 export type Groups = z.infer<typeof GroupsSchema>
 
-const RenderStateMap = {
-  '[R]': z.null(),
-  '[C]': z.null(),
-  '[B]': z.null(),
-  '[SG]': z.object({
-    regions: GroupsSchema,
-  }),
-} as const
+type ZodRuleObject<K extends string = string> = z.ZodObject<{
+  id: z.ZodLiteral<K>
+}>
 
-export const RuleSchema = z.discriminatedUnion('id', [
-  z.object({
+const RuleObjectMap = {
+  '[Sudoku]': z.object({
+    id: z.literal('[Sudoku]'),
+  }),
+  '[R]': z.object({
     id: z.literal('[R]'),
   }),
-  z.object({
+  '[C]': z.object({
     id: z.literal('[C]'),
   }),
-  z.object({
+  '[B]': z.object({
     id: z.literal('[B]'),
   }),
-  z.object({
+  '[SG]': z.object({
     id: z.literal('[SG]'),
-    render_state: RenderStateMap['[SG]'],
+    render_state: z.object({ regions: GroupsSchema }),
   }),
-])
+} satisfies {
+  [K in Rule_ID]: ZodRuleObject<K>
+}
+
+export const RuleSchema = (function discriminatedUnionHelper<const R extends ZodRuleObject>(map: Record<string, R>) {
+  return z.discriminatedUnion('id', Object.values(map) as [R, ...R[]])
+})(RuleObjectMap)
 export type Rule = z.infer<typeof RuleSchema>
 
 export type RuleObject<T extends Rule_ID> = Rule & { id: T }

@@ -27,6 +27,7 @@ function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
 }
 
 const HasErrorCheckers: HasErrorCheckers = {
+  '[Sudoku]': () => false,
   '[R]': (digit_arr) => has_dup(digit_arr, GROUPS_R),
   '[C]': (digit_arr) => has_dup(digit_arr, GROUPS_C),
   '[B]': (digit_arr) => has_dup(digit_arr, GROUPS_B),

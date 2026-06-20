@@ -2,7 +2,7 @@ import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const/const'
 import type { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { type Rule_ID, type RuleObject, type Groups, isKnown } from '../types/Rule'
+import { isKnown, type Rule_ID, type RuleObject, type Groups } from '../types/Rule'
 
 type ErrorChecker<T extends Rule_ID> = (board: Board, rule: RuleObject<T>) => Set<Cell>
 type ErrorCheckers = {
@@ -32,6 +32,7 @@ function check_dup(board: Board, groups: Groups): Set<Cell> {
 }
 
 const ErrorCheckers: ErrorCheckers = {
+  '[Sudoku]': () => new Set(),
   '[R]': (board) => check_dup(board, GROUPS_R),
   '[C]': (board) => check_dup(board, GROUPS_C),
   '[B]': (board) => check_dup(board, GROUPS_B),

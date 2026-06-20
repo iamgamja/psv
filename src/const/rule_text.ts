@@ -1,6 +1,7 @@
 import type { Rule_ID } from '../types/Rule'
 
 export const RuleText: Record<Rule_ID, string> = {
+  '[Sudoku]': '[Sudoku] 스도쿠: 보드판의 모든 칸에 1~9 숫자를 채워야 합니다.',
   '[R]': '[R] 가로열: 보드판의 가로줄에는 같은 숫자가 중복할 수 없습니다.',
   '[C]': '[C] 세로열: 보드판의 세로줄에는 같은 숫자가 중복할 수 없습니다.',
   '[B]': '[B] 박스: 보드판에서 굵은 실선으로 구분된 박스 내부에는 같은 숫자가 중복할 수 없습니다.',
