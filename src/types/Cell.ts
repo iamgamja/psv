@@ -4,7 +4,7 @@ export type Cell = {
   r: IDX
   c: IDX
 
-  digit?: V
+  digit: V | 0
   valid_memo: Set<V>
   candidate_memo: Set<V>
   color: Set<V>

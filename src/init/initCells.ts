@@ -44,7 +44,7 @@ export function initCells(level: LevelData): Cell[][] {
         r,
         c,
 
-        digit: level.board[r - 1][c - 1] || undefined,
+        digit: level.board[r - 1][c - 1],
         valid_memo: is_static ? new Set() : new Set(V),
         candidate_memo: is_static ? new Set() : new Set(V),
         color: new Set(),

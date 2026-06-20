@@ -99,7 +99,7 @@ export function initInput(board: Board, gameState: GameState, settingState: Sett
 
   buttons.delete.addEventListener('click', () => {
     if (gameState.mode1 === 'num') {
-      board.set_digit()
+      board.remove_digit()
     } else if (gameState.mode1 === 'memo') {
       board.clear_memo()
     } else {

@@ -4,7 +4,7 @@ import type { ToggleMode } from './GameState'
 import type { LevelData } from './LevelData'
 import type { Groups, Rule, UnknownRule } from './Rule'
 
-export type DigitArr = (V | undefined)[][]
+export type DigitArr = (V | 0)[][]
 
 export type Board = {
   cells: Cell[][] // 9x9
@@ -23,7 +23,8 @@ export type Board = {
   errors: Set<Cell>
   warnings: Set<Cell>
 
-  set_digit(digit?: V): void
+  set_digit(digit: V): void
+  remove_digit(): void
   toggle_digit(digit: V, mode: ToggleMode): void
 
   add_memo(digit: V): void

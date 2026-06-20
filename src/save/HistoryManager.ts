@@ -13,12 +13,12 @@ const SnapShotCellSchema = z
   .min(3)
   .regex(new RegExp(`^[0-9][0-3][0-9a-fA-F]{1,${MAX_H_LENGTH}}$`))
   .transform((s) => {
-    const first = parseInt(s[0]) as V | 0
+    const d = parseInt(s[0]) as V | 0
     const x = parseInt(s[1])
     const h = parseInt(s.slice(2), 16)
 
     return {
-      digit: first === 0 ? undefined : first,
+      digit: d,
       error: (x & 2) !== 0,
       warning: (x & 1) !== 0,
       color: maskToSet((h >> (2 * GROUP_BITS)) & GROUP_MASK),
@@ -44,7 +44,7 @@ const BranchFrameSchema = z
     const i = parseInt(s.slice(3), 16)
 
     return {
-      digit: d === 0 ? null : d,
+      digit: d,
       r,
       c,
       baseIndex: i,
@@ -70,9 +70,7 @@ type History = z.infer<typeof storedHistorySchema>
  *
  *   각 cell 문자열: `${d}${x}${h}`
  *
- *     d: digit
- *       - 1~9
- *       - undefined이면 0
+ *     d: digit: V | 0
  *
  *     x: error/warning bitset (2비트)
  *       - error = 2
@@ -88,11 +86,11 @@ type History = z.infer<typeof storedHistorySchema>
  *   각 branch frame 문자열: `${d}${r}${c}${i}`
  *
  *     d: digit
- *       - 1~9
+ *       - V
  *       - null이면 0
  *
  *     r, c: cell
- *       - 각각 1~9
+ *       - 각각 IDX
  *       - null이면 r=c=0
  *
  *     i: baseIndex
@@ -144,7 +142,7 @@ function encode(history: History) {
     board: history.board.map((snapshot) =>
       snapshot
         .map(({ digit, error, warning, color, valid_memo, candidate_memo }) => {
-          const d = digit ?? 0
+          const d = digit
           const x = (error ? 2 : 0) | (warning ? 1 : 0)
           const h = ((setTo9BitMask(color) << (2 * GROUP_BITS)) | (setTo9BitMask(valid_memo) << GROUP_BITS) | setTo9BitMask(candidate_memo)).toString(16)
           return `${d}${x}${h}`
@@ -153,7 +151,7 @@ function encode(history: History) {
     ),
     branch: history.branch
       .map(({ digit, r, c, baseIndex }) => {
-        const d = digit ?? 0
+        const d = digit
         const i = baseIndex.toString(16)
         return `${d}${r}${c}${i}`
       })
@@ -237,7 +235,7 @@ export class HistoryManager {
   }
 
   get canRejectBranch(): boolean {
-    return this.branchStack.length > 0 && this.branchStack[this.branchStack.length - 1].digit !== null
+    return this.branchStack.length > 0 && this.branchStack[this.branchStack.length - 1].digit !== 0
   }
 
   get canCancelBranch(): boolean {
@@ -287,10 +285,10 @@ export class HistoryManager {
     this.commit(true)
 
     this.branchStack.push({
-      baseIndex: this.currentSnapshotIndex - 1,
+      digit: 0,
       r: 0,
       c: 0,
-      digit: null,
+      baseIndex: this.currentSnapshotIndex - 1,
     })
 
     this.persist()
@@ -303,10 +301,10 @@ export class HistoryManager {
     this.board.set_digit(digit) // commit은 set_digit이 하므로 생략
 
     this.branchStack.push({
-      baseIndex: this.currentSnapshotIndex - 1,
+      digit,
       r: cell.r,
       c: cell.c,
-      digit,
+      baseIndex: this.currentSnapshotIndex - 1,
     })
 
     this.persist()
@@ -320,10 +318,11 @@ export class HistoryManager {
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
     applySnapshot(this.board, this.snapshot)
 
-    if (branch.r && branch.c && branch.digit !== null) {
+    if (branch.r && branch.c && branch.digit) {
       const cell = this.board.cells[branch.r - 1][branch.c - 1]
       cell.candidate_memo.delete(branch.digit)
       cell.valid_memo.delete(branch.digit)
+      this.board._check_warnings()
       this.commit()
       return true
     }

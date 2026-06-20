@@ -54,14 +54,24 @@ export function initBoard(level: LevelData): Board {
       this.commit()
       this._check_completed()
     },
+    remove_digit() {
+      this.nonstatic_selected.forEach((cell) => {
+        cell.digit = 0
+      })
+      this._check_errors()
+      this._induct()
+      this._check_warnings()
+      this.render()
+      this.commit()
+    },
     toggle_digit(digit, mode) {
       if (this.nonstatic_selected.every((cell) => cell.digit === digit)) {
-        this.set_digit()
+        this.remove_digit()
       } else if (this.nonstatic_selected.every((cell) => cell.digit !== digit)) {
         this.set_digit(digit)
       } else {
         if (mode === 'add_prefer') this.set_digit(digit)
-        else this.set_digit()
+        else this.remove_digit()
       }
     },
 
@@ -221,11 +231,11 @@ export function initBoard(level: LevelData): Board {
 
     auto() {
       // 1. one cell, one memo
-      const targets = this.empty_cells.filter((cell) => cell.valid_memo.size === 1)
-
-      targets.forEach((cell) => {
-        cell.digit = cell.valid_memo.values().next().value
-      })
+      this.empty_cells
+        .filter((cell) => cell.valid_memo.size === 1)
+        .forEach((cell) => {
+          cell.digit = cell.valid_memo.values().next().value!
+        })
 
       // 2. one group, one digit, one memo
       for (const group of this.all_groups) {
@@ -277,7 +287,7 @@ export function initBoard(level: LevelData): Board {
 
         if (!has_error(digit_arr, this.rules)) cell.valid_memo.add(digit)
 
-        digit_arr[cell.r - 1][cell.c - 1] = undefined
+        digit_arr[cell.r - 1][cell.c - 1] = 0
       }
     },
     _check_completed() {
@@ -293,7 +303,7 @@ export function initBoard(level: LevelData): Board {
     render() {
       this.flat_cells.forEach((cell) => {
         renderColor(cell.color, cell.color_element)
-        cell.num_element.textContent = cell.digit?.toString() ?? ''
+        cell.num_element.textContent = cell.digit === 0 ? '' : cell.digit.toString()
         for (const v of V) {
           cell.memo_element.children[v - 1].classList.toggle('hide', !(!cell.digit && cell.candidate_memo.has(v)))
           cell.memo_element.children[v - 1].classList.toggle('invalid', !cell.valid_memo.has(v))

@@ -40,6 +40,8 @@ export const RuleSchema = z.discriminatedUnion('id', [
 ])
 export type Rule = z.infer<typeof RuleSchema>
 
+export type RuleObject<T extends Rule_ID> = Rule & { id: T }
+
 export const UnknownRuleSchema = z.object({
   id: z.string().refine((id) => !Rule_ID.includes(id as Rule_ID), {
     message: 'Unknown rule id',
