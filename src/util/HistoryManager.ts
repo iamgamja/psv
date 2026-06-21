@@ -2,11 +2,11 @@ import { z } from 'zod'
 import { IDX, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
+import { STORAGE_PREFIX_HISTORY } from '../const/storage_key'
 
 const GROUP_BITS = 9
 const GROUP_MASK = (1 << GROUP_BITS) - 1
 const MAX_H_LENGTH = ((1 << (3 * GROUP_BITS)) - 1).toString(16).length
-const STORAGE_KEY_PREFIX = 'psv:history:'
 
 const SnapShotCellSchema = z
   .string()
@@ -128,7 +128,7 @@ function getSnapshot(board: Board): SnapShot {
 
 function loadHistory(id: string): History | null {
   try {
-    const raw = localStorage?.getItem(`${STORAGE_KEY_PREFIX}${id}`)
+    const raw = localStorage?.getItem(`${STORAGE_PREFIX_HISTORY}${id}`)
     if (!raw) return null
 
     return HistorySchema.parse(JSON.parse(raw))
@@ -162,11 +162,11 @@ function encode(history: History) {
 }
 
 function saveHistory(id: string, history: History): void {
-  localStorage?.setItem(`${STORAGE_KEY_PREFIX}${id}`, encode(history))
+  localStorage?.setItem(`${STORAGE_PREFIX_HISTORY}${id}`, encode(history))
 }
 
 function removeHistory(id: string) {
-  localStorage?.removeItem(`${STORAGE_KEY_PREFIX}${id}`)
+  localStorage?.removeItem(`${STORAGE_PREFIX_HISTORY}${id}`)
 }
 
 function applySnapshot(board: Board, snapshot: SnapShot) {

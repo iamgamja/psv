@@ -115,3 +115,12 @@
 .modal-body button.active {
   background-color: #90c6ff;
 }
+
+.modal-body button:disabled {
+  color: #e0e0e0;
+  cursor: not-allowed;
+}
+
+.modal-body .blue {
+  color: #4fa4ff;
+}

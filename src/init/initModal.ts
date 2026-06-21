@@ -6,6 +6,7 @@ import { createElement } from '../util/createElement'
 import { entries } from '../util/entries'
 import { Modal } from '../util/Modal'
 import { saveSetting } from './saveloadSetting'
+import { STORAGE_PREFIX_HISTORY } from '../const/storage_key'
 
 export function initInfoModal(board: Board) {
   const info_modal = new Modal('info-modal', 'Info')
@@ -31,7 +32,9 @@ export function initInfoModal(board: Board) {
         }),
       ],
     }),
+
     createElement('hr'),
+
     createElement('div', {
       className: 'list',
       content: [
@@ -58,6 +61,18 @@ export function initInfoModal(board: Board) {
       eventlistner: {
         click: () => {
           board.reset()
+        },
+      },
+    }),
+
+    createElement('hr'),
+
+    createElement('button', {
+      content: 'view storage',
+      eventlistner: {
+        click: () => {
+          info_modal.close()
+          createStorageViewerModal(board).open()
         },
       },
     }),
@@ -209,4 +224,90 @@ export function initSettingModal(State: State) {
   button_map.useAuto.off.addEventListener('click', () => State.input?.render())
 
   return setting_modal
+}
+
+function getHistorySize(): Record<string, number> {
+  const result: Record<string, number> = {}
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i)
+
+    if (key && key.startsWith(STORAGE_PREFIX_HISTORY)) {
+      const value = localStorage.getItem(key)
+
+      if (value !== null) {
+        result[key.slice(STORAGE_PREFIX_HISTORY.length)] = new TextEncoder().encode(value).length
+      }
+    }
+  }
+
+  return result
+}
+
+function createStorageViewerModal(board: Board) {
+  const storage_viewer_modal = new Modal('storage-viewer-modal', 'localStorage')
+
+  function render() {
+    const history_sizes = getHistorySize()
+    const sum_size = Object.values(history_sizes).reduce((a, b) => a + b, 0)
+
+    while (storage_viewer_modal.body.firstChild) storage_viewer_modal.body.firstChild.remove()
+
+    storage_viewer_modal.body.append(
+      createElement('ul', {
+        content: createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              createElement('code', {
+                className: 'list',
+                content: ['전체', ':', `${sum_size}B`, `(${((sum_size / 5e6) * 100).toFixed(6)}%)`],
+              }),
+            ],
+          }),
+        }),
+      }),
+      createElement('hr'),
+      createElement('ul', {
+        content: entries(history_sizes)
+          .sort((a, b) => b[1] - a[1]) // 크기 내림차순 정렬
+          .map(([id, size]) =>
+            createElement('li', {
+              content: createElement('div', {
+                className: 'list',
+                content: [
+                  createElement('code', {
+                    className: 'list',
+                    content: [
+                      createElement('span', {
+                        className: id === board.level.id ? 'blue' : undefined,
+                        content: id,
+                      }),
+                      ':',
+                      `${size}B`,
+                      `(${((size / 5e6) * 100).toFixed(6)}%)`,
+                    ],
+                  }),
+                  createElement('button', {
+                    className: 'red',
+                    content: 'delete',
+                    eventlistner: {
+                      click: () => {
+                        localStorage?.removeItem(`${STORAGE_PREFIX_HISTORY}${id}`)
+
+                        render()
+                      },
+                    },
+                  }),
+                ],
+              }),
+            }),
+          ),
+      }),
+    )
+  }
+
+  render()
+
+  return storage_viewer_modal
 }

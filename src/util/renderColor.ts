@@ -36,9 +36,7 @@ export function initColor(color_element: HTMLDivElement) {
 export function renderColor(color: Set<V>, color_element: HTMLDivElement): void {
   let svg = color_element.firstChild!
 
-  while (svg.firstChild) {
-    svg.removeChild(svg.firstChild)
-  }
+  while (svg.firstChild) svg.firstChild.remove()
 
   const colors = Array.from(color).sort()
 

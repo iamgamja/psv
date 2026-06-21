@@ -17,47 +17,44 @@ export class Modal {
   private closeTimer: number | null = null
 
   constructor(id: string, title?: string) {
-    document.body.append(
-      (this.overlay = createElement('div', {
-        id,
-        className: 'modal-overlay',
-        content: createElement('div', {
-          className: 'modal-container',
-          content: [
-            createElement('div', {
-              className: 'modal-header',
-              content: [
-                createElement('div', {
-                  className: 'modal-title',
-                  content: title,
-                }),
-                createElement('button', {
-                  className: 'modal-close-button',
-                  eventlistner: {
-                    click: this.handleOverlayClick,
-                  },
-                }),
-              ],
-            }),
-            (this.body = createElement('div', {
-              className: 'modal-body',
-            })),
-          ],
-          eventlistner: {
-            click: (event) => event.stopPropagation(),
-          },
-        }),
+    this.overlay = createElement('div', {
+      id,
+      className: 'modal-overlay',
+      content: createElement('div', {
+        className: 'modal-container',
+        content: [
+          createElement('div', {
+            className: 'modal-header',
+            content: [
+              createElement('div', {
+                className: 'modal-title',
+                content: title,
+              }),
+              createElement('button', {
+                className: 'modal-close-button',
+                eventlistner: {
+                  click: () => this.close(),
+                },
+              }),
+            ],
+          }),
+          (this.body = createElement('div', {
+            className: 'modal-body',
+          })),
+        ],
         eventlistner: {
-          click: this.handleOverlayClick,
+          click: (event) => event.stopPropagation(),
         },
-      })),
-    )
+      }),
+      eventlistner: {
+        click: () => this.close(),
+      },
+    })
   }
 
   open(): void {
-    if (this.isOpen) {
-      return
-    }
+    if (this.isOpen) return
+
     if (this.closeTimer !== null) {
       window.clearTimeout(this.closeTimer)
       this.closeTimer = null
@@ -67,6 +64,7 @@ export class Modal {
       this.overlay.classList.add('open')
     })
     document.addEventListener('keydown', this.handleKeyDown)
+
     this.isOpen = true
   }
 
@@ -81,6 +79,7 @@ export class Modal {
       }
       this.closeTimer = null
     }, 200)
+
     this.isOpen = false
   }
 
@@ -90,10 +89,6 @@ export class Modal {
     } else {
       this.open()
     }
-  }
-
-  private handleOverlayClick = (): void => {
-    this.close()
   }
 
   private handleKeyDown = (event: KeyboardEvent): void => {

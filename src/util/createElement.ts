@@ -23,7 +23,7 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(tag: K, opt
   }
 
   if (options?.content) {
-    if (Array.isArray(options.content)) ele.append(...options.content)
+    if (Array.isArray(options.content)) ele.append(...options.content.map((x) => (x instanceof Node ? x : createElement('span', { content: x }))))
     else ele.append(options.content)
   }
 

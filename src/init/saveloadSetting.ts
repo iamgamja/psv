@@ -1,11 +1,10 @@
 import { default_setting } from '../const/default'
+import { STORAGE_KEY_SETTING } from '../const/storage_key'
 import { SettingStateSchema, type SettingState } from '../types/State'
-
-const STORAGE_KEY = 'psv:setting'
 
 export function loadSetting() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY_SETTING)
     if (!raw) return default_setting
 
     return {
@@ -18,5 +17,5 @@ export function loadSetting() {
 }
 
 export function saveSetting(settingState: SettingState) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settingState))
+  localStorage.setItem(STORAGE_KEY_SETTING, JSON.stringify(settingState))
 }
