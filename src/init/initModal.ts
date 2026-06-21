@@ -99,7 +99,7 @@ export function initInfoModal(board: Board) {
 }
 
 export function initSettingModal(State: State) {
-  const setting_modal = new Modal('setting-modal', 'State.Setting')
+  const setting_modal = new Modal('setting-modal', 'Setting')
 
   type ButtonMap = {
     [K in keyof SettingState]: Record<SettingState[K], HTMLButtonElement | null>
