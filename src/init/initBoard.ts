@@ -269,7 +269,7 @@ export function initBoard(level: LevelData, State: State): Board {
       this.errors = check_error(this)
     },
     _check_warnings() {
-      this.warnings = check_warning(this)
+      this.warnings = check_warning(this, State)
     },
     _induct(cell?: Cell) {
       // 실행 순서: _check_errors, _induct, _check_warnings

@@ -17,4 +17,6 @@ export const default_setting: SettingState = {
   toggleMode: 'remove_prefer',
   fillMemoWhenInit: 'on',
   useAuto: 'on',
+  useCellWarning: 'on',
+  useGroupWarning: 'on',
 }

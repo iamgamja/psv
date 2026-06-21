@@ -11,6 +11,8 @@ export const SettingStateSchema = z.object({
   toggleMode: z.enum(['add_prefer', 'remove_prefer']),
   fillMemoWhenInit: z.enum(['on', 'off']),
   useAuto: z.enum(['on', 'off']),
+  useCellWarning: z.enum(['on', 'off']),
+  useGroupWarning: z.enum(['on', 'off']),
 })
 export type SettingState = z.infer<typeof SettingStateSchema>
 

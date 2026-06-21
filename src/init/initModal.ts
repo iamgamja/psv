@@ -109,6 +109,8 @@ export function initSettingModal(State: State) {
     toggleMode: { add_prefer: null, remove_prefer: null },
     fillMemoWhenInit: { on: null, off: null },
     useAuto: { on: null, off: null },
+    useCellWarning: { on: null, off: null },
+    useGroupWarning: { on: null, off: null },
   }
 
   setting_modal.body.append(
@@ -151,6 +153,34 @@ export function initSettingModal(State: State) {
                 content: 'on',
               })),
               (button_map.useAuto.off = createElement('button', {
+                content: 'off',
+              })),
+            ],
+          }),
+        }),
+        createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              '후보가 없는 칸 경고: ',
+              (button_map.useCellWarning.on = createElement('button', {
+                content: 'on',
+              })),
+              (button_map.useCellWarning.off = createElement('button', {
+                content: 'off',
+              })),
+            ],
+          }),
+        }),
+        createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              '[R], [C], [B], [SG]에서 후보에 없는 숫자 경고: ',
+              (button_map.useGroupWarning.on = createElement('button', {
+                content: 'on',
+              })),
+              (button_map.useGroupWarning.off = createElement('button', {
                 content: 'off',
               })),
             ],
