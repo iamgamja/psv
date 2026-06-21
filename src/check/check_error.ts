@@ -1,13 +1,8 @@
-import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const/const'
+import { getGroups } from '../const/groups'
 import type { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { isKnown, type Rule_ID, type RuleObject, type Groups } from '../types/Rule'
-
-type ErrorChecker<T extends Rule_ID> = (board: Board, rule: RuleObject<T>) => Set<Cell>
-type ErrorCheckers = {
-  [K in Rule_ID]: ErrorChecker<K>
-}
+import { isKnown, type Groups, type Rule } from '../types/Rule'
 
 function check_dup(board: Board, groups: Groups): Set<Cell> {
   const res = new Set<Cell>()
@@ -31,20 +26,26 @@ function check_dup(board: Board, groups: Groups): Set<Cell> {
   return res
 }
 
-const ErrorCheckers: ErrorCheckers = {
-  '[Sudoku]': () => new Set(),
-  '[R]': (board) => check_dup(board, GROUPS_R),
-  '[C]': (board) => check_dup(board, GROUPS_C),
-  '[B]': (board) => check_dup(board, GROUPS_B),
-  '[SG]': (board, rule) => check_dup(board, rule.render_state.regions),
+function has_error_rule(board: Board, rule: Rule): Set<Cell> {
+  switch (rule.id) {
+    case '[Sudoku]':
+      return new Set()
+    case '[R]':
+      return check_dup(board, getGroups(rule))
+    case '[C]':
+      return check_dup(board, getGroups(rule))
+    case '[B]':
+      return check_dup(board, getGroups(rule))
+    case '[SG]':
+      return check_dup(board, getGroups(rule))
+  }
 }
 
 export function check_error(board: Board): Set<Cell> {
   const res = new Set<Cell>()
 
   for (const rule of board.rules.filter(isKnown)) {
-    // @ts-ignore
-    ErrorCheckers[rule.id](board, rule).forEach((cell) => res.add(cell))
+    has_error_rule(board, rule).forEach((cell) => res.add(cell))
   }
 
   return res

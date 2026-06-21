@@ -1,7 +1,8 @@
 import { SIZE_CELL } from '../const/const'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
-import { isKnown, type Rule_ID, type RuleObject, type POS } from '../types/Rule'
+import { isKnown, type POS, type Rule } from '../types/Rule'
+import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
 
 const container = document.querySelector('#board-container')!
 const W = container.clientWidth
@@ -93,84 +94,68 @@ const Draw = {
   },
 }
 
-// --------- 
+// ---------
 
-type Renderer<T extends Rule_ID> = (board: Board, rule: RuleObject<T>) => void
-type Renderers = {
-  [K in Rule_ID]: Renderer<K>
-}
+function render_rule(board: Board, rule: Rule): boolean {
+  switch (rule.id) {
+    case '[Sudoku]': {
+      for (const r of IDX0)
+        for (const [c1, c2] of [
+          [0, -1],
+          [8, 9],
+        ])
+          Draw.Divider([r, c1 as IDX0], [r, c2 as IDX0], { thickness: 'heavy' })
+      for (const c of IDX0)
+        for (const [r1, r2] of [
+          [0, -1],
+          [8, 9],
+        ])
+          Draw.Divider([r1 as IDX0, c], [r2 as IDX0, c], { thickness: 'heavy' })
 
-function* generator_adjacent_pos() {
-  for (const r1 of IDX0) {
-    for (const c1 of IDX0) {
-      for (const [dr, dc] of [
-        [0, 1],
-        [1, 0],
-      ]) {
-        const r2 = r1 + dr
-        const c2 = c1 + dc
-        if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
-        yield [
-          [r1, c1],
-          [r2, c2],
-        ] as [POS, POS]
-      }
+      return true
+    }
+
+    case '[R]': {
+      Array.from(generator_adjacent_pos('wasd'))
+        .filter(([pos1, pos2]) => pos1[0] !== pos2[0])
+        .forEach(([pos1, pos2]) => {
+          Draw.Divider(pos1, pos2, { thickness: 'regular' })
+        })
+      return true
+    }
+    case '[C]': {
+      Array.from(generator_adjacent_pos('wasd'))
+        .filter(([pos1, pos2]) => pos1[1] !== pos2[1])
+        .forEach(([pos1, pos2]) => {
+          Draw.Divider(pos1, pos2, { thickness: 'regular' })
+        })
+      return true
+    }
+    case '[B]': {
+      Array.from(generator_adjacent_pos('wasd'))
+        .filter(([pos1, pos2]) => Math.floor(pos1[0] / 3) !== Math.floor(pos2[0] / 3) || Math.floor(pos1[1] / 3) !== Math.floor(pos2[1] / 3))
+        .forEach(([pos1, pos2]) => {
+          Draw.Divider(pos1, pos2, { thickness: 'heavy' })
+        })
+      return true
+    }
+    case '[SG]': {
+      Array.from(generator_adjacent_pos('wasd'))
+        .filter(([[r1, c1], [r2, c2]]) => {
+          const cell1 = board.cells[r1][c1]
+          const cell2 = board.cells[r2][c2]
+          return !rule.render_state.regions.map((group) => group.map(([r, c]) => board.cells[r][c])).some((cells) => cells.includes(cell1) && cells.includes(cell2))
+        })
+        .forEach(([pos1, pos2]) => {
+          Draw.Divider(pos1, pos2, { thickness: 'heavy' })
+        })
+      return true
     }
   }
 }
 
-const Renderers: Renderers = {
-  '[Sudoku]': () => {
-    for (const r of IDX0)
-      for (const [c1, c2] of [
-        [0, -1],
-        [8, 9],
-      ])
-        Draw.Divider([r, c1 as IDX0], [r, c2 as IDX0], { thickness: 'heavy' })
-    for (const c of IDX0)
-      for (const [r1, r2] of [
-        [0, -1],
-        [8, 9],
-      ])
-        Draw.Divider([r1 as IDX0, c], [r2 as IDX0, c], { thickness: 'heavy' })
-  },
-  '[R]': () => {
-    Array.from(generator_adjacent_pos())
-      .filter(([pos1, pos2]) => pos1[0] !== pos2[0])
-      .forEach(([pos1, pos2]) => {
-        Draw.Divider(pos1, pos2, { thickness: 'regular' })
-      })
-  },
-  '[C]': () => {
-    Array.from(generator_adjacent_pos())
-      .filter(([pos1, pos2]) => pos1[1] !== pos2[1])
-      .forEach(([pos1, pos2]) => {
-        Draw.Divider(pos1, pos2, { thickness: 'regular' })
-      })
-  },
-  '[B]': () => {
-    Array.from(generator_adjacent_pos())
-      .filter(([pos1, pos2]) => Math.floor(pos1[0] / 3) !== Math.floor(pos2[0] / 3) || Math.floor(pos1[1] / 3) !== Math.floor(pos2[1] / 3))
-      .forEach(([pos1, pos2]) => {
-        Draw.Divider(pos1, pos2, { thickness: 'heavy' })
-      })
-  },
-  '[SG]': (board, rule) => {
-    Array.from(generator_adjacent_pos())
-      .filter(([[r1, c1], [r2, c2]]) => {
-        const cell1 = board.cells[r1][c1]
-        const cell2 = board.cells[r2][c2]
-        return !rule.render_state.regions.map((group) => group.map(([r, c]) => board.cells[r][c])).some((cells) => cells.includes(cell1) && cells.includes(cell2))
-      })
-      .forEach(([pos1, pos2]) => {
-        Draw.Divider(pos1, pos2, { thickness: 'heavy' })
-      })
-  },
-}
-
 export function renderRules(board: Board) {
   for (const rule of board.rules.filter(isKnown)) {
-    // @ts-ignore
-    Renderers[rule.id](board, rule)
+    render_rule(board, rule)
   }
 }

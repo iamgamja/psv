@@ -1,12 +1,7 @@
-import { GROUPS_B, GROUPS_C, GROUPS_R } from '../const/const'
-import { V } from '../types/base'
+import { getGroups } from '../const/groups'
+import type { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import { isKnown, type Groups, type Rule, type Rule_ID, type RuleObject, type UnknownRule } from '../types/Rule'
-
-type HasErrorChecker<T extends Rule_ID> = (digit_arr: DigitArr, rule: RuleObject<T>) => boolean
-type HasErrorCheckers = {
-  [K in Rule_ID]: HasErrorChecker<K>
-}
+import { isKnown, type Groups, type Rule } from '../types/Rule'
 
 function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   for (const group of groups) {
@@ -26,18 +21,24 @@ function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   return false
 }
 
-const HasErrorCheckers: HasErrorCheckers = {
-  '[Sudoku]': () => false,
-  '[R]': (digit_arr) => has_dup(digit_arr, GROUPS_R),
-  '[C]': (digit_arr) => has_dup(digit_arr, GROUPS_C),
-  '[B]': (digit_arr) => has_dup(digit_arr, GROUPS_B),
-  '[SG]': (digit_arr, rule) => has_dup(digit_arr, rule.render_state.regions),
+function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
+  switch (rule.id) {
+    case '[Sudoku]':
+      return false
+    case '[R]':
+      return has_dup(digit_arr, getGroups(rule))
+    case '[C]':
+      return has_dup(digit_arr, getGroups(rule))
+    case '[B]':
+      return has_dup(digit_arr, getGroups(rule))
+    case '[SG]':
+      return has_dup(digit_arr, getGroups(rule))
+  }
 }
 
-export function has_error(digit_arr: DigitArr, rules: (Rule | UnknownRule)[]): boolean {
+export function has_error(digit_arr: DigitArr, rules: Rule[]): boolean {
   for (const rule of rules.filter(isKnown)) {
-    // @ts-ignore
-    if (HasErrorCheckers[rule.id](digit_arr, rule)) return true
+    if (has_error_rule(digit_arr, rule)) return true
   }
   return false
 }

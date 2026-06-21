@@ -1,7 +1,7 @@
 import { check_error } from '../check/check_error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
-import { GROUPS_R, GROUPS_C, GROUPS_B } from '../const/const'
+import { getGroups, hasGroup } from '../const/groups'
 import { HistoryManager } from '../util/HistoryManager'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
@@ -30,9 +30,12 @@ export function initBoard(level: LevelData, State: State): Board {
 
     level,
     rules: level.rules,
-    all_groups: level.rules
+    all_groups: level.rules.filter(isKnown).filter(hasGroup).map(getGroups).flat(),
+    all_9_groups: level.rules
       .filter(isKnown)
-      .map((rule) => (rule.id === '[R]' ? GROUPS_R : rule.id === '[C]' ? GROUPS_C : rule.id === '[B]' ? GROUPS_B : rule.id === '[SG]' ? rule.render_state.regions : []))
+      .filter(hasGroup)
+      .map(getGroups)
+      .filter((groups) => groups.length === 9)
       .flat(),
 
     selected: new Set(),
@@ -287,7 +290,7 @@ export function initBoard(level: LevelData, State: State): Board {
       for (const digit of cell.candidate_memo) {
         digit_arr[cell.r - 1][cell.c - 1] = digit
 
-        if (!has_error(digit_arr, this.rules)) cell.valid_memo.add(digit)
+        if (!has_error(digit_arr, this.rules.filter(isKnown))) cell.valid_memo.add(digit)
 
         digit_arr[cell.r - 1][cell.c - 1] = 0
       }

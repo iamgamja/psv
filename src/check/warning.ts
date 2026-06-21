@@ -11,7 +11,7 @@ export function check_warning(board: Board): Set<Cell> {
   })
 
   // 2. one group, one digit, no memo
-  for (const group of board.all_groups) {
+  for (const group of board.all_9_groups) {
     const cells = group.map(([r, c]) => board.cells[r][c])
     const empty_cells = cells.filter((cell) => !cell.digit)
 
