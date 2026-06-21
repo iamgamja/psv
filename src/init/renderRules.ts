@@ -1,7 +1,7 @@
 import { SIZE_CELL } from '../const/const'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
-import { isKnown, type POS, type Rule } from '../types/Rule'
+import { isKnown, type Rule } from '../types/Rule'
 import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
 
 const container = document.querySelector('#board-container')!
@@ -13,6 +13,8 @@ svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
 
 // ---------
 
+type POSlike = [number, number]
+
 declare const __brand: unique symbol
 type Brand<B> = { [__brand]: B }
 
@@ -20,7 +22,7 @@ type X = number & Brand<'X'>
 type Y = number & Brand<'Y'>
 type Coord = [X, Y]
 
-function calculateCenter(pos1: POS, pos2?: POS): Coord {
+function calculateCenter(pos1: POSlike, pos2?: POSlike): Coord {
   if (!pos2) return [(pos1[1] + 1) * SIZE_CELL + SIZE_CELL / 2, (pos1[0] + 1) * SIZE_CELL + SIZE_CELL / 2] as Coord
 
   const [x1, y1] = calculateCenter(pos1)
@@ -30,24 +32,63 @@ function calculateCenter(pos1: POS, pos2?: POS): Coord {
 
 // ---------
 
+const DrawWidth = {
+  border_light: 0.5,
+  border_regular: 1,
+  border_heavy: 3,
+
+  hint_light: 3,
+  hint_regular: 10,
+  hint_heavy: 25,
+} as const
+
+const DrawRadius = {
+  small: SIZE_CELL * 0.15,
+  regular: SIZE_CELL * 0.35,
+  big: SIZE_CELL * 0.45,
+} as const
+
 interface DrawOptions {
   color?: string
-  thickness: 'light' | 'regular' | 'heavy'
+  thickness?: keyof typeof DrawWidth
+  size?: keyof typeof DrawRadius
 }
 
 interface ParsedDrawOptions {
   color: string
-  strokeWidth: string
+  strokeWidth: number
+  r: number
+}
+
+interface DrawLineOptions {
+  color?: string
+  thickness?: keyof typeof DrawWidth
+  round?: boolean
+}
+
+interface ParsedDrawLineOptions {
+  color: string
+  strokeWidth: number
+  round: boolean
 }
 
 function parseDrawOptions(options?: DrawOptions): ParsedDrawOptions {
   return {
     color: options?.color ?? '#000000',
-    strokeWidth: options?.thickness === 'light' ? '0.5px' : options?.thickness === 'heavy' ? '3px' : '1px',
+    strokeWidth: options?.thickness ? DrawWidth[options.thickness] : DrawWidth.border_regular,
+    r: options?.size ? DrawRadius[options.size] : DrawRadius.regular,
   }
 }
 
-function createCircle(x: X, y: Y, r: number, { color, strokeWidth }: ParsedDrawOptions) {
+function parseDrawLineOptions(options?: DrawLineOptions): ParsedDrawLineOptions {
+  return {
+    color: options?.color ?? '#000000',
+    strokeWidth: options?.thickness ? DrawWidth[options.thickness] : DrawWidth.border_regular,
+    round: options?.round ?? true,
+  }
+}
+
+function createCircle(x: X, y: Y, { color, strokeWidth, r }: ParsedDrawOptions) {
   const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
 
   circle.setAttribute('cx', x.toString())
@@ -55,12 +96,27 @@ function createCircle(x: X, y: Y, r: number, { color, strokeWidth }: ParsedDrawO
   circle.setAttribute('r', r.toString())
   circle.setAttribute('fill', '#00000000')
   circle.setAttribute('stroke', color)
-  circle.setAttribute('stroke-width', strokeWidth)
+  circle.setAttribute('stroke-width', strokeWidth.toString())
 
   svg.appendChild(circle)
 }
+function createDiamond(x: X, y: Y, { color, strokeWidth, r }: ParsedDrawOptions) {
+  const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
 
-function createLine(x1: X, y1: Y, x2: X, y2: Y, { color, strokeWidth }: ParsedDrawOptions) {
+  const p1 = `${x},${y - r}` // 상
+  const p2 = `${x + r},${y}` // 우
+  const p3 = `${x},${y + r}` // 하
+  const p4 = `${x - r},${y}` // 좌
+  diamond.setAttribute('points', `${p1} ${p2} ${p3} ${p4}`)
+
+  diamond.setAttribute('fill', '#00000000')
+  diamond.setAttribute('stroke', color)
+  diamond.setAttribute('stroke-width', strokeWidth.toString())
+
+  svg.appendChild(diamond)
+}
+
+function createLine(x1: X, y1: Y, x2: X, y2: Y, { color, strokeWidth, round }: ParsedDrawLineOptions) {
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
 
   line.setAttribute('x1', x1.toString())
@@ -69,18 +125,50 @@ function createLine(x1: X, y1: Y, x2: X, y2: Y, { color, strokeWidth }: ParsedDr
   line.setAttribute('y2', y2.toString())
   // line.setAttribute('fill', color)
   line.setAttribute('stroke', color)
-  line.setAttribute('stroke-width', strokeWidth)
+  line.setAttribute('stroke-width', strokeWidth.toString())
+  if (round) line.setAttribute('stroke-linecap', 'round')
 
   svg.appendChild(line)
 }
 
 const Draw = {
-  Circle(pos: POS, options: DrawOptions) {
+  Circle(pos: POSlike, options_?: DrawOptions) {
+    const options: DrawOptions = {
+      size: 'regular',
+      ...options_,
+    }
     const [x, y] = calculateCenter(pos)
 
-    createCircle(x, y, SIZE_CELL * 0.35, parseDrawOptions(options))
+    createCircle(x, y, parseDrawOptions(options))
   },
-  Divider(pos1: POS, pos2: POS, options: DrawOptions) {
+  MidCircle(pos1: POSlike, pos2: POSlike, options_?: DrawOptions) {
+    const options: DrawOptions = {
+      size: 'small',
+      ...options_,
+    }
+    const [x, y] = calculateCenter(pos1, pos2)
+
+    createCircle(x, y, parseDrawOptions(options))
+  },
+  Diamond(pos: POSlike, options_?: DrawOptions) {
+    const options: DrawOptions = {
+      size: 'regular',
+      ...options_,
+    }
+    const [x, y] = calculateCenter(pos)
+
+    createDiamond(x, y, parseDrawOptions(options))
+  },
+  MidDiamond(pos1: POSlike, pos2: POSlike, options_?: DrawOptions) {
+    const options: DrawOptions = {
+      size: 'small',
+      ...options_,
+    }
+    const [x, y] = calculateCenter(pos1, pos2)
+
+    createDiamond(x, y, parseDrawOptions(options))
+  },
+  Divider(pos1: POSlike, pos2: POSlike, options?: DrawLineOptions) {
     const [x1, y1] = calculateCenter(pos1)
     const [x2, y2] = calculateCenter(pos2)
     const [cx, cy] = calculateCenter(pos1, pos2)
@@ -90,11 +178,32 @@ const Draw = {
     const newX2 = (cx - (y2 - cy)) as X
     const newY2 = (cy + (x2 - cx)) as Y
 
-    createLine(newX1, newY1, newX2, newY2, parseDrawOptions(options))
+    createLine(newX1, newY1, newX2, newY2, parseDrawLineOptions(options))
+  },
+  Line(pos1: POSlike, pos2: POSlike, options?: DrawLineOptions) {
+    const [x1, y1] = calculateCenter(pos1)
+    const [x2, y2] = calculateCenter(pos2)
+
+    createLine(x1, y1, x2, y2, parseDrawLineOptions(options))
   },
 }
 
 // ---------
+
+/**
+@todo 렌더링 아이디어
+
+- MR
+Draw.Line([0, 0], [1, 1], { color: '#fe4b196b', thickness: 'hint_light' })
+Draw.Line([0, 2], [1, 1], { color: '#fe4b196b', thickness: 'hint_light' })
+Draw.Line([0, 2], [1, 2], { color: '#fe4b196b', thickness: 'hint_light' })
+
+- RF
+Draw.Line([5, 0 - 0.5], [5, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
+
+- TM
+Draw.Line([7, 0], [7, 2], {color: '#fe4b196b', thickness: 'hint_heavy'})
+*/
 
 function render_rule(board: Board, rule: Rule): boolean {
   switch (rule.id) {
@@ -105,13 +214,13 @@ function render_rule(board: Board, rule: Rule): boolean {
           [0, -1],
           [8, 9],
         ])
-          Draw.Divider([r, c1 as IDX0], [r, c2 as IDX0], { thickness: 'heavy' })
+          Draw.Divider([r, c1], [r, c2], { thickness: 'border_heavy' })
       for (const c of IDX0)
         for (const [r1, r2] of [
           [0, -1],
           [8, 9],
         ])
-          Draw.Divider([r1 as IDX0, c], [r2 as IDX0, c], { thickness: 'heavy' })
+          Draw.Divider([r1, c], [r2, c], { thickness: 'border_heavy' })
 
       return true
     }
@@ -120,7 +229,7 @@ function render_rule(board: Board, rule: Rule): boolean {
       Array.from(generator_adjacent_pos('wasd'))
         .filter(([pos1, pos2]) => pos1[0] !== pos2[0])
         .forEach(([pos1, pos2]) => {
-          Draw.Divider(pos1, pos2, { thickness: 'regular' })
+          Draw.Divider(pos1, pos2, { thickness: 'border_regular' })
         })
       return true
     }
@@ -128,7 +237,7 @@ function render_rule(board: Board, rule: Rule): boolean {
       Array.from(generator_adjacent_pos('wasd'))
         .filter(([pos1, pos2]) => pos1[1] !== pos2[1])
         .forEach(([pos1, pos2]) => {
-          Draw.Divider(pos1, pos2, { thickness: 'regular' })
+          Draw.Divider(pos1, pos2, { thickness: 'border_regular' })
         })
       return true
     }
@@ -136,7 +245,7 @@ function render_rule(board: Board, rule: Rule): boolean {
       Array.from(generator_adjacent_pos('wasd'))
         .filter(([pos1, pos2]) => Math.floor(pos1[0] / 3) !== Math.floor(pos2[0] / 3) || Math.floor(pos1[1] / 3) !== Math.floor(pos2[1] / 3))
         .forEach(([pos1, pos2]) => {
-          Draw.Divider(pos1, pos2, { thickness: 'heavy' })
+          Draw.Divider(pos1, pos2, { thickness: 'border_heavy' })
         })
       return true
     }
@@ -148,7 +257,7 @@ function render_rule(board: Board, rule: Rule): boolean {
           return !rule.render_state.regions.map((group) => group.map(([r, c]) => board.cells[r][c])).some((cells) => cells.includes(cell1) && cells.includes(cell2))
         })
         .forEach(([pos1, pos2]) => {
-          Draw.Divider(pos1, pos2, { thickness: 'heavy' })
+          Draw.Divider(pos1, pos2, { thickness: 'border_heavy' })
         })
       return true
     }
@@ -157,6 +266,8 @@ function render_rule(board: Board, rule: Rule): boolean {
     }
   }
 }
+
+// TODO: 렌더링 순서 결정
 
 export function renderRules(board: Board) {
   for (const rule of board.rules.filter(isKnown)) {
