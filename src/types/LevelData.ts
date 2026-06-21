@@ -6,7 +6,7 @@ const VSchema = z.union(V.map((v) => z.literal(v)))
 
 export const LevelDataSchema = z.object({
   id: z.string(),
-  difficulty: z.number(),
+  difficulty: z.union([z.number(), z.string()]),
 
   board: z.array(z.array(z.union([VSchema, z.literal(0)])).length(9)).length(9),
   rules: z.array(z.union([RuleSchema, UnknownRuleSchema])),
