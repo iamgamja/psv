@@ -26,12 +26,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[Sudoku]':
       return false
     case '[R]':
-      return has_dup(digit_arr, getGroups(rule))
     case '[C]':
-      return has_dup(digit_arr, getGroups(rule))
     case '[B]':
-      return has_dup(digit_arr, getGroups(rule))
     case '[SG]':
+    case '[DT]':
       return has_dup(digit_arr, getGroups(rule))
   }
 }

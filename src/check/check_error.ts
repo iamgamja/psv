@@ -31,12 +31,10 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
     case '[Sudoku]':
       return new Set()
     case '[R]':
-      return check_dup(board, getGroups(rule))
     case '[C]':
-      return check_dup(board, getGroups(rule))
     case '[B]':
-      return check_dup(board, getGroups(rule))
     case '[SG]':
+    case '[DT]':
       return check_dup(board, getGroups(rule))
   }
 }

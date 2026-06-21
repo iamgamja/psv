@@ -99,6 +99,7 @@ const Draw = {
 function render_rule(board: Board, rule: Rule): boolean {
   switch (rule.id) {
     case '[Sudoku]': {
+      // 보드 가장자리
       for (const r of IDX0)
         for (const [c1, c2] of [
           [0, -1],
@@ -149,6 +150,9 @@ function render_rule(board: Board, rule: Rule): boolean {
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'heavy' })
         })
+      return true
+    }
+    case '[DT]': {
       return true
     }
   }
