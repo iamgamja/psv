@@ -57,11 +57,11 @@ const BranchStackSchema = z
   .pipe(z.array(BranchFrameSchema))
 type BranchStack = z.infer<typeof BranchStackSchema>
 
-const storedHistorySchema = z.object({
+const HistorySchema = z.object({
   board: z.array(SnapShotSchema).min(1),
   branch: BranchStackSchema,
 })
-type History = z.infer<typeof storedHistorySchema>
+type History = z.infer<typeof HistorySchema>
 
 /**
  * 저장 형식: JSON.stringify({ board, branch })
@@ -131,24 +131,26 @@ function loadHistory(id: string): History | null {
     const raw = localStorage?.getItem(`${STORAGE_KEY_PREFIX}${id}`)
     if (!raw) return null
 
-    return storedHistorySchema.parse(JSON.parse(raw))
+    return HistorySchema.parse(JSON.parse(raw))
   } catch {
     return null
   }
 }
 
+function encodeSnapshot(snapshot: SnapShot) {
+  return snapshot
+    .map(({ digit, error, warning, color, valid_memo, candidate_memo }) => {
+      const d = digit
+      const x = (error ? 2 : 0) | (warning ? 1 : 0)
+      const h = ((setTo9BitMask(color) << (2 * GROUP_BITS)) | (setTo9BitMask(valid_memo) << GROUP_BITS) | setTo9BitMask(candidate_memo)).toString(16)
+      return `${d}${x}${h}`
+    })
+    .join(',')
+}
+
 function encode(history: History) {
   return JSON.stringify({
-    board: history.board.map((snapshot) =>
-      snapshot
-        .map(({ digit, error, warning, color, valid_memo, candidate_memo }) => {
-          const d = digit
-          const x = (error ? 2 : 0) | (warning ? 1 : 0)
-          const h = ((setTo9BitMask(color) << (2 * GROUP_BITS)) | (setTo9BitMask(valid_memo) << GROUP_BITS) | setTo9BitMask(candidate_memo)).toString(16)
-          return `${d}${x}${h}`
-        })
-        .join(','),
-    ),
+    board: history.board.map(encodeSnapshot),
     branch: history.branch
       .map(({ digit, r, c, baseIndex }) => {
         const d = digit
@@ -261,7 +263,7 @@ export class HistoryManager {
    */
   commit(force?: boolean): void {
     const next = getSnapshot(this.board)
-    if (!force && next === this.snapshot) return
+    if (!force && encodeSnapshot(next) === encodeSnapshot(this.snapshot)) return
 
     this.snapshots = this.snapshots.slice(0, this.currentSnapshotIndex + 1)
     this.snapshots.push(next)
@@ -351,6 +353,5 @@ export class HistoryManager {
 
   reset(): void {
     removeHistory(this.board.level.id)
-    this.branchStack = []
   }
 }
