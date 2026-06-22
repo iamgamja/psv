@@ -1,8 +1,10 @@
 import { SIZE_CELL } from '../const/const'
+import { getGroups } from '../const/groups'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
 import { isKnown, type Rule } from '../types/Rule'
 import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
+import { hasPOSs } from '../util/groups'
 
 const container = document.querySelector('#board-container')!
 const W = container.clientWidth
@@ -43,19 +45,21 @@ const DrawWidth = {
 } as const
 
 const DrawRadius = {
-  small: SIZE_CELL * 0.15,
+  small: SIZE_CELL * 0.10,
   regular: SIZE_CELL * 0.35,
   big: SIZE_CELL * 0.45,
 } as const
 
 interface DrawOptions {
-  color?: string
+  stroke_color?: string
+  fill_color?: string
   thickness?: keyof typeof DrawWidth
   size?: keyof typeof DrawRadius
 }
 
 interface ParsedDrawOptions {
-  color: string
+  stroke_color: string
+  fill_color: string
   strokeWidth: number
   r: number
 }
@@ -74,7 +78,8 @@ interface ParsedDrawLineOptions {
 
 function parseDrawOptions(options?: DrawOptions): ParsedDrawOptions {
   return {
-    color: options?.color ?? '#000000',
+    stroke_color: options?.stroke_color ?? '#000000',
+    fill_color: options?.fill_color ?? '#ffffff',
     strokeWidth: options?.thickness ? DrawWidth[options.thickness] : DrawWidth.border_regular,
     r: options?.size ? DrawRadius[options.size] : DrawRadius.regular,
   }
@@ -88,19 +93,19 @@ function parseDrawLineOptions(options?: DrawLineOptions): ParsedDrawLineOptions 
   }
 }
 
-function createCircle(x: X, y: Y, { color, strokeWidth, r }: ParsedDrawOptions) {
+function createCircle(x: X, y: Y, { stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
   const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
 
   circle.setAttribute('cx', x.toString())
   circle.setAttribute('cy', y.toString())
   circle.setAttribute('r', r.toString())
-  circle.setAttribute('fill', '#00000000')
-  circle.setAttribute('stroke', color)
+  circle.setAttribute('fill', fill_color)
+  circle.setAttribute('stroke', stroke_color)
   circle.setAttribute('stroke-width', strokeWidth.toString())
 
   svg.appendChild(circle)
 }
-function createDiamond(x: X, y: Y, { color, strokeWidth, r }: ParsedDrawOptions) {
+function createDiamond(x: X, y: Y, { stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
   const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
 
   const p1 = `${x},${y - r}` // 상
@@ -109,8 +114,8 @@ function createDiamond(x: X, y: Y, { color, strokeWidth, r }: ParsedDrawOptions)
   const p4 = `${x - r},${y}` // 좌
   diamond.setAttribute('points', `${p1} ${p2} ${p3} ${p4}`)
 
-  diamond.setAttribute('fill', '#00000000')
-  diamond.setAttribute('stroke', color)
+  diamond.setAttribute('fill', fill_color)
+  diamond.setAttribute('stroke', stroke_color)
   diamond.setAttribute('stroke-width', strokeWidth.toString())
 
   svg.appendChild(diamond)
@@ -227,7 +232,9 @@ function render_rule(board: Board, rule: Rule): boolean {
 
     case '[R]': {
       Array.from(generator_adjacent_pos('wasd'))
-        .filter(([pos1, pos2]) => pos1[0] !== pos2[0])
+        .filter(([pos1, pos2]) => {
+          return !getGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
+        })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_regular' })
         })
@@ -235,7 +242,9 @@ function render_rule(board: Board, rule: Rule): boolean {
     }
     case '[C]': {
       Array.from(generator_adjacent_pos('wasd'))
-        .filter(([pos1, pos2]) => pos1[1] !== pos2[1])
+        .filter(([pos1, pos2]) => {
+          return !getGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
+        })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_regular' })
         })
@@ -243,7 +252,9 @@ function render_rule(board: Board, rule: Rule): boolean {
     }
     case '[B]': {
       Array.from(generator_adjacent_pos('wasd'))
-        .filter(([pos1, pos2]) => Math.floor(pos1[0] / 3) !== Math.floor(pos2[0] / 3) || Math.floor(pos1[1] / 3) !== Math.floor(pos2[1] / 3))
+        .filter(([pos1, pos2]) => {
+          return !getGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
+        })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_heavy' })
         })
@@ -251,10 +262,8 @@ function render_rule(board: Board, rule: Rule): boolean {
     }
     case '[SG]': {
       Array.from(generator_adjacent_pos('wasd'))
-        .filter(([[r1, c1], [r2, c2]]) => {
-          const cell1 = board.cells[r1][c1]
-          const cell2 = board.cells[r2][c2]
-          return !rule.render_state.regions.map((group) => group.map(([r, c]) => board.cells[r][c])).some((cells) => cells.includes(cell1) && cells.includes(cell2))
+        .filter(([pos1, pos2]) => {
+          return !rule.render_state.regions.some((group) => hasPOSs(group, pos1, pos2))
         })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_heavy' })
@@ -262,6 +271,14 @@ function render_rule(board: Board, rule: Rule): boolean {
       return true
     }
     case '[DT]': {
+      return true
+    }
+
+    case '[LK]':
+    case "[LK']": {
+      rule.render_state.edges.forEach(([pos1, pos2]) => {
+        Draw.MidDiamond(pos1, pos2)
+      })
       return true
     }
   }

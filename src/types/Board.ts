@@ -15,8 +15,8 @@ export type Board = {
 
   level: LevelData
   rules: (Rule | UnknownRule)[]
-  all_groups: Groups
-  all_9_groups: Groups
+  all_disjoint_groups: Groups
+  all_9_disjoint_groups: Groups
 
   selected: Set<Cell>
   get empty_selected(): Cell[]

@@ -1,7 +1,7 @@
 import { check_error } from '../check/check_error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
-import { getGroups, hasGroup } from '../const/groups'
+import { getGroups, hasDisJointGroup } from '../const/groups'
 import { HistoryManager } from '../util/HistoryManager'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
@@ -13,7 +13,7 @@ import { isKnown } from '../types/Rule'
 import { showToast } from '../util/toast'
 import type { State } from '../types/State'
 import { renderRules } from './renderRules'
-import { hasCells } from '../util/hasCells'
+import { hasCells } from '../util/groups'
 
 export function initBoard(level: LevelData, State: State): Board {
   const cells = initCells(level, State)
@@ -31,10 +31,10 @@ export function initBoard(level: LevelData, State: State): Board {
 
     level,
     rules: level.rules,
-    all_groups: level.rules.filter(isKnown).filter(hasGroup).map(getGroups).flat(),
-    all_9_groups: level.rules
+    all_disjoint_groups: level.rules.filter(isKnown).filter(hasDisJointGroup).map(getGroups).flat(),
+    all_9_disjoint_groups: level.rules
       .filter(isKnown)
-      .filter(hasGroup)
+      .filter(hasDisJointGroup)
       .map(getGroups)
       .filter((groups) => groups.length === 9)
       .flat(),
@@ -209,7 +209,7 @@ export function initBoard(level: LevelData, State: State): Board {
 
       this.selected.clear()
       for (const cell of this.flat_cells) {
-        if (last_selected.every((selected_cell) => this.all_groups.some((group) => hasCells(group, cell, selected_cell)))) this.selected.add(cell)
+        if (last_selected.every((selected_cell) => this.all_disjoint_groups.some((group) => hasCells(group, cell, selected_cell)))) this.selected.add(cell)
       }
 
       last_selected.forEach((cell) => this.selected.delete(cell))
@@ -220,7 +220,7 @@ export function initBoard(level: LevelData, State: State): Board {
       return (
         (State.Setting.useCellAuto === 'on' && this.empty_cells.some((cell) => cell.valid_memo.size === 1)) ||
         (State.Setting.useGroupAuto === 'on' &&
-          this.all_9_groups.some((group) => {
+          this.all_9_disjoint_groups.some((group) => {
             const digits = new Set(group.map(([r, c]) => this.cells[r][c].digit))
             return V.some((digit) => !digits.has(digit) && group.map(([r, c]) => this.cells[r][c]).filter((cell) => !cell.digit && cell.valid_memo.has(digit)).length === 1)
           }))
@@ -238,7 +238,7 @@ export function initBoard(level: LevelData, State: State): Board {
 
       if (State.Setting.useGroupAuto === 'on')
         // 2. one group, one digit, one memo
-        for (const group of this.all_9_groups) {
+        for (const group of this.all_9_disjoint_groups) {
           const cells = group.map(([r, c]) => this.cells[r][c])
           const empty_cells = cells.filter((cell) => !cell.digit)
 

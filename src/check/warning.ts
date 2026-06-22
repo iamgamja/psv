@@ -15,7 +15,7 @@ export function check_warning(board: Board, State: State): Set<Cell> {
 
   // 2. one group, one digit, no memo
   if (State.Setting.useGroupWarning === 'on') {
-    for (const group of board.all_9_groups) {
+    for (const group of board.all_9_disjoint_groups) {
       const cells = group.map(([r, c]) => board.cells[r][c])
       const empty_cells = cells.filter((cell) => !cell.digit)
 

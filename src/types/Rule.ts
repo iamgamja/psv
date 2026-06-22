@@ -4,7 +4,7 @@ import { IDX0 } from './base'
 
 const IDX0Schema = z.union(IDX0.map((i) => z.literal(i)))
 
-export const Rule_ID = ['[Sudoku]', '[R]', '[C]', '[B]', '[SG]', '[DT]'] as const
+export const Rule_ID = ['[Sudoku]', '[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']"] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
 
@@ -13,6 +13,9 @@ export type POS = z.infer<typeof POSSchema>
 
 export const GroupsSchema = z.array(z.array(POSSchema))
 export type Groups = z.infer<typeof GroupsSchema>
+
+export const TwoGroupsSchema = z.array(z.tuple([POSSchema, POSSchema]))
+export type TwoGroups = z.infer<typeof TwoGroupsSchema>
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{
   id: z.ZodLiteral<K>
@@ -37,6 +40,14 @@ const RuleObjectMap = {
   }),
   '[DT]': z.object({
     id: z.literal('[DT]'),
+  }),
+  '[LK]': z.object({
+    id: z.literal('[LK]'),
+    render_state: z.object({ edges: TwoGroupsSchema }),
+  }),
+  "[LK']": z.object({
+    id: z.literal("[LK']"),
+    render_state: z.object({ edges: TwoGroupsSchema }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>
