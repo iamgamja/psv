@@ -13,6 +13,7 @@ import { isKnown } from '../types/Rule'
 import { showToast } from '../util/toast'
 import type { State } from '../types/State'
 import { renderRules } from './renderRules'
+import { hasCells } from '../util/hasCells'
 
 export function initBoard(level: LevelData, State: State): Board {
   const cells = initCells(level, State)
@@ -201,23 +202,14 @@ export function initBoard(level: LevelData, State: State): Board {
     },
 
     set_selected_by_selected_scope() {
-      // 현재 선택된 셀들이 모두 같은 그룹에 포함되어 있을 때, 그 그룹의 셀을 선택한다.
+      // 선택된 칸 모두와 중복할 수 없는(같은 그룹에 있는) 칸을 선택한다.
       // 단, 원래 선택되어 있던 셀들은 제외한다.
       const last_selected = Array.from(this.selected)
       if (last_selected.length === 0) return
 
       this.selected.clear()
-      for (const group of this.all_groups) {
-        const is_target_group = last_selected.every((selected_cell) => group.some(([r, c]) => r === selected_cell.r - 1 && c === selected_cell.c - 1))
-
-        if (is_target_group) {
-          for (const [r, c] of group) {
-            const cell = this.cells[r][c]
-            if (cell) {
-              this.selected.add(cell)
-            }
-          }
-        }
+      for (const cell of this.flat_cells) {
+        if (last_selected.every((selected_cell) => this.all_groups.some((group) => hasCells(group, cell, selected_cell)))) this.selected.add(cell)
       }
 
       last_selected.forEach((cell) => this.selected.delete(cell))
