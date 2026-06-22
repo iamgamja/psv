@@ -10,7 +10,8 @@ export type GameState = {
 export const SettingStateSchema = z.object({
   toggleMode: z.enum(['add_prefer', 'remove_prefer']),
   fillMemoWhenInit: z.enum(['on', 'off']),
-  useAuto: z.enum(['on', 'off']),
+  useCellAuto: z.enum(['on', 'off']),
+  useGroupAuto: z.enum(['on', 'off']),
   useCellWarning: z.enum(['on', 'off']),
   useGroupWarning: z.enum(['on', 'off']),
 })

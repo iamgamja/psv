@@ -1,6 +1,6 @@
 import type { V } from './base'
 import type { Cell } from './Cell'
-import type { SettingState } from './State'
+import type { SettingState, State } from './State'
 import type { LevelData } from './LevelData'
 import type { Groups, Rule, UnknownRule } from './Rule'
 
@@ -49,8 +49,8 @@ export type Board = {
 
   set_selected_by_selected_scope(): void
 
-  get can_auto(): boolean
-  auto(): void
+  can_auto(State: State): boolean
+  auto(State: State): void
 
   _check_errors(): void
   _check_warnings(): void

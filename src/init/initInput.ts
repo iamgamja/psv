@@ -67,8 +67,8 @@ export function initInput(State: State): Input {
 
       // set disabled state
       buttons.mode2.select.disabled = State.Game.mode2 === 'branch'
-      buttons.auto.disabled = State.Setting.useAuto === 'off' || State.Game.mode2 === 'branch' || !board.can_auto
-      buttons.auto.classList.toggle('invisible', State.Setting.useAuto === 'off')
+      buttons.auto.disabled = (State.Setting.useCellAuto === 'off' && State.Setting.useGroupAuto === 'off') || State.Game.mode2 === 'branch' || !board.can_auto(State)
+      buttons.auto.classList.toggle('invisible', State.Setting.useCellAuto === 'off' && State.Setting.useGroupAuto === 'off')
       buttons.delete.disabled = State.Game.mode2 === 'branch'
       buttons.undo.disabled = State.Game.mode2 === 'branch' || !board.can_undo
       buttons.redo.disabled = State.Game.mode2 === 'branch' || !board.can_redo
@@ -161,7 +161,7 @@ export function initInput(State: State): Input {
   })
 
   buttons.auto.addEventListener('click', () => {
-    board.auto()
+    board.auto(State)
     input.render()
   })
 

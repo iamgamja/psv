@@ -224,38 +224,41 @@ export function initBoard(level: LevelData, State: State): Board {
       this.render()
     },
 
-    get can_auto() {
+    can_auto(State) {
       return (
-        this.empty_cells.some((cell) => cell.valid_memo.size === 1) ||
-        this.all_9_groups.some((group) => {
-          const digits = new Set(group.map(([r, c]) => this.cells[r][c].digit))
-          return V.some((digit) => !digits.has(digit) && group.map(([r, c]) => this.cells[r][c]).filter((cell) => !cell.digit && cell.valid_memo.has(digit)).length === 1)
-        })
+        (State.Setting.useCellAuto === 'on' && this.empty_cells.some((cell) => cell.valid_memo.size === 1)) ||
+        (State.Setting.useGroupAuto === 'on' &&
+          this.all_9_groups.some((group) => {
+            const digits = new Set(group.map(([r, c]) => this.cells[r][c].digit))
+            return V.some((digit) => !digits.has(digit) && group.map(([r, c]) => this.cells[r][c]).filter((cell) => !cell.digit && cell.valid_memo.has(digit)).length === 1)
+          }))
       )
     },
 
-    auto() {
-      // 1. one cell, one memo
-      this.empty_cells
-        .filter((cell) => cell.valid_memo.size === 1)
-        .forEach((cell) => {
-          cell.digit = cell.valid_memo.values().next().value!
-        })
+    auto(State) {
+      if (State.Setting.useCellAuto === 'on')
+        // 1. one cell, one memo
+        this.empty_cells
+          .filter((cell) => cell.valid_memo.size === 1)
+          .forEach((cell) => {
+            cell.digit = cell.valid_memo.values().next().value!
+          })
 
-      // 2. one group, one digit, one memo
-      for (const group of this.all_9_groups) {
-        const cells = group.map(([r, c]) => this.cells[r][c])
-        const empty_cells = cells.filter((cell) => !cell.digit)
+      if (State.Setting.useGroupAuto === 'on')
+        // 2. one group, one digit, one memo
+        for (const group of this.all_9_groups) {
+          const cells = group.map(([r, c]) => this.cells[r][c])
+          const empty_cells = cells.filter((cell) => !cell.digit)
 
-        for (const digit of V) {
-          if (cells.some((cell) => cell.digit === digit)) continue
+          for (const digit of V) {
+            if (cells.some((cell) => cell.digit === digit)) continue
 
-          const targets = empty_cells.filter((cell) => cell.valid_memo.has(digit))
-          if (targets.length !== 1) continue
+            const targets = empty_cells.filter((cell) => cell.valid_memo.has(digit))
+            if (targets.length !== 1) continue
 
-          targets[0].digit = digit
+            targets[0].digit = digit
+          }
         }
-      }
 
       this._check_errors()
       this._induct()

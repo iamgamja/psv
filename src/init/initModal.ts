@@ -123,7 +123,8 @@ export function initSettingModal(State: State) {
   const button_map: ButtonMap = {
     toggleMode: { add_prefer: null, remove_prefer: null },
     fillMemoWhenInit: { on: null, off: null },
-    useAuto: { on: null, off: null },
+    useCellAuto: { on: null, off: null },
+    useGroupAuto: { on: null, off: null },
     useCellWarning: { on: null, off: null },
     useGroupWarning: { on: null, off: null },
   }
@@ -163,11 +164,25 @@ export function initSettingModal(State: State) {
           content: createElement('div', {
             className: 'list',
             content: [
-              '자동 채우기 기능: ',
-              (button_map.useAuto.on = createElement('button', {
+              '후보가 하나인 칸 자동 채우기: ',
+              (button_map.useCellAuto.on = createElement('button', {
                 content: 'on',
               })),
-              (button_map.useAuto.off = createElement('button', {
+              (button_map.useCellAuto.off = createElement('button', {
+                content: 'off',
+              })),
+            ],
+          }),
+        }),
+        createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              '[R], [C], [B], [SG]에서 후보로 가지는 칸이 하나인 숫자 자동 채우기: ',
+              (button_map.useGroupAuto.on = createElement('button', {
+                content: 'on',
+              })),
+              (button_map.useGroupAuto.off = createElement('button', {
                 content: 'off',
               })),
             ],
@@ -220,8 +235,10 @@ export function initSettingModal(State: State) {
     }
   })()
 
-  button_map.useAuto.on.addEventListener('click', () => State.input?.render())
-  button_map.useAuto.off.addEventListener('click', () => State.input?.render())
+  button_map.useCellAuto.on.addEventListener('click', () => State.input?.render())
+  button_map.useCellAuto.off.addEventListener('click', () => State.input?.render())
+  button_map.useGroupAuto.on.addEventListener('click', () => State.input?.render())
+  button_map.useGroupAuto.off.addEventListener('click', () => State.input?.render())
 
   return setting_modal
 }
