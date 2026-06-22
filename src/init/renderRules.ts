@@ -45,7 +45,7 @@ const DrawWidth = {
 } as const
 
 const DrawRadius = {
-  small: SIZE_CELL * 0.10,
+  small: SIZE_CELL * 0.1,
   regular: SIZE_CELL * 0.35,
   big: SIZE_CELL * 0.45,
 } as const
@@ -210,7 +210,7 @@ Draw.Line([5, 0 - 0.5], [5, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_reg
 Draw.Line([7, 0], [7, 2], {color: '#fe4b196b', thickness: 'hint_heavy'})
 */
 
-function render_rule(board: Board, rule: Rule): boolean {
+function render_rule(rule: Rule): boolean {
   switch (rule.id) {
     case '[Sudoku]': {
       // 보드 가장자리
@@ -288,6 +288,6 @@ function render_rule(board: Board, rule: Rule): boolean {
 
 export function renderRules(board: Board) {
   for (const rule of board.rules.filter(isKnown)) {
-    render_rule(board, rule)
+    render_rule(rule)
   }
 }
