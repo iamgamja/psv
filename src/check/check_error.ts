@@ -1,4 +1,4 @@
-import { getDisJointGroups } from '../const/groups'
+import { getDisJointGroups, GROUPS_QD } from '../const/groups'
 import { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
@@ -138,6 +138,18 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
         }
       }
 
+      return res
+    }
+
+    case '[QD]': {
+      const res = new Set<Cell>()
+      for (const group of GROUPS_QD) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) for (const cell of cells) res.add(cell)
+        }
+      }
       return res
     }
   }

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { IDX0 } from '../types/base'
-import type { Groups, Rule, Rule_ID, RuleObject, TwoGroups } from '../types/Rule'
+import type { Group, Groups, Rule, Rule_ID, RuleObject, TwoGroups } from '../types/Rule'
 import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
 
 const GROUPS_R: Groups = Array.from({ length: 9 }, () => [])
@@ -13,6 +13,18 @@ const GROUPS_B: Groups = Array.from({ length: 9 }, () => [])
 for (const r of IDX0) for (const c of IDX0) GROUPS_B[Math.floor(r / 3) * 3 + Math.floor(c / 3)].push([r, c])
 
 const GROUPS_DT: TwoGroups = Array.from(generator_adjacent_pos('king'))
+
+export const GROUPS_QD: Groups = []
+for (let r = 0; r < 8; r++) {
+  for (let c = 0; c < 8; c++) {
+    GROUPS_QD.push([
+      [r, c],
+      [r, c + 1],
+      [r + 1, c],
+      [r + 1, c + 1],
+    ] as Group)
+  }
+}
 
 const Rule_ID_Has_DisJointGroup = ['[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']", '[MR]'] as const satisfies Rule_ID[]
 const RuleIdHasDisJointGroupSchema = z.enum(Rule_ID_Has_DisJointGroup)

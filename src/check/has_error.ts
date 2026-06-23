@@ -1,4 +1,4 @@
-import { getDisJointGroups } from '../const/groups'
+import { getDisJointGroups, GROUPS_QD } from '../const/groups'
 import type { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
@@ -104,6 +104,17 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
         if (filled_all) {
           if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) return true
+        }
+      }
+      return false
+    }
+
+    case '[QD]': {
+      for (const group of GROUPS_QD) {
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+
+        if (filled_all) {
+          if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) return true
         }
       }
       return false

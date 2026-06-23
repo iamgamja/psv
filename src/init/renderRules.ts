@@ -274,9 +274,6 @@ function render_rule(rule: Rule): boolean {
         })
       return true
     }
-    case '[DT]': {
-      return true
-    }
 
     case '[LK]':
     case "[LK']": {
@@ -302,6 +299,10 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
+
+    case '[DT]':
+    case '[QD]':
+      return true
   }
 }
 
