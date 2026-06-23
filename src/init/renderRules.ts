@@ -281,6 +281,13 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
+
+    case '[MT]': {
+      rule.render_state.diamond_cells.forEach((pos) => {
+        Draw.Diamond(pos)
+      })
+      return true
+    }
   }
 }
 

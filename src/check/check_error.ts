@@ -13,13 +13,13 @@ function check_dup(board: Board, groups: Groups): Set<Cell> {
     const M = new Map<V, Set<Cell>>()
 
     for (const pos of group) {
-      const [r, c] = pos
-      const cell = board.cells[r][c]
+      const cell = POS2Cell(board, pos)
+      const digit = cell.digit
 
-      if (!cell.digit) continue
+      if (!digit) continue
 
-      if (!M.has(cell.digit)) M.set(cell.digit, new Set())
-      M.get(cell.digit)!.add(cell)
+      if (!M.has(digit)) M.set(digit, new Set())
+      M.get(digit)!.add(cell)
     }
 
     for (const s of Array.from(M.values()).filter((s) => s.size >= 2)) for (const cell of s) res.add(cell)
@@ -62,6 +62,35 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
       const res = new Set<Cell>()
       check_2groups(board, differenceOf2Groups(Array.from(generator_adjacent_pos('wasd')), rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1).forEach(res.add)
       check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1).forEach(res.add)
+      return res
+    }
+
+    case '[MT]': {
+      // X가 X개보다 많이 있으면 체크
+      // 모든 [MT] 셀이 채워졌을 때, 추가로 모든 X가 X개인지 체크
+      const res = new Set<Cell>()
+
+      const M = new Map<V, Set<Cell>>()
+      let filled_all = true
+      for (const pos of rule.render_state.diamond_cells) {
+        const cell = POS2Cell(board, pos)
+        const digit = cell.digit
+
+        if (!digit) {
+          filled_all = false
+          continue
+        }
+
+        if (!M.has(digit)) M.set(digit, new Set())
+        M.get(digit)!.add(cell)
+      }
+
+      if (filled_all) {
+        for (const [_, s] of Array.from(M.entries()).filter(([v, s]) => s.size !== v)) for (const cell of s) res.add(cell)
+      } else {
+        for (const [_, s] of Array.from(M.entries()).filter(([v, s]) => s.size > v)) for (const cell of s) res.add(cell)
+      }
+
       return res
     }
   }

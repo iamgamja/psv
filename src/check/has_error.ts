@@ -3,15 +3,14 @@ import type { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Groups, type Rule, type TwoGroups } from '../types/Rule'
 import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
-import { differenceOf2Groups, POS2Digit } from '../util/groups'
+import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
 
 function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   for (const group of groups) {
     const visit = new Set<V>()
 
     for (const pos of group) {
-      const [r, c] = pos
-      const digit = digit_arr[r][c]
+      const digit = POS2Digit(digit_arr, pos)
 
       if (!digit) continue
 
@@ -45,11 +44,37 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
     case '[LK]':
       return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
-    case "[LK']":
+    case "[LK']": {
       return (
         has_2groups(digit_arr, differenceOf2Groups(Array.from(generator_adjacent_pos('wasd')), rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1) ||
         has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1)
       )
+    }
+
+    case '[MT]': {
+      // X가 X개보다 많이 있으면 체크
+      // 모든 [MT] 셀이 채워졌을 때, 추가로 모든 X가 X개인지 체크
+      const M = new Map<V, Set<number>>()
+      let filled_all = true
+      for (const pos of rule.render_state.diamond_cells) {
+        const digit = POS2Digit(digit_arr, pos)
+        const n = POS2number(pos)
+
+        if (!digit) {
+          filled_all = false
+          continue
+        }
+
+        if (!M.has(digit)) M.set(digit, new Set())
+        M.get(digit)!.add(n)
+      }
+
+      if (filled_all) {
+        return Array.from(M.entries()).some(([v, s]) => s.size !== v)
+      } else {
+        return Array.from(M.entries()).some(([v, s]) => s.size > v)
+      }
+    }
   }
 }
 
