@@ -75,6 +75,22 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
         return Array.from(M.entries()).some(([v, s]) => s.size > v)
       }
     }
+
+    case '[MR]': {
+      // 항상 중복 검사
+      // [MR]의 전부가 채워졌을 때, 추가로 연속하는지 체크
+      if (has_dup(digit_arr, rule.render_state.metros)) return true
+
+      for (const group of rule.render_state.metros) {
+        const digits = group.map((pos) => POS2Digit(digit_arr, pos))
+        const filled_all = digits.every((digit) => digit)
+
+        if (filled_all) {
+          if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) return true
+        }
+      }
+      return false
+    }
   }
 }
 

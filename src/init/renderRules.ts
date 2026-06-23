@@ -5,6 +5,8 @@ import type { Board } from '../types/Board'
 import { isKnown, type Rule } from '../types/Rule'
 import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
 import { hasPOSs } from '../util/groups'
+import { pairwise } from '../util/pairwise'
+import { SoftDistinctColorGenerator } from '../util/SoftDistinctColorGenerator'
 
 const container = document.querySelector('#board-container')!
 const W = container.clientWidth
@@ -210,6 +212,8 @@ Draw.Line([5, 0 - 0.5], [5, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_reg
 Draw.Line([7, 0], [7, 2], {color: '#fe4b196b', thickness: 'hint_heavy'})
 */
 
+const color_generator = new SoftDistinctColorGenerator()
+
 function render_rule(rule: Rule): boolean {
   switch (rule.id) {
     case '[Sudoku]': {
@@ -285,6 +289,16 @@ function render_rule(rule: Rule): boolean {
     case '[MT]': {
       rule.render_state.diamond_cells.forEach((pos) => {
         Draw.Diamond(pos)
+      })
+      return true
+    }
+
+    case '[MR]': {
+      rule.render_state.metros.forEach((group) => {
+        const color = color_generator.next()
+        pairwise(group).forEach(([pos1, pos2]) => {
+          Draw.Line(pos1, pos2, { color, thickness: 'hint_light' })
+        })
       })
       return true
     }

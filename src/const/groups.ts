@@ -14,7 +14,7 @@ for (const r of IDX0) for (const c of IDX0) GROUPS_B[Math.floor(r / 3) * 3 + Mat
 
 const GROUPS_DT: TwoGroups = Array.from(generator_adjacent_pos('king'))
 
-const Rule_ID_Has_DisJointGroup = ['[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']"] as const satisfies Rule_ID[]
+const Rule_ID_Has_DisJointGroup = ['[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']", '[MR]'] as const satisfies Rule_ID[]
 const RuleIdHasDisJointGroupSchema = z.enum(Rule_ID_Has_DisJointGroup)
 type Rule_ID_Has_DisJointGroup = z.infer<typeof RuleIdHasDisJointGroupSchema>
 
@@ -37,5 +37,7 @@ export function getDisJointGroups(rule: RuleObject<Rule_ID_Has_DisJointGroup>): 
     case '[LK]':
     case "[LK']":
       return rule.render_state.edges
+    case '[MR]':
+      return rule.render_state.metros
   }
 }

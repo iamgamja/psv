@@ -60,8 +60,10 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
       return check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
     case "[LK']": {
       const res = new Set<Cell>()
-      check_2groups(board, differenceOf2Groups(Array.from(generator_adjacent_pos('wasd')), rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1).forEach(res.add)
-      check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1).forEach(res.add)
+      check_2groups(board, differenceOf2Groups(Array.from(generator_adjacent_pos('wasd')), rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1).forEach((cell) =>
+        res.add(cell),
+      )
+      check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1).forEach((cell) => res.add(cell))
       return res
     }
 
@@ -89,6 +91,32 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
         for (const [_, s] of Array.from(M.entries()).filter(([v, s]) => s.size !== v)) for (const cell of s) res.add(cell)
       } else {
         for (const [_, s] of Array.from(M.entries()).filter(([v, s]) => s.size > v)) for (const cell of s) res.add(cell)
+      }
+
+      return res
+    }
+
+    case '[MR]': {
+      // 항상 중복 검사
+      // [MR]의 전부가 채워졌을 때, 추가로 연속하는지 체크
+      const res = new Set<Cell>()
+
+      console.log(check_dup(board, rule.render_state.metros))
+      check_dup(board, rule.render_state.metros).forEach((cell) => res.add(cell))
+
+      for (const group of rule.render_state.metros) {
+        const cells = group.map((pos) => POS2Cell(board, pos))
+        const filled_all = cells.every((cell) => cell.digit)
+
+        if (filled_all) {
+          if (
+            !cells
+              .map((cell) => cell.digit!)
+              .toSorted()
+              .every((v, i, a) => v - a[0] === i)
+          )
+            for (const cell of cells) res.add(cell)
+        }
       }
 
       return res
