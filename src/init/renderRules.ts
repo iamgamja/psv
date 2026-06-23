@@ -1,5 +1,5 @@
 import { SIZE_CELL } from '../const/const'
-import { getGroups } from '../const/groups'
+import { getDisJointGroups } from '../const/groups'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
 import { isKnown, type Rule } from '../types/Rule'
@@ -233,7 +233,7 @@ function render_rule(rule: Rule): boolean {
     case '[R]': {
       Array.from(generator_adjacent_pos('wasd'))
         .filter(([pos1, pos2]) => {
-          return !getGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
+          return !getDisJointGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
         })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_regular' })
@@ -243,7 +243,7 @@ function render_rule(rule: Rule): boolean {
     case '[C]': {
       Array.from(generator_adjacent_pos('wasd'))
         .filter(([pos1, pos2]) => {
-          return !getGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
+          return !getDisJointGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
         })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_regular' })
@@ -253,7 +253,7 @@ function render_rule(rule: Rule): boolean {
     case '[B]': {
       Array.from(generator_adjacent_pos('wasd'))
         .filter(([pos1, pos2]) => {
-          return !getGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
+          return !getDisJointGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
         })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_heavy' })

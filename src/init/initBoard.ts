@@ -1,7 +1,7 @@
 import { check_error } from '../check/check_error'
 import { has_error } from '../check/has_error'
 import { check_warning } from '../check/warning'
-import { getGroups, hasDisJointGroup } from '../const/groups'
+import { hasDisJointGroup, getDisJointGroups } from '../const/groups'
 import { HistoryManager } from '../util/HistoryManager'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
@@ -31,11 +31,11 @@ export function initBoard(level: LevelData, State: State): Board {
 
     level,
     rules: level.rules,
-    all_disjoint_groups: level.rules.filter(isKnown).filter(hasDisJointGroup).map(getGroups).flat(),
+    all_disjoint_groups: level.rules.filter(isKnown).filter(hasDisJointGroup).map(getDisJointGroups).flat(),
     all_9_disjoint_groups: level.rules
       .filter(isKnown)
       .filter(hasDisJointGroup)
-      .map(getGroups)
+      .map(getDisJointGroups)
       .filter((groups) => groups.length === 9)
       .flat(),
 

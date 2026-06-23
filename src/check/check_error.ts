@@ -1,4 +1,4 @@
-import { getGroups } from '../const/groups'
+import { getDisJointGroups } from '../const/groups'
 import type { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
@@ -54,7 +54,7 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
     case '[B]':
     case '[SG]':
     case '[DT]':
-      return check_dup(board, getGroups(rule))
+      return check_dup(board, getDisJointGroups(rule))
 
     case '[LK]':
       return check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)

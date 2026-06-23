@@ -11,10 +11,16 @@ export type Rule_ID = z.infer<typeof RuleIdSchema>
 export const POSSchema = z.tuple([IDX0Schema, IDX0Schema])
 export type POS = z.infer<typeof POSSchema>
 
-export const GroupsSchema = z.array(z.array(POSSchema))
+export const GroupSchema = z.array(POSSchema)
+export type Group = z.infer<typeof GroupSchema>
+
+export const GroupsSchema = z.array(GroupSchema)
 export type Groups = z.infer<typeof GroupsSchema>
 
-export const TwoGroupsSchema = z.array(z.tuple([POSSchema, POSSchema]))
+export const TwoGroupSchema = GroupSchema.length(2)
+export type TwoGroup = z.infer<typeof TwoGroupSchema>
+
+export const TwoGroupsSchema = z.array(TwoGroupSchema)
 export type TwoGroups = z.infer<typeof TwoGroupsSchema>
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{

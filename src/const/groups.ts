@@ -22,15 +22,7 @@ export function hasDisJointGroup(rule: Rule): rule is RuleObject<Rule_ID_Has_Dis
   return RuleIdHasDisJointGroupSchema.safeParse(rule.id).success
 }
 
-const Rule_ID_Has_Group = ['[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']"] as const satisfies Rule_ID[]
-const RuleIdHasGroupSchema = z.enum(Rule_ID_Has_Group)
-type Rule_ID_Has_Group = z.infer<typeof RuleIdHasGroupSchema>
-
-export function hasGroup(rule: Rule): rule is RuleObject<Rule_ID_Has_Group> {
-  return RuleIdHasGroupSchema.safeParse(rule.id).success
-}
-
-export function getGroups(rule: RuleObject<Rule_ID_Has_Group>): Groups {
+export function getDisJointGroups(rule: RuleObject<Rule_ID_Has_DisJointGroup>): Groups {
   switch (rule.id) {
     case '[R]':
       return GROUPS_R
@@ -38,10 +30,9 @@ export function getGroups(rule: RuleObject<Rule_ID_Has_Group>): Groups {
       return GROUPS_C
     case '[B]':
       return GROUPS_B
+    case '[SG]':
+      return rule.render_state.regions
     case '[DT]':
       return GROUPS_DT
-
-    default:
-      throw new Error('why')
   }
 }

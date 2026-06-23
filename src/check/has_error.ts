@@ -1,4 +1,4 @@
-import { getGroups } from '../const/groups'
+import { getDisJointGroups } from '../const/groups'
 import type { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Groups, type Rule, type TwoGroups } from '../types/Rule'
@@ -41,7 +41,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[B]':
     case '[SG]':
     case '[DT]':
-      return has_dup(digit_arr, getGroups(rule))
+      return has_dup(digit_arr, getDisJointGroups(rule))
 
     case '[LK]':
       return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)

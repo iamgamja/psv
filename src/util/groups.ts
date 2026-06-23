@@ -1,7 +1,7 @@
 import type { IDX0, V } from '../types/base'
 import type { Board, DigitArr } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import type { POS, TwoGroups } from '../types/Rule'
+import type { Group, POS, TwoGroup, TwoGroups } from '../types/Rule'
 
 export function cell2POS(cell: Cell): POS {
   const r = (cell.r - 1) as IDX0
@@ -25,19 +25,19 @@ export function number2POS(n: number): POS {
   return [Math.floor(n / 9), n % 9] as POS
 }
 
-export function TwoGroup2number([pos1, pos2]: [POS, POS]): number {
+export function TwoGroup2number([pos1, pos2]: TwoGroup): number {
   return POS2number(pos1) * 81 + POS2number(pos2)
 }
 
-export function number2TwoGroup(n: number): [POS, POS] {
-  return [Math.floor(n / 81), n % 81].map(number2POS) as [POS, POS]
+export function number2TwoGroup(n: number): TwoGroup {
+  return [Math.floor(n / 81), n % 81].map(number2POS) as TwoGroup
 }
 
-export function hasPOSs(group: POS[], ...targets: POS[]) {
+export function hasPOSs(group: Group, ...targets: Group) {
   return targets.every((target) => group.some((pos) => pos[0] === target[0] && pos[1] === target[1]))
 }
 
-export function hasCells(group: POS[], ...targets: Cell[]) {
+export function hasCells(group: Group, ...targets: Cell[]) {
   return targets.every((cell) => hasPOSs(group, cell2POS(cell)))
 }
 
