@@ -1,9 +1,40 @@
 import { getDisJointGroups } from '../const/groups'
 import type { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import { isKnown, type Groups, type Rule, type TwoGroups } from '../types/Rule'
+import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
 import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
-import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
+import { differenceOf2Groups, POS2Digit } from '../util/groups'
+
+type ParsedGroup =
+  | {
+      digits: V[]
+      sub_groups: Map<V, Group>
+      filled_all: true
+    }
+  | {
+      digits: (V | 0)[]
+      sub_groups: Map<V, Group>
+      filled_all: false
+    }
+export function parseGroup(digit_arr: DigitArr, group: Group): ParsedGroup {
+  const digits = group.map((pos) => POS2Digit(digit_arr, pos))
+  const filled_all = digits.every((digit) => digit)
+
+  const sub_groups = new Map<V, Group>()
+  for (let i = 0; i < group.length; i++) {
+    const digit = digits[i]
+    if (digit) {
+      if (!sub_groups.has(digit)) sub_groups.set(digit, [])
+      sub_groups.get(digit)!.push(group[i])
+    }
+  }
+
+  return {
+    digits,
+    sub_groups,
+    filled_all,
+  } as ParsedGroup
+}
 
 function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   for (const group of groups) {
@@ -54,25 +85,12 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[MT]': {
       // X가 X개보다 많이 있으면 체크
       // 모든 [MT] 셀이 채워졌을 때, 추가로 모든 X가 X개인지 체크
-      const M = new Map<V, Set<number>>()
-      let filled_all = true
-      for (const pos of rule.render_state.diamond_cells) {
-        const digit = POS2Digit(digit_arr, pos)
-        const n = POS2number(pos)
-
-        if (!digit) {
-          filled_all = false
-          continue
-        }
-
-        if (!M.has(digit)) M.set(digit, new Set())
-        M.get(digit)!.add(n)
-      }
+      const { sub_groups, filled_all } = parseGroup(digit_arr, rule.render_state.diamond_cells)
 
       if (filled_all) {
-        return Array.from(M.entries()).some(([v, s]) => s.size !== v)
+        return Array.from(sub_groups.entries()).some(([v, s]) => s.length !== v)
       } else {
-        return Array.from(M.entries()).some(([v, s]) => s.size > v)
+        return Array.from(sub_groups.entries()).some(([v, s]) => s.length > v)
       }
     }
 
@@ -82,8 +100,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       if (has_dup(digit_arr, rule.render_state.metros)) return true
 
       for (const group of rule.render_state.metros) {
-        const digits = group.map((pos) => POS2Digit(digit_arr, pos))
-        const filled_all = digits.every((digit) => digit)
+        const { digits, filled_all } = parseGroup(digit_arr, group)
 
         if (filled_all) {
           if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) return true

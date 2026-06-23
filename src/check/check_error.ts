@@ -1,10 +1,51 @@
 import { getDisJointGroups } from '../const/groups'
-import type { V } from '../types/base'
+import { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { isKnown, type Groups, type Rule, type TwoGroups } from '../types/Rule'
+import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
 import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
 import { differenceOf2Groups, POS2Cell } from '../util/groups'
+
+type ParsedGroup =
+  | {
+      digits: V[]
+      cells: Cell[]
+      sub_groups: Map<V, Group>
+      sub_cells: Map<V, Cell[]>
+      filled_all: true
+    }
+  | {
+      digits: (V | 0)[]
+      cells: Cell[]
+      sub_groups: Map<V, Group>
+      sub_cells: Map<V, Cell[]>
+      filled_all: false
+    }
+export function parseGroup(board: Board, group: Group): ParsedGroup {
+  const cells = group.map((pos) => POS2Cell(board, pos))
+  const digits = cells.map((cell) => cell.digit)
+  const filled_all = digits.every((digit) => digit)
+
+  const sub_groups = new Map<V, Group>()
+  const sub_cells = new Map<V, Cell[]>()
+  for (let i = 0; i < group.length; i++) {
+    const digit = digits[i]
+    if (digit) {
+      if (!sub_groups.has(digit)) sub_groups.set(digit, [])
+      sub_groups.get(digit)!.push(group[i])
+      if (!sub_cells.has(digit)) sub_cells.set(digit, [])
+      sub_cells.get(digit)!.push(cells[i])
+    }
+  }
+
+  return {
+    digits,
+    cells,
+    sub_groups,
+    sub_cells,
+    filled_all,
+  } as ParsedGroup
+}
 
 function check_dup(board: Board, groups: Groups): Set<Cell> {
   const res = new Set<Cell>()
@@ -71,26 +112,12 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
       // X가 X개보다 많이 있으면 체크
       // 모든 [MT] 셀이 채워졌을 때, 추가로 모든 X가 X개인지 체크
       const res = new Set<Cell>()
-
-      const M = new Map<V, Set<Cell>>()
-      let filled_all = true
-      for (const pos of rule.render_state.diamond_cells) {
-        const cell = POS2Cell(board, pos)
-        const digit = cell.digit
-
-        if (!digit) {
-          filled_all = false
-          continue
-        }
-
-        if (!M.has(digit)) M.set(digit, new Set())
-        M.get(digit)!.add(cell)
-      }
+      const { sub_cells, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
 
       if (filled_all) {
-        for (const [_, s] of Array.from(M.entries()).filter(([v, s]) => s.size !== v)) for (const cell of s) res.add(cell)
+        for (const [v, s] of sub_cells.entries()) if (s.length !== v) s.forEach((cell) => res.add(cell))
       } else {
-        for (const [_, s] of Array.from(M.entries()).filter(([v, s]) => s.size > v)) for (const cell of s) res.add(cell)
+        for (const [v, s] of sub_cells.entries()) if (s.length > v) s.forEach((cell) => res.add(cell))
       }
 
       return res
@@ -101,21 +128,13 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
       // [MR]의 전부가 채워졌을 때, 추가로 연속하는지 체크
       const res = new Set<Cell>()
 
-      console.log(check_dup(board, rule.render_state.metros))
       check_dup(board, rule.render_state.metros).forEach((cell) => res.add(cell))
 
       for (const group of rule.render_state.metros) {
-        const cells = group.map((pos) => POS2Cell(board, pos))
-        const filled_all = cells.every((cell) => cell.digit)
+        const { cells, digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
-          if (
-            !cells
-              .map((cell) => cell.digit!)
-              .toSorted()
-              .every((v, i, a) => v - a[0] === i)
-          )
-            for (const cell of cells) res.add(cell)
+          if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) for (const cell of cells) res.add(cell)
         }
       }
 
