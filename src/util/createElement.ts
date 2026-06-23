@@ -1,13 +1,9 @@
-import { entries } from './entries'
-
 interface CreateElementOptions {
   id?: string
   className?: string | string[]
   content?: string | Node | (string | Node)[]
 
-  eventlistner?: {
-    [K in keyof HTMLElementEventMap]?: (event: HTMLElementEventMap[K]) => any
-  }
+  onclick?: (e: TouchEvent) => unknown
 }
 
 export function createElement<K extends keyof HTMLElementTagNameMap>(tag: K, options?: CreateElementOptions) {
@@ -27,11 +23,10 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(tag: K, opt
     else ele.append(options.content)
   }
 
-  if (options?.eventlistner) {
-    for (const [key, callback] of entries(options.eventlistner)) {
-      // @ts-ignore
-      if (callback) ele.addEventListener(key, callback)
-    }
+  if (options?.onclick) {
+    ele.addEventListener('click', (e) => {
+      options!.onclick!(e as TouchEvent)
+    })
   }
 
   return ele

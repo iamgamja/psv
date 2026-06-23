@@ -19,10 +19,8 @@ function createToastElement(message: string, type: ToastType): HTMLElement {
       createElement('button', {
         className: 'toast-close-button',
         content: '✕',
-        eventlistner: {
-          click: () => {
-            toast.remove()
-          },
+        onclick: () => {
+          toast.remove()
         },
       }),
     ],

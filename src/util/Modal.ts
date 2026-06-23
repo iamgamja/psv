@@ -32,8 +32,8 @@ export class Modal {
               }),
               createElement('button', {
                 className: 'modal-close-button',
-                eventlistner: {
-                  click: () => this.close(),
+                onclick: () => {
+                  this.close()
                 },
               }),
             ],
@@ -42,12 +42,12 @@ export class Modal {
             className: 'modal-body',
           })),
         ],
-        eventlistner: {
-          click: (event) => event.stopPropagation(),
+        onclick: (event) => {
+          event.stopPropagation()
         },
       }),
-      eventlistner: {
-        click: () => this.close(),
+      onclick: () => {
+        this.close()
       },
     })
   }

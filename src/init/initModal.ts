@@ -43,14 +43,12 @@ export function initInfoModal(board: Board) {
         }),
         createElement('button', {
           content: 'load',
-          eventlistner: {
-            click: () => {
-              const url = new URL(window.location.href)
-              url.searchParams.set('data', base64_input!.value)
+          onclick: () => {
+            const url = new URL(window.location.href)
+            url.searchParams.set('data', base64_input!.value)
 
-              history.pushState(null, '', url.toString())
-              location.reload()
-            },
+            history.pushState(null, '', url.toString())
+            location.reload()
           },
         }),
       ],
@@ -58,10 +56,8 @@ export function initInfoModal(board: Board) {
     createElement('button', {
       className: 'red',
       content: 'reset',
-      eventlistner: {
-        click: () => {
-          board.reset()
-        },
+      onclick: () => {
+        board.reset()
       },
     }),
 
@@ -69,11 +65,9 @@ export function initInfoModal(board: Board) {
 
     createElement('button', {
       content: 'view storage',
-      eventlistner: {
-        click: () => {
-          info_modal.close()
-          createStorageViewerModal(board).open()
-        },
+      onclick: () => {
+        info_modal.close()
+        createStorageViewerModal(board).open()
       },
     }),
   )
@@ -308,12 +302,10 @@ function createStorageViewerModal(board: Board) {
                   createElement('button', {
                     className: 'red',
                     content: 'delete',
-                    eventlistner: {
-                      click: () => {
-                        localStorage?.removeItem(`${STORAGE_PREFIX_HISTORY}${id}`)
+                    onclick: () => {
+                      localStorage?.removeItem(`${STORAGE_PREFIX_HISTORY}${id}`)
 
-                        render()
-                      },
+                      render()
                     },
                   }),
                 ],
