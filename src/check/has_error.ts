@@ -119,6 +119,16 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       }
       return false
     }
+    case "[QD']": {
+      for (const group of GROUPS_QD) {
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+
+        if (filled_all) {
+          if (!(digits.reduce((a, b) => a + b, 0) % 3 !== 0)) return true
+        }
+      }
+      return false
+    }
 
     case '[TP]': {
       for (const group of GROUPS_TP) {

@@ -158,6 +158,19 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+    case "[QD']": {
+      const collector = new CellCollector()
+
+      for (const group of GROUPS_QD) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (!(digits.reduce((a, b) => a + b, 0) % 3 !== 0)) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
 
     case '[TP]': {
       const collector = new CellCollector()
