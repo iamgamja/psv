@@ -40,7 +40,7 @@ function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   for (const group of groups) {
     const { sub_groups } = parseGroup(digit_arr, group)
 
-    for (const s of sub_groups.values()) if (s.length >= 2) return true
+    for (const group of sub_groups.values()) if (!(group.length <= 1)) return true
   }
 
   return false
@@ -49,10 +49,11 @@ function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
 /** @returns 모든 길이 2의 그룹이 f를 만족하는가? */
 function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
   for (const group of groups) {
-    const { digits } = parseGroup(digit_arr, group)
-    const [digit1, digit2] = digits
+    const { digits, filled_all } = parseGroup(digit_arr, group)
 
-    if (digit1 && digit2 && !f(digit1, digit2)) return true
+    if (filled_all) {
+      if (!f(digits[0], digits[1])) return true
+    }
   }
 
   return false
@@ -84,10 +85,12 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       const { sub_groups, filled_all } = parseGroup(digit_arr, rule.render_state.diamond_cells)
 
       if (filled_all) {
-        return Array.from(sub_groups.entries()).some(([v, s]) => s.length !== v)
+        if (!Array.from(sub_groups.entries()).every(([v, s]) => s.length === v)) return true
       } else {
-        return Array.from(sub_groups.entries()).some(([v, s]) => s.length > v)
+        if (!Array.from(sub_groups.entries()).every(([v, s]) => s.length <= v)) return true
       }
+
+      return false
     }
 
     case '[MR]': {
@@ -102,6 +105,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) return true
         }
       }
+
       return false
     }
 
@@ -152,7 +156,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
         if (digit && filled_all) {
           const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
-          if (digit !== avg) return true
+          if (!(digit === avg)) return true
         }
       }
 
@@ -185,8 +189,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           else if (type_arr[r][c] === 'no') cnt_no++
         }
 
-        if (cnt_yes >= 2) return true
-        else if (cnt_no === 9) return true
+        if (!(cnt_yes <= 1)) return true
+        else if (!(cnt_no < 9)) return true
       }
       for (const c of IDX0) {
         let cnt_yes = 0
@@ -196,8 +200,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           else if (type_arr[r][c] === 'no') cnt_no++
         }
 
-        if (cnt_yes >= 2) return true
-        else if (cnt_no === 9) return true
+        if (!(cnt_yes <= 1)) return true
+        else if (!(cnt_no < 9)) return true
       }
 
       return false

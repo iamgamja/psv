@@ -53,7 +53,7 @@ function check_dup(board: Board, groups: Groups): Set<Cell> {
   for (const group of groups) {
     const { sub_cells } = parseGroup(board, group)
 
-    for (const s of sub_cells.values()) if (s.length >= 2) collector.add(s)
+    for (const cells of sub_cells.values()) if (!(cells.length <= 1)) collector.add(cells)
   }
 
   return collector.res
@@ -64,10 +64,11 @@ function check_2groups(board: Board, groups: TwoGroups, f: (d1: V, d2: V) => boo
   const collector = new CellCollector()
 
   for (const group of groups) {
-    const { cells, digits } = parseGroup(board, group)
-    const [digit1, digit2] = digits
+    const { cells, digits, filled_all } = parseGroup(board, group)
 
-    if (digit1 && digit2 && !f(digit1, digit2)) collector.add(cells)
+    if (filled_all) {
+      if (!f(digits[0], digits[1])) collector.add(cells)
+    }
   }
 
   return collector.res
@@ -118,9 +119,9 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const { sub_cells, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
 
       if (filled_all) {
-        for (const [v, s] of sub_cells.entries()) if (s.length !== v) collector.add(s)
+        for (const [v, s] of sub_cells.entries()) if (!(s.length === v)) collector.add(s)
       } else {
-        for (const [v, s] of sub_cells.entries()) if (s.length > v) collector.add(s)
+        for (const [v, s] of sub_cells.entries()) if (!(s.length <= v)) collector.add(s)
       }
 
       return collector.res
@@ -205,7 +206,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
         if (digit && filled_all) {
           const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
-          if (digit !== avg) {
+          if (!(digit === avg)) {
             collector.add([cell])
             collector.add(cells)
           }
@@ -244,8 +245,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, [r, c] as POS))
         }
 
-        if (yes.length >= 2) collector.add(yes)
-        else if (no.length === 9) collector.add(no)
+        if (!(yes.length <= 1)) collector.add(yes)
+        else if (!(no.length < 9)) collector.add(no)
       }
       for (const c of IDX0) {
         const yes: Cell[] = []
@@ -255,8 +256,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, [r, c] as POS))
         }
 
-        if (yes.length >= 2) collector.add(yes)
-        else if (no.length === 9) collector.add(no)
+        if (!(yes.length <= 1)) collector.add(yes)
+        else if (!(no.length < 9)) collector.add(no)
       }
 
       return collector.res
