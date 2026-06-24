@@ -197,8 +197,6 @@ const Draw = {
   MidTriangle(pos1: POSlike, pos2: POSlike, options_?: DrawOptions) {
     const options: DrawOptions = {
       size: 'small',
-      stroke_color: '#ffffff',
-      fill_color: '#000000',
       ...options_,
     }
     const [x, y] = calculateCenter(pos1, pos2)
@@ -347,7 +345,7 @@ function render_rule(rule: Rule): boolean {
 
     case '[PO]': {
       rule.render_state.edges.forEach(([pos1, pos2]) => {
-        Draw.MidTriangle(pos1, pos2)
+        Draw.MidTriangle(pos1, pos2, { stroke_color: '#ffffff', fill_color: '#000000' })
       })
       return true
     }
