@@ -3,7 +3,7 @@ import { getDisJointGroups } from '../const/groups'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
 import { isKnown, type Rule } from '../types/Rule'
-import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
+import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { hasPOSs } from '../util/groups'
 import { pairwise } from '../util/pairwise'
 import { SoftDistinctColorGenerator } from '../util/SoftDistinctColorGenerator'
@@ -235,7 +235,7 @@ function render_rule(rule: Rule): boolean {
     }
 
     case '[R]': {
-      Array.from(generator_adjacent_pos('wasd'))
+      GROUPS_ADJACENT['wasd']
         .filter(([pos1, pos2]) => {
           return !getDisJointGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
         })
@@ -245,7 +245,7 @@ function render_rule(rule: Rule): boolean {
       return true
     }
     case '[C]': {
-      Array.from(generator_adjacent_pos('wasd'))
+      GROUPS_ADJACENT['wasd']
         .filter(([pos1, pos2]) => {
           return !getDisJointGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
         })
@@ -255,7 +255,7 @@ function render_rule(rule: Rule): boolean {
       return true
     }
     case '[B]': {
-      Array.from(generator_adjacent_pos('wasd'))
+      GROUPS_ADJACENT['wasd']
         .filter(([pos1, pos2]) => {
           return !getDisJointGroups(rule).some((group) => hasPOSs(group, pos1, pos2))
         })
@@ -265,7 +265,7 @@ function render_rule(rule: Rule): boolean {
       return true
     }
     case '[SG]': {
-      Array.from(generator_adjacent_pos('wasd'))
+      GROUPS_ADJACENT['wasd']
         .filter(([pos1, pos2]) => {
           return !rule.render_state.regions.some((group) => hasPOSs(group, pos1, pos2))
         })
@@ -296,6 +296,19 @@ function render_rule(rule: Rule): boolean {
         pairwise(group).forEach(([pos1, pos2]) => {
           Draw.Line(pos1, pos2, { color, thickness: 'hint_light' })
         })
+      })
+      return true
+    }
+
+    case '[LO]': {
+      rule.render_state.cells.forEach((pos) => {
+        Draw.Circle(pos, { stroke_color: '#b9ff49', fill_color: '#b9ff4954' })
+      })
+      return true
+    }
+    case "[LO']": {
+      rule.render_state.cells.forEach((pos) => {
+        Draw.Circle(pos, { stroke_color: '#49f9ff', fill_color: '#49f9ff54' })
       })
       return true
     }

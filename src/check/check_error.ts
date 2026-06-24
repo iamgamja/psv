@@ -3,7 +3,7 @@ import { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
-import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
+import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell } from '../util/groups'
 
 type ParsedGroup =
@@ -104,7 +104,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     case "[LK']": {
       const collector = new CellCollector()
 
-      collector.add(check_2groups(board, differenceOf2Groups(Array.from(generator_adjacent_pos('wasd')), rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1))
+      collector.add(check_2groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1))
       collector.add(check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1))
 
       return collector.res
@@ -167,6 +167,48 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         if (filled_all) {
           if (digits[0] < digits[1] && digits[1] < digits[2]) collector.add(cells)
           else if (digits[0] > digits[1] && digits[1] > digits[2]) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[LO]': {
+      const collector = new CellCollector()
+
+      for (const pos of rule.render_state.cells) {
+        const cell = POS2Cell(board, pos)
+        const digit = cell.digit
+
+        const group = create_adjacent_group_of_pos(pos, 'wasd')
+        const { cells, digits } = parseGroup(board, group)
+
+        if (digit) {
+          if (!(digits.filter((d) => d).every((d) => d > digit) || digits.filter((d) => d).every((d) => d < digit))) {
+            collector.add([cell])
+            collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+    case "[LO']": {
+      const collector = new CellCollector()
+
+      for (const pos of rule.render_state.cells) {
+        const cell = POS2Cell(board, pos)
+        const digit = cell.digit
+
+        const group = create_adjacent_group_of_pos(pos, 'wasd')
+        const { cells, digits, filled_all } = parseGroup(board, group)
+
+        if (digit && filled_all) {
+          const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
+          if (digit !== avg) {
+            collector.add([cell])
+            collector.add(cells)
+          }
         }
       }
 

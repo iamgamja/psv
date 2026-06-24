@@ -2,7 +2,7 @@ import { getDisJointGroups, GROUPS_QD, GROUPS_TP } from '../const/groups'
 import type { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
-import { generator_adjacent_pos } from '../util/generator_adjacent_pos'
+import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit } from '../util/groups'
 
 type ParsedGroup =
@@ -73,7 +73,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
     case "[LK']": {
       return (
-        has_2groups(digit_arr, differenceOf2Groups(Array.from(generator_adjacent_pos('wasd')), rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1) ||
+        has_2groups(digit_arr, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1) ||
         has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1)
       )
     }
@@ -123,6 +123,36 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
         if (filled_all) {
           if (digits[0] < digits[1] && digits[1] < digits[2]) return true
           else if (digits[0] > digits[1] && digits[1] > digits[2]) return true
+        }
+      }
+
+      return false
+    }
+
+    case '[LO]': {
+      for (const pos of rule.render_state.cells) {
+        const digit = POS2Digit(digit_arr, pos)
+
+        const group = create_adjacent_group_of_pos(pos, 'wasd')
+        const { digits } = parseGroup(digit_arr, group)
+
+        if (digit) {
+          if (!(digits.filter((d) => d).every((d) => d > digit) || digits.filter((d) => d).every((d) => d < digit))) return true
+        }
+      }
+
+      return false
+    }
+    case "[LO']": {
+      for (const pos of rule.render_state.cells) {
+        const digit = POS2Digit(digit_arr, pos)
+
+        const group = create_adjacent_group_of_pos(pos, 'wasd')
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+
+        if (digit && filled_all) {
+          const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
+          if (digit !== avg) return true
         }
       }
 
