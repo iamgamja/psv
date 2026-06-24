@@ -38,16 +38,9 @@ export function parseGroup(digit_arr: DigitArr, group: Group): ParsedGroup {
 
 function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   for (const group of groups) {
-    const visit = new Set<V>()
+    const { sub_groups } = parseGroup(digit_arr, group)
 
-    for (const pos of group) {
-      const digit = POS2Digit(digit_arr, pos)
-
-      if (!digit) continue
-
-      if (visit.has(digit)) return true
-      visit.add(digit)
-    }
+    for (const s of sub_groups.values()) if (s.length >= 2) return true
   }
 
   return false
@@ -55,8 +48,11 @@ function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
 
 /** @returns 모든 길이 2의 그룹이 f를 만족하는가? */
 function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
-  for (const [d1, d2] of groups.map((group) => group.map((pos) => POS2Digit(digit_arr, pos)))) {
-    if (d1 && d2 && !f(d1, d2)) return true
+  for (const group of groups) {
+    const { digits } = parseGroup(digit_arr, group)
+    const [digit1, digit2] = digits
+
+    if (digit1 && digit2 && !f(digit1, digit2)) return true
   }
 
   return false
