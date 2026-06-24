@@ -1,4 +1,4 @@
-import { getDisJointGroups, GROUPS_QD, GROUPS_TP } from '../const/groups'
+import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
 import { IDX0, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
@@ -265,6 +265,33 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
     case '[PO]':
       return check_2groups(board, rule.render_state.edges, (d1, d2) => d1 < d2)
+
+    case "[R']": {
+      const collector = new CellCollector()
+
+      const remainders_map = new Map<V, IDX0>() // (v, r)
+
+      for (const r of IDX0) {
+        const group = GROUPS_R[r]
+        const cells = group.map((pos) => POS2Cell(board, pos))
+
+        const { digits, filled_all } = parseGroup(board, group)
+
+        const s = new Set(digits)
+        const reminders = V.filter((i) => !s.has(i))
+
+        if (filled_all) {
+          if (!(reminders.length === 1)) {
+            collector.add(cells)
+          } else if (remainders_map.has(reminders[0])) {
+            collector.add(GROUPS_R[remainders_map.get(reminders[0])!].map((pos) => POS2Cell(board, pos)))
+            collector.add(cells)
+          } else remainders_map.set(reminders[0], r)
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 

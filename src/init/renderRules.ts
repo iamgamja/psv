@@ -1,5 +1,5 @@
 import { SIZE_CELL } from '../const/const'
-import { getDisJointGroups } from '../const/groups'
+import { getDisJointGroups, GROUPS_R } from '../const/groups'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
 import { isKnown, type Rule } from '../types/Rule'
@@ -271,6 +271,16 @@ function render_rule(rule: Rule): boolean {
         })
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_regular' })
+        })
+      return true
+    }
+    case "[R']": {
+      GROUPS_ADJACENT['wasd']
+        .filter(([pos1, pos2]) => {
+          return !GROUPS_R.some((group) => hasPOSs(group, pos1, pos2))
+        })
+        .forEach(([pos1, pos2]) => {
+          Draw.Divider(pos1, pos2, { color: '#700000', thickness: 'border_regular' })
         })
       return true
     }

@@ -3,7 +3,7 @@ import { IDX0 } from '../types/base'
 import type { Group, Groups, Rule, Rule_ID, RuleObject, TwoGroups } from '../types/Rule'
 import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
 
-const GROUPS_R: Groups = Array.from({ length: 9 }, () => [])
+export const GROUPS_R: Groups = Array.from({ length: 9 }, () => [])
 for (const r of IDX0) for (const c of IDX0) GROUPS_R[r].push([r, c])
 
 const GROUPS_C: Groups = Array.from({ length: 9 }, () => [])

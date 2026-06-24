@@ -1,5 +1,5 @@
-import { getDisJointGroups, GROUPS_QD, GROUPS_TP } from '../const/groups'
-import { IDX0, type V } from '../types/base'
+import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
+import { IDX0, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
@@ -209,6 +209,27 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
     case '[PO]':
       return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => d1 < d2)
+
+    case "[R']": {
+      const remainders_map = new Set<V>()
+
+      for (const r of IDX0) {
+        const group = GROUPS_R[r]
+
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+
+        const s = new Set(digits)
+        const reminders = V.filter((i) => !s.has(i))
+
+        if (filled_all) {
+          if (!(reminders.length === 1)) return true
+          else if (remainders_map.has(reminders[0])) return true
+          else remainders_map.add(reminders[0])
+        }
+      }
+
+      return false
+    }
   }
 }
 
