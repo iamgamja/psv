@@ -1,4 +1,44 @@
-/** @todo */
+/**
+ * @todo
+ *
+ * - TwoGroups
+ * 프리즘 PR
+ * 프리즘' PR'
+ *
+ * - Groups
+ * 세그먼트' SG'
+ * 템퍼러쳐 TM
+ * 레퍼런스 RF
+ * 스트림 SR
+ * 인버전 IV
+ * 아쿠아리움 AQ
+ * 페어 PA
+ *
+ * - 특수한 칸 / 칸들
+ * 루트 RT
+ * 루트' RT'
+ * 벡터 VT
+ * 리플렉스 EF
+ *
+ * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
+ * 퀀텀 QT
+ * 레인지 RG
+ * 레인지' RG'
+ * 시퀀스 SQ
+ * 프로덕트 PD
+ *
+ * - 경로 탐색
+ * 브릿지 BD
+ * 트레일 TR
+ * 트레일' TR'
+ *
+ * - 덩어리
+ * 이스케이프 ES
+ * 엡실론 EP
+ *
+ * - 그 외
+ * 스텐실 ST
+ */
 import { z } from 'zod'
 import { IDX0 } from './base'
 
