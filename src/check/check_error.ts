@@ -262,6 +262,9 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[PO]':
+      return check_2groups(board, rule.render_state.edges, (d1, d2) => d1 < d2)
   }
 }
 

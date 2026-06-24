@@ -47,7 +47,8 @@ const DrawWidth = {
 } as const
 
 const DrawRadius = {
-  small: SIZE_CELL * 0.1,
+  smallest: SIZE_CELL * 0.1,
+  small: SIZE_CELL * 0.2,
   regular: SIZE_CELL * 0.35,
   big: SIZE_CELL * 0.45,
 } as const
@@ -122,6 +123,24 @@ function createDiamond(x: X, y: Y, { stroke_color, fill_color, strokeWidth, r }:
 
   svg.appendChild(diamond)
 }
+/**
+ * @param direction degree 단위. 오른쪽을 0으로 하고, 반시계방향을 +로 한다.
+ */
+function createTriangle(x: X, y: Y, direction: number, { stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
+  const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+
+  const points = [0, 120, 240].map((a) => {
+    const rad = ((direction + a) * Math.PI) / 180
+    return `${x + r * Math.cos(rad)},${y - r * Math.sin(rad)}`
+  })
+  triangle.setAttribute('points', points.join(' '))
+
+  triangle.setAttribute('fill', fill_color)
+  triangle.setAttribute('stroke', stroke_color)
+  triangle.setAttribute('stroke-width', strokeWidth.toString())
+
+  svg.appendChild(triangle)
+}
 
 function createLine(x1: X, y1: Y, x2: X, y2: Y, { color, strokeWidth, round }: ParsedDrawLineOptions) {
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
@@ -150,7 +169,7 @@ const Draw = {
   },
   MidCircle(pos1: POSlike, pos2: POSlike, options_?: DrawOptions) {
     const options: DrawOptions = {
-      size: 'small',
+      size: 'smallest',
       ...options_,
     }
     const [x, y] = calculateCenter(pos1, pos2)
@@ -168,13 +187,26 @@ const Draw = {
   },
   MidDiamond(pos1: POSlike, pos2: POSlike, options_?: DrawOptions) {
     const options: DrawOptions = {
-      size: 'small',
+      size: 'smallest',
       ...options_,
     }
     const [x, y] = calculateCenter(pos1, pos2)
 
     createDiamond(x, y, parseDrawOptions(options))
   },
+  MidTriangle(pos1: POSlike, pos2: POSlike, options_?: DrawOptions) {
+    const options: DrawOptions = {
+      size: 'small',
+      stroke_color: '#ffffff',
+      fill_color: '#000000',
+      ...options_,
+    }
+    const [x, y] = calculateCenter(pos1, pos2)
+    const direction = (Math.atan2(-(pos2[0] - pos1[0]), pos2[1] - pos1[1]) * 180) / Math.PI
+
+    createTriangle(x, y, direction, parseDrawOptions(options))
+  },
+
   Divider(pos1: POSlike, pos2: POSlike, options?: DrawLineOptions) {
     const [x1, y1] = calculateCenter(pos1)
     const [x2, y2] = calculateCenter(pos2)
@@ -309,6 +341,13 @@ function render_rule(rule: Rule): boolean {
     case "[LO']": {
       rule.render_state.cells.forEach((pos) => {
         Draw.Circle(pos, { stroke_color: '#49f9ff', fill_color: '#49f9ff54' })
+      })
+      return true
+    }
+
+    case '[PO]': {
+      rule.render_state.edges.forEach(([pos1, pos2]) => {
+        Draw.MidTriangle(pos1, pos2)
       })
       return true
     }

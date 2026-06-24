@@ -206,6 +206,9 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[PO]':
+      return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => d1 < d2)
   }
 }
 
