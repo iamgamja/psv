@@ -1,4 +1,4 @@
-import { getDisJointGroups, GROUPS_QD } from '../const/groups'
+import { getDisJointGroups, GROUPS_QD, GROUPS_TP } from '../const/groups'
 import type { V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
@@ -113,6 +113,19 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) return true
         }
       }
+      return false
+    }
+
+    case '[TP]': {
+      for (const group of GROUPS_TP) {
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+
+        if (filled_all) {
+          if (digits[0] < digits[1] && digits[1] < digits[2]) return true
+          else if (digits[0] > digits[1] && digits[1] > digits[2]) return true
+        }
+      }
+
       return false
     }
   }

@@ -26,6 +26,22 @@ for (let r = 0; r < 8; r++) {
   }
 }
 
+export const GROUPS_TP: Groups = []
+for (let r = 0; r < 7; r++) {
+  for (let c = 0; c < 7; c++) {
+    GROUPS_TP.push([
+      [r, c],
+      [r + 1, c + 1],
+      [r + 2, c + 2],
+    ] as Group)
+    GROUPS_TP.push([
+      [r, c + 2],
+      [r + 1, c + 1],
+      [r + 2, c],
+    ] as Group)
+  }
+}
+
 const Rule_ID_Has_DisJointGroup = ['[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']", '[MR]'] as const satisfies Rule_ID[]
 const RuleIdHasDisJointGroupSchema = z.enum(Rule_ID_Has_DisJointGroup)
 type Rule_ID_Has_DisJointGroup = z.infer<typeof RuleIdHasDisJointGroupSchema>

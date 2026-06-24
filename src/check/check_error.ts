@@ -1,4 +1,4 @@
-import { getDisJointGroups, GROUPS_QD } from '../const/groups'
+import { getDisJointGroups, GROUPS_QD, GROUPS_TP } from '../const/groups'
 import { V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
@@ -87,7 +87,7 @@ class CellCollector {
   }
 }
 
-function has_error_rule(board: Board, rule: Rule): Set<Cell> {
+function check_error_rule(board: Board, rule: Rule): Set<Cell> {
   switch (rule.id) {
     case '[Sudoku]':
       return new Set()
@@ -157,6 +157,21 @@ function has_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[TP]': {
+      const collector = new CellCollector()
+
+      for (const group of GROUPS_TP) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (digits[0] < digits[1] && digits[1] < digits[2]) collector.add(cells)
+          else if (digits[0] > digits[1] && digits[1] > digits[2]) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 
@@ -164,7 +179,7 @@ export function check_error(board: Board): Set<Cell> {
   const collector = new CellCollector()
 
   for (const rule of board.rules.filter(isKnown)) {
-    collector.add(has_error_rule(board, rule))
+    collector.add(check_error_rule(board, rule))
   }
 
   return collector.res
