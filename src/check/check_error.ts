@@ -1,8 +1,8 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_TP } from '../const/groups'
-import { V } from '../types/base'
+import { IDX0, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
+import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell } from '../util/groups'
 
@@ -210,6 +210,53 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             collector.add(cells)
           }
         }
+      }
+
+      return collector.res
+    }
+
+    case '[BP]': {
+      const collector = new CellCollector()
+
+      type type_arr = ('no' | 'yes' | 'unknown')[][]
+      const type_arr: type_arr = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
+
+      for (const r of IDX0) {
+        for (const c of IDX0) {
+          const pos = [r, c] as POS
+          const cell = POS2Cell(board, pos)
+          const digit = cell.digit
+
+          const group = create_adjacent_group_of_pos(pos, 'wasd')
+          const { digits, filled_all } = parseGroup(board, group)
+
+          if (digit && !digits.filter((d) => d).every((d) => Math.abs(d - digit) >= 3)) type_arr[r][c] = 'no'
+          else if (digit && filled_all) type_arr[r][c] = digits.every((d) => Math.abs(d - digit) >= 3) ? 'yes' : 'no'
+          else type_arr[r][c] = 'unknown'
+        }
+      }
+
+      for (const r of IDX0) {
+        const yes: Cell[] = []
+        const no: Cell[] = []
+        for (const c of IDX0) {
+          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, [r, c] as POS))
+          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, [r, c] as POS))
+        }
+
+        if (yes.length >= 2) collector.add(yes)
+        else if (no.length === 9) collector.add(no)
+      }
+      for (const c of IDX0) {
+        const yes: Cell[] = []
+        const no: Cell[] = []
+        for (const r of IDX0) {
+          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, [r, c] as POS))
+          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, [r, c] as POS))
+        }
+
+        if (yes.length >= 2) collector.add(yes)
+        else if (no.length === 9) collector.add(no)
       }
 
       return collector.res

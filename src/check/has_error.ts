@@ -1,7 +1,7 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_TP } from '../const/groups'
-import type { V } from '../types/base'
+import { IDX0, type V } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import { isKnown, type Group, type Groups, type Rule, type TwoGroups } from '../types/Rule'
+import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit } from '../util/groups'
 
@@ -154,6 +154,50 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
           if (digit !== avg) return true
         }
+      }
+
+      return false
+    }
+
+    case '[BP]': {
+      type type_arr = ('no' | 'yes' | 'unknown')[][]
+      const type_arr: type_arr = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
+
+      for (const r of IDX0) {
+        for (const c of IDX0) {
+          const pos = [r, c] as POS
+          const digit = POS2Digit(digit_arr, pos)
+
+          const group = create_adjacent_group_of_pos(pos, 'wasd')
+          const { digits, filled_all } = parseGroup(digit_arr, group)
+
+          if (digit && digits.filter((d) => d).some((d) => Math.abs(d - digit) < 3)) type_arr[r][c] = 'no'
+          else if (digit && filled_all) type_arr[r][c] = digits.every((d) => Math.abs(d - digit) >= 3) ? 'yes' : 'no'
+          else type_arr[r][c] = 'unknown'
+        }
+      }
+
+      for (const r of IDX0) {
+        let cnt_yes = 0
+        let cnt_no = 0
+        for (const c of IDX0) {
+          if (type_arr[r][c] === 'yes') cnt_yes++
+          else if (type_arr[r][c] === 'no') cnt_no++
+        }
+
+        if (cnt_yes >= 2) return true
+        else if (cnt_no === 9) return true
+      }
+      for (const c of IDX0) {
+        let cnt_yes = 0
+        let cnt_no = 0
+        for (const r of IDX0) {
+          if (type_arr[r][c] === 'yes') cnt_yes++
+          else if (type_arr[r][c] === 'no') cnt_no++
+        }
+
+        if (cnt_yes >= 2) return true
+        else if (cnt_no === 9) return true
       }
 
       return false

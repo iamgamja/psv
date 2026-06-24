@@ -316,6 +316,7 @@ function render_rule(rule: Rule): boolean {
     case '[DT]':
     case '[QD]':
     case '[TP]':
+    case '[BP]':
       return true
   }
 }
