@@ -60,7 +60,7 @@ function check_dup(board: Board, groups: Groups): Set<Cell> {
   return collector.res
 }
 
-/** @returns 모든 길이 2의 그룹마다, f를 만족하지 않는 Cell들의 집합 */
+/** @returns 모든 완성된 길이 2의 그룹마다, f를 만족하지 않는 Cell들의 집합 */
 function check_2groups(board: Board, groups: TwoGroups, f: (d1: V, d2: V) => boolean): Set<Cell> {
   const collector = new CellCollector()
 
@@ -107,8 +107,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     case "[LK']": {
       const collector = new CellCollector()
 
-      collector.add(check_2groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1))
-      collector.add(check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1))
+      collector.add(check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1))
+      collector.add(check_2groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1))
 
       return collector.res
     }

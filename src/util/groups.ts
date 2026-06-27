@@ -29,6 +29,11 @@ export function TwoGroup2number([pos1, pos2]: TwoGroup): number {
   return POS2number(pos1) * 81 + POS2number(pos2)
 }
 
+export function TwoGroupComb2number(two_group: TwoGroup): number {
+  const [n1, n2] = two_group.map(POS2number).sort((a, b) => a - b)
+  return n1 * 81 + n2
+}
+
 export function number2TwoGroup(n: number): TwoGroup {
   return [Math.floor(n / 81), n % 81].map(number2POS) as TwoGroup
 }
@@ -41,8 +46,9 @@ export function hasCells(group: Group, ...targets: Cell[]) {
   return targets.every((cell) => hasPOSs(group, cell2POS(cell)))
 }
 
+/** 각 TwoGroup을 순서 없는 그룹으로 간주한다. */
 export function differenceOf2Groups(groups1: TwoGroups, groups2: TwoGroups) {
-  const set = new Set(groups1.map(TwoGroup2number))
-  groups2.map(TwoGroup2number).forEach((n) => set.delete(n))
+  const set = new Set(groups1.map(TwoGroupComb2number))
+  groups2.map(TwoGroupComb2number).forEach((n) => set.delete(n))
   return Array.from(set).map(number2TwoGroup)
 }

@@ -47,7 +47,7 @@ function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   return false
 }
 
-/** @returns 모든 길이 2의 그룹이 f를 만족하는가? */
+/** @returns 어떤 완성된 그룹이 f를 만족하지 않으면 true */
 function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
   for (const group of groups) {
     const { digits, filled_all } = parseGroup(digit_arr, group)
@@ -76,8 +76,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
     case "[LK']": {
       return (
-        has_2groups(digit_arr, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) === 1) ||
-        has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) !== 1)
+        has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1) ||
+        has_2groups(digit_arr, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1)
       )
     }
 

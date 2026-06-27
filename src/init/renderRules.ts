@@ -202,12 +202,12 @@ const Draw = {
 
     Draw._createPolygon(x, y, 50, 0, parseDrawOptions(options))
   },
-  Diamond(pos: POSlike, pos2?: POSlike | null, options_?: DrawOptions) {
+  Diamond(pos1: POSlike, pos2?: POSlike | null, options_?: DrawOptions) {
     const options: DrawOptions = {
       size: !pos2 ? 'regular' : 'smallest',
       ...options_,
     }
-    const [x, y] = calculateCenter(pos)
+    const [x, y] = calculateCenter(pos1, pos2)
 
     Draw._createPolygon(x, y, 4, 0, parseDrawOptions(options))
   },
