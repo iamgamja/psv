@@ -162,6 +162,24 @@ function createTriangle(x: X, y: Y, direction: number, { dotted, stroke_color, f
 
   svg.appendChild(ele)
 }
+function createHexagon(x: X, y: Y, { dotted, stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
+  const ele = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+
+  const p1 = `${x},${y - r}` // 상
+  const p2 = `${x + r * 0.866},${y - r * 0.5}` // 우상
+  const p3 = `${x + r * 0.866},${y + r * 0.5}` // 우하
+  const p4 = `${x},${y + r}` // 하
+  const p5 = `${x - r * 0.866},${y + r * 0.5}` // 좌하
+  const p6 = `${x - r * 0.866},${y - r * 0.5}` // 좌상
+  ele.setAttribute('points', `${p1} ${p2} ${p3} ${p4} ${p5} ${p6}`)
+
+  ele.setAttribute('fill', fill_color)
+  ele.setAttribute('stroke', stroke_color)
+  ele.setAttribute('stroke-width', strokeWidth.toString())
+  if (dotted) ele.setAttribute('stroke-dasharray', '2')
+
+  svg.appendChild(ele)
+}
 
 function createLine(x1: X, y1: Y, x2: X, y2: Y, { dotted, color, strokeWidth, round }: ParsedDrawLineOptions) {
   const ele = document.createElementNS('http://www.w3.org/2000/svg', 'line')
@@ -224,6 +242,15 @@ const Draw = {
     const direction = (Math.atan2(-(pos2[0] - pos1[0]), pos2[1] - pos1[1]) * 180) / Math.PI
 
     createTriangle(x, y, direction, parseDrawOptions(options))
+  },
+  MidHexagon(pos1: POSlike, pos2: POSlike, options_?: DrawOptions) {
+    const options: DrawOptions = {
+      size: 'small',
+      ...options_,
+    }
+    const [x, y] = calculateCenter(pos1, pos2)
+
+    createHexagon(x, y, parseDrawOptions(options))
   },
 
   Divider(pos1: POSlike, pos2: POSlike, options?: DrawLineOptions) {
@@ -459,6 +486,20 @@ function render_rule(rule: Rule): boolean {
     case '[PO]': {
       rule.render_state.edges.forEach(([pos1, pos2]) => {
         Draw.MidTriangle(pos1, pos2, { stroke_color: '#ffffff', fill_color: '#000000' })
+      })
+      return true
+    }
+
+    case '[PR]': {
+      rule.render_state.edges.forEach(([r1, c1, r2, c2, isred]) => {
+        Draw.MidHexagon([r1, c1], [r2, c2], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+      })
+      return true
+    }
+    case "[PR']": {
+      rule.render_state.triplets.forEach(([r1, c1, r2, c2, r3, c3, isred]) => {
+        Draw.MidHexagon([r1, c1], [r2, c2], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+        Draw.MidHexagon([r2, c2], [r3, c3], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
       })
       return true
     }

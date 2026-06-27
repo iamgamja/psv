@@ -1,4 +1,5 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
+import { Prime2Set, Square2Set, Prime3Set, Square3Set } from '../const/number_set'
 import { IDX0, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
@@ -236,6 +237,46 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           if (!(reminders.length === 1)) return true
           else if (remainders_map.has(reminders[0])) return true
           else remainders_map.add(reminders[0])
+        }
+      }
+
+      return false
+    }
+
+    case '[PR]': {
+      for (const [r1, c1, r2, c2, isred] of rule.render_state.edges) {
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+        ]
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+
+        if (filled_all) {
+          if (isred) {
+            if (!Prime2Set.has(parseInt(digits.join('')))) return true
+          } else {
+            if (!Square2Set.has(parseInt(digits.join('')))) return true
+          }
+        }
+      }
+
+      return false
+    }
+    case "[PR']": {
+      for (const [r1, c1, r2, c2, r3, c3, isred] of rule.render_state.triplets) {
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+          [r3, c3],
+        ]
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+
+        if (filled_all) {
+          if (isred) {
+            if (!Prime3Set.has(parseInt(digits.join('')))) return true
+          } else {
+            if (!Square3Set.has(parseInt(digits.join('')))) return true
+          }
         }
       }
 

@@ -5,6 +5,7 @@ import type { Cell } from '../types/Cell'
 import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell } from '../util/groups'
+import { Prime2Set, Square2Set, Prime3Set, Square3Set } from '../const/number_set'
 
 type ParsedGroup =
   | {
@@ -301,6 +302,50 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             collector.add(GROUPS_R[remainders_map.get(reminders[0])!].map((pos) => POS2Cell(board, pos)))
             collector.add(cells)
           } else remainders_map.set(reminders[0], r)
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[PR]': {
+      const collector = new CellCollector()
+
+      for (const [r1, c1, r2, c2, isred] of rule.render_state.edges) {
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+        ]
+        const { digits, cells, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (isred) {
+            if (!Prime2Set.has(parseInt(digits.join('')))) collector.add(cells)
+          } else {
+            if (!Square2Set.has(parseInt(digits.join('')))) collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+    case "[PR']": {
+      const collector = new CellCollector()
+
+      for (const [r1, c1, r2, c2, r3, c3, isred] of rule.render_state.triplets) {
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+          [r3, c3],
+        ]
+        const { digits, cells, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (isred) {
+            if (!Prime3Set.has(parseInt(digits.join('')))) collector.add(cells)
+          } else {
+            if (!Square3Set.has(parseInt(digits.join('')))) collector.add(cells)
+          }
         }
       }
 

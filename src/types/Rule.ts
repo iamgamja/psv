@@ -1,10 +1,6 @@
 /**
  * @todo
  *
- * - TwoGroups
- * 프리즘 PR
- * 프리즘' PR'
- *
  * - Groups
  * 템퍼러쳐 TM
  * 레퍼런스 RF
@@ -63,6 +59,8 @@ export const Rule_ID = [
   '[BP]',
   '[PO]',
   "[R']",
+  '[PR]',
+  "[PR']",
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -81,6 +79,9 @@ export type TwoGroup = z.infer<typeof TwoGroupSchema>
 
 export const TwoGroupsSchema = z.array(TwoGroupSchema)
 export type TwoGroups = z.infer<typeof TwoGroupsSchema>
+
+const PREdgesSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()]))
+const PRPrimeTripletsSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()]))
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{
   id: z.ZodLiteral<K>
@@ -153,6 +154,18 @@ const RuleObjectMap = {
   "[R']": z.object({
     id: z.literal("[R']"),
   }),
+  '[PR]': z.object({
+    id: z.literal('[PR]'),
+    render_state: z.object({
+      edges: PREdgesSchema,
+    }),
+  }),
+  "[PR']": z.object({
+    id: z.literal("[PR']"),
+    render_state: z.object({
+      triplets: PRPrimeTripletsSchema,
+    }),
+  }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>
 }
@@ -165,9 +178,7 @@ export type Rule = z.infer<typeof RuleSchema>
 export type RuleObject<T extends Rule_ID> = Rule & { id: T }
 
 export const UnknownRuleSchema = z.object({
-  id: z.string().refine((id) => !Rule_ID.includes(id as Rule_ID), {
-    message: 'Unknown rule id',
-  }),
+  id: z.string().refine((id) => !Rule_ID.includes(id as Rule_ID)),
 })
 export type UnknownRule = z.infer<typeof UnknownRuleSchema>
 
