@@ -1,3 +1,5 @@
+import { IDX0 } from '../types/base'
+
 export const Prime2Set = new Set([11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97])
 export const Prime3Set = new Set([
   113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 311, 313,
@@ -7,3 +9,28 @@ export const Prime3Set = new Set([
 ])
 export const Square2Set = new Set([16, 25, 36, 49, 64, 81])
 export const Square3Set = new Set([121, 144, 169, 196, 225, 256, 289, 324, 361, 441, 484, 529, 576, 625, 676, 729, 784, 841, 961])
+
+/** d^2 -> [dr, dc][] */
+export const distanceMap: Record<number, readonly [IDX0, IDX0][]> = (function generateDistanceMap() {
+  const result: Record<number, Set<string>> = {}
+
+  for (const dr of IDX0) {
+    for (const dc of IDX0) {
+      // 같은 칸 제외
+      if (dr === 0 && dc === 0) continue
+
+      const dist2 = dr * dr + dc * dc
+
+      if (!result[dist2]) {
+        result[dist2] = new Set()
+      }
+
+      result[dist2].add(`${dr},${dc}`)
+    }
+  }
+
+  return Object.fromEntries(Object.entries(result).map(([dist, values]) => [Number(dist), [...values].map((v) => v.split(',').map(Number) as [IDX0, IDX0])]))
+})()
+export const distances = Object.keys(distanceMap)
+  .map(Number)
+  .toSorted((a, b) => a - b)

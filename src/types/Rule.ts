@@ -10,8 +10,6 @@
  * 페어 PA
  *
  * - 특수한 칸 / 칸들
- * 루트 RT
- * 루트' RT'
  * 벡터 VT
  * 리플렉스 EF
  *
@@ -61,6 +59,8 @@ export const Rule_ID = [
   "[R']",
   '[PR]',
   "[PR']",
+  '[RT]',
+  "[RT']",
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -82,6 +82,8 @@ export type TwoGroups = z.infer<typeof TwoGroupsSchema>
 
 const PREdgesSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()]))
 const PRPrimeTripletsSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()]))
+
+const RTSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, z.number()]))
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{
   id: z.ZodLiteral<K>
@@ -164,6 +166,18 @@ const RuleObjectMap = {
     id: z.literal("[PR']"),
     render_state: z.object({
       triplets: PRPrimeTripletsSchema,
+    }),
+  }),
+  '[RT]': z.object({
+    id: z.literal('[RT]'),
+    render_state: z.object({
+      cells: RTSchema,
+    }),
+  }),
+  "[RT']": z.object({
+    id: z.literal("[RT']"),
+    render_state: z.object({
+      cells: RTSchema,
     }),
   }),
 } satisfies {

@@ -50,6 +50,12 @@ const DrawRadius = {
   big: SIZE_CELL * 0.45,
 } as const
 
+const DrawTextSize = {
+  small: SIZE_CELL * 0.3,
+  regular: SIZE_CELL * 0.5,
+  big: SIZE_CELL * 0.8,
+}
+
 interface DrawOptions {
   dotted?: boolean
   stroke_color?: string
@@ -80,6 +86,18 @@ interface ParsedDrawLineOptions {
   round: boolean
 }
 
+interface DrawTextOptions {
+  color?: string
+  fontSize?: keyof typeof DrawTextSize
+  align?: 'left' | 'center' | 'right'
+}
+
+interface ParsedDrawTextOptions {
+  color: string
+  fontSize: number
+  align: 'left' | 'center' | 'right'
+}
+
 function parseDrawOptions(options?: DrawOptions): ParsedDrawOptions {
   return {
     dotted: options?.dotted ?? false,
@@ -96,6 +114,14 @@ function parseDrawLineOptions(options?: DrawLineOptions): ParsedDrawLineOptions 
     color: options?.color ?? '#000000',
     strokeWidth: options?.thickness ? DrawWidth[options.thickness] : DrawWidth.border_regular,
     round: options?.round ?? true,
+  }
+}
+
+function parseDrawTextOptions(options?: DrawTextOptions): ParsedDrawTextOptions {
+  return {
+    color: options?.color ?? '#000000',
+    fontSize: options?.fontSize ? DrawTextSize[options.fontSize] : DrawTextSize.small,
+    align: options?.align ?? 'center',
   }
 }
 
@@ -147,6 +173,22 @@ const Draw = {
     ele.setAttribute('stroke-width', strokeWidth.toString())
     if (round) ele.setAttribute('stroke-linecap', 'round')
     if (dotted) ele.setAttribute('stroke-dasharray', '2')
+
+    svg.appendChild(ele)
+  },
+  _createText(x: X, y: Y, text: string, { color, fontSize, align }: ParsedDrawTextOptions) {
+    const ele = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+
+    ele.setAttribute('x', x.toString())
+    ele.setAttribute('y', y.toString())
+    ele.setAttribute('fill', color)
+    ele.setAttribute('font-size', fontSize.toString())
+
+    ele.setAttribute('text-anchor', align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle')
+
+    ele.setAttribute('dominant-baseline', 'middle')
+
+    ele.textContent = text
 
     svg.appendChild(ele)
   },
@@ -280,6 +322,26 @@ const Draw = {
 
       if (has_map.D && !(has_map.E && has_map.W)) Draw._createLine(d, w, D, w, parsedLineOptions)
       if (has_map.D && !(has_map.C && has_map.X)) Draw._createLine(d, s, D, s, parsedLineOptions)
+    }
+  },
+  Text(pos: POSlike, text: string, options?: DrawTextOptions) {
+    const parsedOptions = parseDrawTextOptions(options)
+
+    const [x, y] = calculateCenter(pos)
+
+    switch (parsedOptions.align) {
+      case 'left': {
+        Draw._createText(x - SIZE_CELL * 0.3, y, text, parsedOptions)
+        return true
+      }
+      case 'center': {
+        Draw._createText(x, y, text, parsedOptions)
+        return true
+      }
+      case 'right': {
+        Draw._createText(x + SIZE_CELL * 0.3, y, text, parsedOptions)
+        return true
+      }
     }
   },
 }
@@ -431,6 +493,14 @@ function render_rule(rule: Rule): boolean {
       rule.render_state.triplets.forEach(([r1, c1, r2, c2, r3, c3, isred]) => {
         Draw.Hexagon([r1, c1], [r2, c2], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
         Draw.Hexagon([r2, c2], [r3, c3], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+      })
+      return true
+    }
+
+    case '[RT]':
+    case "[RT']": {
+      rule.render_state.cells.forEach(([r, c, dd]) => {
+        Draw.Text([r, c], '√' + dd.toString(), { color: '#8e8e8eee', fontSize: 'regular' })
       })
       return true
     }

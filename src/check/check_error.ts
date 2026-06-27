@@ -5,7 +5,7 @@ import type { Cell } from '../types/Cell'
 import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell } from '../util/groups'
-import { Prime2Set, Square2Set, Prime3Set, Square3Set } from '../const/number_set'
+import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
 
 type ParsedGroup =
   | {
@@ -345,6 +345,111 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             if (!Prime3Set.has(parseInt(digits.join('')))) collector.add(cells)
           } else {
             if (!Square3Set.has(parseInt(digits.join('')))) collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[RT]': {
+      const collector = new CellCollector()
+
+      for (const [r1, c1, dd] of rule.render_state.cells) {
+        const pos1 = [r1, c1] as POS
+        const cell1 = POS2Cell(board, pos1)
+        const digit1 = cell1.digit
+
+        if (digit1) {
+          const idx = distances.indexOf(dd)
+          for (let i = 0; i < idx; i++) {
+            for (const [dr, dc] of distanceMap[distances[i]]) {
+              for (const [r2, c2] of [
+                [r1 - dr, c1 - dc],
+                [r1 - dr, c1 + dc],
+                [r1 + dr, c1 - dc],
+                [r1 + dr, c1 + dc],
+              ]) {
+                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+                const pos2 = [r2, c2] as POS
+                const cell2 = POS2Cell(board, pos2)
+                const digit2 = cell2.digit
+
+                if (digit1 === digit2) collector.add([cell1, cell2])
+              }
+            }
+          }
+
+          const group: Group = []
+          for (const [dr, dc] of distanceMap[distances[idx]]) {
+            for (const [r2, c2] of [
+              [r1 - dr, c1 - dc],
+              [r1 - dr, c1 + dc],
+              [r1 + dr, c1 - dc],
+              [r1 + dr, c1 + dc],
+            ]) {
+              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+              group.push([r2, c2] as POS)
+            }
+          }
+
+          const { digits, cells, filled_all } = parseGroup(board, group)
+          if (filled_all) {
+            if (!digits.includes(digit1)) collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+    case "[RT']": {
+      const collector = new CellCollector()
+
+      for (const [r1, c1, dd] of rule.render_state.cells) {
+        const pos1 = [r1, c1] as POS
+        const cell1 = POS2Cell(board, pos1)
+        const digit1 = cell1.digit
+
+        if (digit1) {
+          const idx = distances.indexOf(dd)
+          for (let i = idx + 1; i < distances.length; i++) {
+            for (const [dr, dc] of distanceMap[distances[i]]) {
+              for (const [r2, c2] of [
+                [r1 - dr, c1 - dc],
+                [r1 - dr, c1 + dc],
+                [r1 + dr, c1 - dc],
+                [r1 + dr, c1 + dc],
+              ]) {
+                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+                const pos2 = [r2, c2] as POS
+                const cell2 = POS2Cell(board, pos2)
+                const digit2 = cell2.digit
+
+                if (digit1 === digit2) collector.add([cell1, cell2])
+              }
+            }
+          }
+
+          const group: Group = []
+          for (const [dr, dc] of distanceMap[distances[idx]]) {
+            for (const [r2, c2] of [
+              [r1 - dr, c1 - dc],
+              [r1 - dr, c1 + dc],
+              [r1 + dr, c1 - dc],
+              [r1 + dr, c1 + dc],
+            ]) {
+              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+              group.push([r2, c2] as POS)
+            }
+          }
+
+          const { digits, cells, filled_all } = parseGroup(board, group)
+          if (filled_all) {
+            if (!digits.includes(digit1)) collector.add(cells)
           }
         }
       }

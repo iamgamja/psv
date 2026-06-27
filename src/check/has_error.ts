@@ -1,5 +1,5 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
-import { Prime2Set, Square2Set, Prime3Set, Square3Set } from '../const/number_set'
+import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } from '../const/check_helper'
 import { IDX0, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
@@ -276,6 +276,103 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             if (!Prime3Set.has(parseInt(digits.join('')))) return true
           } else {
             if (!Square3Set.has(parseInt(digits.join('')))) return true
+          }
+        }
+      }
+
+      return false
+    }
+
+    case '[RT]': {
+      for (const [r1, c1, dd] of rule.render_state.cells) {
+        const pos1 = [r1, c1] as POS
+        const digit1 = POS2Digit(digit_arr, pos1)
+
+        if (digit1) {
+          const idx = distances.indexOf(dd)
+          for (let i = 0; i < idx; i++) {
+            for (const [dr, dc] of distanceMap[distances[i]]) {
+              for (const [r2, c2] of [
+                [r1 - dr, c1 - dc],
+                [r1 - dr, c1 + dc],
+                [r1 + dr, c1 - dc],
+                [r1 + dr, c1 + dc],
+              ]) {
+                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+                const pos2 = [r2, c2] as POS
+                const digit2 = POS2Digit(digit_arr, pos2)
+
+                if (digit1 === digit2) return true
+              }
+            }
+          }
+
+          const group: Group = []
+          for (const [dr, dc] of distanceMap[distances[idx]]) {
+            for (const [r2, c2] of [
+              [r1 - dr, c1 - dc],
+              [r1 - dr, c1 + dc],
+              [r1 + dr, c1 - dc],
+              [r1 + dr, c1 + dc],
+            ]) {
+              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+              group.push([r2, c2] as POS)
+            }
+          }
+
+          const { digits, filled_all } = parseGroup(digit_arr, group)
+          if (filled_all) {
+            if (!digits.includes(digit1)) return true
+          }
+        }
+      }
+
+      return false
+    }
+    case "[RT']": {
+      for (const [r1, c1, dd] of rule.render_state.cells) {
+        const pos1 = [r1, c1] as POS
+        const digit1 = POS2Digit(digit_arr, pos1)
+
+        if (digit1) {
+          const idx = distances.indexOf(dd)
+          for (let i = idx + 1; i < distances.length; i++) {
+            for (const [dr, dc] of distanceMap[distances[i]]) {
+              for (const [r2, c2] of [
+                [r1 - dr, c1 - dc],
+                [r1 - dr, c1 + dc],
+                [r1 + dr, c1 - dc],
+                [r1 + dr, c1 + dc],
+              ]) {
+                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+                const pos2 = [r2, c2] as POS
+                const digit2 = POS2Digit(digit_arr, pos2)
+
+                if (digit1 === digit2) return true
+              }
+            }
+          }
+
+          const group: Group = []
+          for (const [dr, dc] of distanceMap[distances[idx]]) {
+            for (const [r2, c2] of [
+              [r1 - dr, c1 - dc],
+              [r1 - dr, c1 + dc],
+              [r1 + dr, c1 - dc],
+              [r1 + dr, c1 + dc],
+            ]) {
+              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+
+              group.push([r2, c2] as POS)
+            }
+          }
+
+          const { digits, filled_all } = parseGroup(digit_arr, group)
+          if (filled_all) {
+            if (!digits.includes(digit1)) return true
           }
         }
       }
