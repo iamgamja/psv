@@ -505,6 +505,13 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
+    case '[PA]': {
+      rule.render_state.dominoes.forEach((two_group) => {
+        Draw.Cage(two_group, { dotted: true, stroke_color: '#6d4dfaff', fill_color: '#6d4dfa4b' })
+      })
+      return true
+    }
+
     case '[DT]':
     case '[QD]':
     case "[QD']":

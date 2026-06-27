@@ -7,7 +7,6 @@
  * 스트림 SR
  * 인버전 IV
  * 아쿠아리움 AQ
- * 페어 PA
  *
  * - 특수한 칸 / 칸들
  * 벡터 VT
@@ -61,6 +60,7 @@ export const Rule_ID = [
   "[PR']",
   '[RT]',
   "[RT']",
+  '[PA]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -178,6 +178,12 @@ const RuleObjectMap = {
     id: z.literal("[RT']"),
     render_state: z.object({
       cells: RTSchema,
+    }),
+  }),
+  '[PA]': z.object({
+    id: z.literal('[PA]'),
+    render_state: z.object({
+      dominoes: TwoGroupsSchema,
     }),
   }),
 } satisfies {

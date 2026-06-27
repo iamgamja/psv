@@ -379,6 +379,22 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[PA]': {
+      const visit = new Set<string>() // `${d1}${d2}`; d1 <= d2
+
+      for (const two_group of rule.render_state.dominoes) {
+        const { digits, filled_all } = parseGroup(digit_arr, two_group)
+
+        if (filled_all) {
+          const s = digits.toSorted().join('')
+          if (visit.has(s)) return true
+          visit.add(s)
+        }
+      }
+
+      return false
+    }
   }
 }
 

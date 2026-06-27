@@ -456,6 +456,31 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[PA]': {
+      const collector = new CellCollector()
+
+      const visit = new Map<string, CellCollector>() // `${d1}${d2}` -> cells; d1 <= d2
+
+      for (const two_group of rule.render_state.dominoes) {
+        const { digits, cells, filled_all } = parseGroup(board, two_group)
+
+        if (filled_all) {
+          const s = digits.toSorted().join('')
+          if (!visit.has(s)) {
+            visit.set(s, new CellCollector())
+          }
+
+          visit.get(s)!.add(cells)
+        }
+      }
+
+      for (const cells of Array.from(visit.values()).map((cl) => cl.res)) {
+        if (cells.size != 2) collector.add(cells)
+      }
+
+      return collector.res
+    }
   }
 }
 
