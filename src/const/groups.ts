@@ -42,7 +42,7 @@ for (let r = 0; r < 7; r++) {
   }
 }
 
-const Rule_ID_Has_DisJointGroup = ['[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']", '[MR]', '[PO]'] as const satisfies Rule_ID[]
+const Rule_ID_Has_DisJointGroup = ['[R]', '[C]', '[B]', '[SG]', "[SG']", '[DT]', '[LK]', "[LK']", '[MR]', '[PO]'] as const satisfies Rule_ID[]
 const RuleIdHasDisJointGroupSchema = z.enum(Rule_ID_Has_DisJointGroup)
 type Rule_ID_Has_DisJointGroup = z.infer<typeof RuleIdHasDisJointGroupSchema>
 
@@ -61,6 +61,7 @@ export function getDisJointGroups(rule: RuleObject<Rule_ID_Has_DisJointGroup>): 
     case '[DT]':
       return GROUPS_DT
     case '[SG]':
+    case "[SG']":
       return rule.render_state.regions
     case '[LK]':
     case "[LK']":

@@ -6,7 +6,6 @@
  * 프리즘' PR'
  *
  * - Groups
- * 세그먼트' SG'
  * 템퍼러쳐 TM
  * 레퍼런스 RF
  * 스트림 SR
@@ -44,7 +43,27 @@ import { IDX0 } from './base'
 
 const IDX0Schema = z.union(IDX0.map((i) => z.literal(i)))
 
-export const Rule_ID = ['[Sudoku]', '[R]', '[C]', '[B]', '[SG]', '[DT]', '[LK]', "[LK']", '[MT]', '[MR]', '[QD]', "[QD']", '[TP]', '[LO]', "[LO']", '[BP]', '[PO]', "[R']"] as const
+export const Rule_ID = [
+  '[Sudoku]',
+  '[R]',
+  '[C]',
+  '[B]',
+  '[SG]',
+  "[SG']",
+  '[DT]',
+  '[LK]',
+  "[LK']",
+  '[MT]',
+  '[MR]',
+  '[QD]',
+  "[QD']",
+  '[TP]',
+  '[LO]',
+  "[LO']",
+  '[BP]',
+  '[PO]',
+  "[R']",
+] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
 
@@ -82,6 +101,10 @@ const RuleObjectMap = {
   }),
   '[SG]': z.object({
     id: z.literal('[SG]'),
+    render_state: z.object({ regions: GroupsSchema }),
+  }),
+  "[SG']": z.object({
+    id: z.literal("[SG']"),
     render_state: z.object({ regions: GroupsSchema }),
   }),
   '[DT]': z.object({

@@ -2,9 +2,9 @@ import { SIZE_CELL } from '../const/const'
 import { getDisJointGroups, GROUPS_R } from '../const/groups'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
-import { isKnown, type Rule } from '../types/Rule'
+import { isKnown, type Group, type Rule } from '../types/Rule'
 import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
-import { hasPOSs } from '../util/groups'
+import { hasPOSs, POS2number } from '../util/groups'
 import { pairwise } from '../util/pairwise'
 import { SoftDistinctColorGenerator } from '../util/SoftDistinctColorGenerator'
 
@@ -19,19 +19,16 @@ svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
 
 type POSlike = [number, number]
 
-declare const __brand: unique symbol
-type Brand<B> = { [__brand]: B }
-
-type X = number & Brand<'X'>
-type Y = number & Brand<'Y'>
+type X = number
+type Y = number
 type Coord = [X, Y]
 
 function calculateCenter(pos1: POSlike, pos2?: POSlike): Coord {
-  if (!pos2) return [(pos1[1] + 1) * SIZE_CELL + SIZE_CELL / 2, (pos1[0] + 1) * SIZE_CELL + SIZE_CELL / 2] as Coord
+  if (!pos2) return [(pos1[1] + 1) * SIZE_CELL + SIZE_CELL / 2, (pos1[0] + 1) * SIZE_CELL + SIZE_CELL / 2]
 
   const [x1, y1] = calculateCenter(pos1)
   const [x2, y2] = calculateCenter(pos2)
-  return [(x1 + x2) / 2, (y1 + y2) / 2] as Coord
+  return [(x1 + x2) / 2, (y1 + y2) / 2]
 }
 
 // ---------
@@ -54,6 +51,7 @@ const DrawRadius = {
 } as const
 
 interface DrawOptions {
+  dotted?: boolean
   stroke_color?: string
   fill_color?: string
   thickness?: keyof typeof DrawWidth
@@ -61,6 +59,7 @@ interface DrawOptions {
 }
 
 interface ParsedDrawOptions {
+  dotted: boolean
   stroke_color: string
   fill_color: string
   strokeWidth: number
@@ -68,12 +67,14 @@ interface ParsedDrawOptions {
 }
 
 interface DrawLineOptions {
+  dotted?: boolean
   color?: string
   thickness?: keyof typeof DrawWidth
   round?: boolean
 }
 
 interface ParsedDrawLineOptions {
+  dotted: boolean
   color: string
   strokeWidth: number
   round: boolean
@@ -81,6 +82,7 @@ interface ParsedDrawLineOptions {
 
 function parseDrawOptions(options?: DrawOptions): ParsedDrawOptions {
   return {
+    dotted: options?.dotted ?? false,
     stroke_color: options?.stroke_color ?? '#000000',
     fill_color: options?.fill_color ?? '#ffffff',
     strokeWidth: options?.thickness ? DrawWidth[options.thickness] : DrawWidth.border_regular,
@@ -90,71 +92,90 @@ function parseDrawOptions(options?: DrawOptions): ParsedDrawOptions {
 
 function parseDrawLineOptions(options?: DrawLineOptions): ParsedDrawLineOptions {
   return {
+    dotted: options?.dotted ?? false,
     color: options?.color ?? '#000000',
     strokeWidth: options?.thickness ? DrawWidth[options.thickness] : DrawWidth.border_regular,
     round: options?.round ?? true,
   }
 }
 
-function createCircle(x: X, y: Y, { stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
-  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+function createRectangle(w: Y, a: X, s: Y, d: X, { dotted, stroke_color, fill_color, strokeWidth }: ParsedDrawOptions) {
+  const ele = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
 
-  circle.setAttribute('cx', x.toString())
-  circle.setAttribute('cy', y.toString())
-  circle.setAttribute('r', r.toString())
-  circle.setAttribute('fill', fill_color)
-  circle.setAttribute('stroke', stroke_color)
-  circle.setAttribute('stroke-width', strokeWidth.toString())
+  ele.setAttribute('x', a.toString())
+  ele.setAttribute('y', w.toString())
+  ele.setAttribute('width', (d - a).toString())
+  ele.setAttribute('height', (s - w).toString())
+  ele.setAttribute('fill', fill_color)
+  ele.setAttribute('stroke', stroke_color)
+  ele.setAttribute('stroke-width', strokeWidth.toString())
+  if (dotted) ele.setAttribute('stroke-dasharray', '2')
 
-  svg.appendChild(circle)
+  svg.appendChild(ele)
 }
-function createDiamond(x: X, y: Y, { stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
-  const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+
+function createCircle(x: X, y: Y, { dotted, stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
+  const ele = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+
+  ele.setAttribute('cx', x.toString())
+  ele.setAttribute('cy', y.toString())
+  ele.setAttribute('r', r.toString())
+  ele.setAttribute('fill', fill_color)
+  ele.setAttribute('stroke', stroke_color)
+  ele.setAttribute('stroke-width', strokeWidth.toString())
+  if (dotted) ele.setAttribute('stroke-dasharray', '2')
+
+  svg.appendChild(ele)
+}
+function createDiamond(x: X, y: Y, { dotted, stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
+  const ele = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
 
   const p1 = `${x},${y - r}` // 상
   const p2 = `${x + r},${y}` // 우
   const p3 = `${x},${y + r}` // 하
   const p4 = `${x - r},${y}` // 좌
-  diamond.setAttribute('points', `${p1} ${p2} ${p3} ${p4}`)
+  ele.setAttribute('points', `${p1} ${p2} ${p3} ${p4}`)
 
-  diamond.setAttribute('fill', fill_color)
-  diamond.setAttribute('stroke', stroke_color)
-  diamond.setAttribute('stroke-width', strokeWidth.toString())
+  ele.setAttribute('fill', fill_color)
+  ele.setAttribute('stroke', stroke_color)
+  ele.setAttribute('stroke-width', strokeWidth.toString())
+  if (dotted) ele.setAttribute('stroke-dasharray', '2')
 
-  svg.appendChild(diamond)
+  svg.appendChild(ele)
 }
 /**
  * @param direction degree 단위. 오른쪽을 0으로 하고, 반시계방향을 +로 한다.
  */
-function createTriangle(x: X, y: Y, direction: number, { stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
-  const triangle = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+function createTriangle(x: X, y: Y, direction: number, { dotted, stroke_color, fill_color, strokeWidth, r }: ParsedDrawOptions) {
+  const ele = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
 
   const points = [0, 120, 240].map((a) => {
     const rad = ((direction + a) * Math.PI) / 180
     return `${x + r * Math.cos(rad)},${y - r * Math.sin(rad)}`
   })
-  triangle.setAttribute('points', points.join(' '))
+  ele.setAttribute('points', points.join(' '))
 
-  triangle.setAttribute('fill', fill_color)
-  triangle.setAttribute('stroke', stroke_color)
-  triangle.setAttribute('stroke-width', strokeWidth.toString())
+  ele.setAttribute('fill', fill_color)
+  ele.setAttribute('stroke', stroke_color)
+  ele.setAttribute('stroke-width', strokeWidth.toString())
+  if (dotted) ele.setAttribute('stroke-dasharray', '2')
 
-  svg.appendChild(triangle)
+  svg.appendChild(ele)
 }
 
-function createLine(x1: X, y1: Y, x2: X, y2: Y, { color, strokeWidth, round }: ParsedDrawLineOptions) {
-  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+function createLine(x1: X, y1: Y, x2: X, y2: Y, { dotted, color, strokeWidth, round }: ParsedDrawLineOptions) {
+  const ele = document.createElementNS('http://www.w3.org/2000/svg', 'line')
 
-  line.setAttribute('x1', x1.toString())
-  line.setAttribute('y1', y1.toString())
-  line.setAttribute('x2', x2.toString())
-  line.setAttribute('y2', y2.toString())
-  // line.setAttribute('fill', color)
-  line.setAttribute('stroke', color)
-  line.setAttribute('stroke-width', strokeWidth.toString())
-  if (round) line.setAttribute('stroke-linecap', 'round')
+  ele.setAttribute('x1', x1.toString())
+  ele.setAttribute('y1', y1.toString())
+  ele.setAttribute('x2', x2.toString())
+  ele.setAttribute('y2', y2.toString())
+  ele.setAttribute('stroke', color)
+  ele.setAttribute('stroke-width', strokeWidth.toString())
+  if (round) ele.setAttribute('stroke-linecap', 'round')
+  if (dotted) ele.setAttribute('stroke-dasharray', '2')
 
-  svg.appendChild(line)
+  svg.appendChild(ele)
 }
 
 const Draw = {
@@ -210,10 +231,10 @@ const Draw = {
     const [x2, y2] = calculateCenter(pos2)
     const [cx, cy] = calculateCenter(pos1, pos2)
 
-    const newX1 = (cx - (y1 - cy)) as X
-    const newY1 = (cy + (x1 - cx)) as Y
-    const newX2 = (cx - (y2 - cy)) as X
-    const newY2 = (cy + (x2 - cx)) as Y
+    const newX1 = cx - (y1 - cy)
+    const newY1 = cy + (x1 - cx)
+    const newX2 = cx - (y2 - cy)
+    const newY2 = cy + (x2 - cx)
 
     createLine(newX1, newY1, newX2, newY2, parseDrawLineOptions(options))
   },
@@ -222,6 +243,81 @@ const Draw = {
     const [x2, y2] = calculateCenter(pos2)
 
     createLine(x1, y1, x2, y2, parseDrawLineOptions(options))
+  },
+  Cage(group: Group, options_?: DrawOptions) {
+    const parsedRectOptions = parseDrawOptions({
+      size: 'regular',
+      ...options_,
+      dotted: false,
+      stroke_color: '#00000000',
+    })
+    const parsedLineOptions = parseDrawLineOptions({
+      dotted: options_?.dotted,
+      color: options_?.stroke_color,
+      thickness: 'border_regular',
+    })
+
+    const r = parsedRectOptions.r
+
+    const set = new Set(group.map(POS2number))
+
+    for (const pos of group) {
+      const n = POS2number(pos)
+      const has_map = {
+        Q: set.has(n - 9 - 1),
+        W: set.has(n - 9),
+        E: set.has(n - 9 + 1),
+
+        A: set.has(n - 1),
+        D: set.has(n + 1),
+
+        Z: set.has(n + 9 - 1),
+        X: set.has(n + 9),
+        C: set.has(n + 9 + 1),
+      }
+
+      const [x, y] = calculateCenter(pos)
+      const W = y - SIZE_CELL / 2
+      const A = x - SIZE_CELL / 2
+      const S = y + SIZE_CELL / 2
+      const D = x + SIZE_CELL / 2
+
+      const w = y - r
+      const a = x - r
+      const s = y + r
+      const d = x + r
+
+      // fill
+      createRectangle(w, a, s, d, parsedRectOptions)
+      if (has_map.W) createRectangle(W, a, w, d, parsedRectOptions)
+      if (has_map.A) createRectangle(w, A, s, a, parsedRectOptions)
+      if (has_map.X) createRectangle(s, a, S, d, parsedRectOptions)
+      if (has_map.D) createRectangle(w, d, s, D, parsedRectOptions)
+
+      if (has_map.Q && has_map.W && has_map.A) createRectangle(W, A, w, a, parsedRectOptions)
+      if (has_map.E && has_map.W && has_map.D) createRectangle(W, d, w, D, parsedRectOptions)
+
+      if (has_map.Z && has_map.X && has_map.A) createRectangle(s, A, S, a, parsedRectOptions)
+      if (has_map.C && has_map.X && has_map.D) createRectangle(s, d, S, D, parsedRectOptions)
+
+      // stroke
+      if (!has_map.W) createLine(a, w, d, w, parsedLineOptions)
+      if (!has_map.A) createLine(a, w, a, s, parsedLineOptions)
+      if (!has_map.X) createLine(a, s, d, s, parsedLineOptions)
+      if (!has_map.D) createLine(d, w, d, s, parsedLineOptions)
+
+      if (has_map.A && !(has_map.Q && has_map.W)) createLine(A, w, a, w, parsedLineOptions)
+      if (has_map.A && !(has_map.Z && has_map.X)) createLine(A, s, a, s, parsedLineOptions)
+
+      if (has_map.W && !(has_map.Q && has_map.A)) createLine(a, W, a, w, parsedLineOptions)
+      if (has_map.W && !(has_map.E && has_map.D)) createLine(d, W, d, w, parsedLineOptions)
+
+      if (has_map.X && !(has_map.Z && has_map.A)) createLine(a, s, a, S, parsedLineOptions)
+      if (has_map.X && !(has_map.C && has_map.D)) createLine(d, s, d, S, parsedLineOptions)
+
+      if (has_map.D && !(has_map.E && has_map.W)) createLine(d, w, D, w, parsedLineOptions)
+      if (has_map.D && !(has_map.C && has_map.X)) createLine(d, s, D, s, parsedLineOptions)
+    }
   },
 }
 
@@ -314,6 +410,13 @@ function render_rule(rule: Rule): boolean {
         })
       return true
     }
+    case "[SG']": {
+      rule.render_state.regions.forEach((group) => {
+        const color = color_generator.next()
+        Draw.Cage(group, { stroke_color: color + 'ff', fill_color: color + '99' })
+      })
+      return true
+    }
 
     case '[LK]':
     case "[LK']": {
@@ -332,7 +435,7 @@ function render_rule(rule: Rule): boolean {
 
     case '[MR]': {
       rule.render_state.metros.forEach((group) => {
-        const color = color_generator.next()
+        const color = color_generator.next() + 'cc'
         pairwise(group).forEach(([pos1, pos2]) => {
           Draw.Line(pos1, pos2, { color, thickness: 'hint_light' })
         })

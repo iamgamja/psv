@@ -67,6 +67,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[C]':
     case '[B]':
     case '[SG]':
+    case "[SG']":
     case '[DT]':
       return has_dup(digit_arr, getDisJointGroups(rule))
 

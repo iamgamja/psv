@@ -97,6 +97,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     case '[C]':
     case '[B]':
     case '[SG]':
+    case "[SG']":
     case '[DT]':
       return check_dup(board, getDisJointGroups(rule))
 

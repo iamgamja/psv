@@ -37,19 +37,15 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   return [Math.round((r1 + m) * 255), Math.round((g1 + m) * 255), Math.round((b1 + m) * 255)]
 }
 
-function hslToHex8(h: number, s: number, l: number, opacity = 0.8): RGBAHex {
+function hslToHex(h: number, s: number, l: number): RGBAHex {
   const [r, g, b] = hslToRgb(h, s, l)
-  const a = Math.round(clamp(opacity, 0, 1) * 255)
-  return `#${toHex2(r)}${toHex2(g)}${toHex2(b)}${toHex2(a)}` as RGBAHex
+  return `#${toHex2(r)}${toHex2(g)}${toHex2(b)}` as RGBAHex
 }
 
 export class SoftDistinctColorGenerator {
   private index = 0
-  private readonly opacity: number
 
-  constructor(opacity = 0.8) {
-    this.opacity = clamp(opacity, 0, 1)
-  }
+  constructor() {}
 
   next(): RGBAHex {
     const i = this.index++
@@ -65,7 +61,7 @@ export class SoftDistinctColorGenerator {
     const s = saturationPattern[i % saturationPattern.length]
     const l = lightnessPattern[Math.floor(i / saturationPattern.length) % lightnessPattern.length]
 
-    return hslToHex8(hue, s, l, this.opacity)
+    return hslToHex(hue, s, l)
   }
 
   at(index: number): RGBAHex {
@@ -74,6 +70,6 @@ export class SoftDistinctColorGenerator {
     const lightnessPattern = [70, 64, 74, 68, 72]
     const s = saturationPattern[index % saturationPattern.length]
     const l = lightnessPattern[Math.floor(index / saturationPattern.length) % lightnessPattern.length]
-    return hslToHex8(hue, s, l, this.opacity)
+    return hslToHex(hue, s, l)
   }
 }
