@@ -1,9 +1,6 @@
 /**
  * @todo
  *
- * - Groups
- * 인버전 IV
- *
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
  * 퀀텀 QT
  * 레인지 RG
@@ -57,6 +54,7 @@ export const Rule_ID = [
   '[AQ]',
   '[RF]',
   '[SR]',
+  '[IV]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -200,6 +198,10 @@ const RuleObjectMap = {
   '[SR]': z.object({
     id: z.literal('[SR]'),
     render_state: z.object({ streams: GroupsSchema }),
+  }),
+  '[IV]': z.object({
+    id: z.literal('[IV]'),
+    render_state: z.object({ lines: GroupsSchema }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

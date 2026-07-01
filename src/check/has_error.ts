@@ -6,6 +6,7 @@ import { DirMap, isKnown, type Rule } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
+import { pairwise } from '../util/pairwise'
 
 type ParsedGroup =
   | {
@@ -547,6 +548,21 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           }
 
           if (!(x === type)) return true
+        }
+      }
+
+      return false
+    }
+
+    case '[IV]': {
+      for (const group of rule.render_state.lines) {
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const cnt = pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length
+
+        if (filled_all) {
+          if (!(cnt === 1)) return true
+        } else {
+          if (!(cnt <= 1)) return true
         }
       }
 

@@ -39,7 +39,8 @@ const DrawWidth = {
   border_regular: 1,
   border_heavy: 3,
 
-  hint_light: 3,
+  hint_lightest: 3,
+  hint_light: 6,
   hint_regular: 10,
   hint_heavy: 25,
 } as const
@@ -371,6 +372,24 @@ const Draw = {
       if (has_map.D) Draw._createLine(d, y, D, y, parsedOptions)
     }
   },
+  StreamOrder(group: Group, options_?: DrawLineOptions) {
+    const parsedOptions = parseDrawLineOptions({
+      thickness: 'hint_regular',
+      round: false,
+      ...options_,
+    })
+
+    const r = parsedOptions.strokeWidth / 2
+
+    for (const [pos1, pos2] of pairwise(group)) {
+      const [x, y] = calculateCenter(pos1, pos2)
+      const [x1, y1] = calculateCenter(pos1)
+      const [x2, y2] = calculateCenter(pos2)
+
+      Draw._createLine(x, y, x1 + Math.sign(x1 - x) * r, y1 + Math.sign(y1 - y) * r, parsedOptions)
+      Draw._createLine(x, y, x2 + Math.sign(x2 - x) * r, y2 + Math.sign(y1 - y) * r, parsedOptions)
+    }
+  },
   Text(pos: POSlike, text: string, options?: DrawTextOptions) {
     const parsedOptions = parseDrawTextOptions(options)
 
@@ -500,7 +519,7 @@ function render_rule(rule: Rule): boolean {
       rule.render_state.metros.forEach((group) => {
         const color = color_generator.next() + 'cc'
         pairwise(group).forEach(([pos1, pos2]) => {
-          Draw.Line(pos1, pos2, { color, thickness: 'hint_light' })
+          Draw.Line(pos1, pos2, { color, thickness: 'hint_lightest' })
         })
       })
       return true
@@ -596,8 +615,15 @@ function render_rule(rule: Rule): boolean {
 
     case '[SR]': {
       rule.render_state.streams.forEach((group) => {
-        // todo
         Draw.Stream(group, { color: '#32bbff6b' })
+      })
+      return true
+    }
+
+    case '[IV]': {
+      rule.render_state.lines.forEach((group) => {
+        Draw.StreamOrder(group, { color: '#29e8536b', thickness: 'hint_light' })
+        Draw.Circle(group[0], null, { stroke_color: '#00000000', fill_color: '#29e8536b', size: 'small' })
       })
       return true
     }

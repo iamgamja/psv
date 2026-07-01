@@ -7,6 +7,7 @@ import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell, POS2number } from '../util/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
+import { pairwise } from '../util/pairwise'
 
 type ParsedGroup =
   | {
@@ -658,6 +659,23 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           }
 
           if (!(x === type)) collector.add(group.map((pos) => POS2Cell(board, pos)))
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[IV]': {
+      const collector = new CellCollector()
+
+      for (const group of rule.render_state.lines) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+        const cnt = pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length
+
+        if (filled_all) {
+          if (!(cnt === 1)) collector.add(cells)
+        } else {
+          if (!(cnt <= 1)) collector.add(cells)
         }
       }
 
