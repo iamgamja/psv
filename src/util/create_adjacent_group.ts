@@ -1,5 +1,5 @@
-import { IDX0 } from '../types/base'
-import type { Group, Groups, POS, TwoGroup, TwoGroups } from '../types/Rule'
+import { IDX0, POSSchema } from '../types/base'
+import type { Group, Groups, POS, TwoGroup, TwoGroups } from '../types/base'
 
 type AdjacentMode = 'wasd' | 'king'
 
@@ -27,14 +27,15 @@ function create_adjacent_twogroups(adjacent_mode: AdjacentMode): TwoGroups {
 
   for (const r1 of IDX0) {
     for (const c1 of IDX0) {
+      const pos1 = POSSchema.parse([r1, c1])
       for (const [dr, dc] of DeltaMap[adjacent_mode]) {
         const r2 = r1 + dr
         const c2 = c1 + dc
-        if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
-        res.add([
-          [r1, c1],
-          [r2, c2],
-        ] as TwoGroup)
+
+        const pos2 = POSSchema.safeParse([r2, c2])
+        if (!pos2.success) continue
+
+        res.add([pos1, pos2.data])
       }
     }
   }
@@ -55,8 +56,9 @@ export function create_adjacent_group_of_pos(pos: POS, adjacent_mode: AdjacentMo
   for (const [dr, dc] of DeltaMap[adjacent_mode]) {
     const r2 = r1 + dr
     const c2 = c1 + dc
-    if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
-    res.add([r2, c2] as POS)
+
+    const pos2 = POSSchema.safeParse([r2, c2])
+    if (pos2.success) res.add(pos2.data)
   }
 
   return Array.from(res.values())

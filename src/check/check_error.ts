@@ -1,8 +1,9 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
-import { IDX0, V } from '../types/base'
+import { IDX0, POSSchema, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { DirMap, isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
+import { DirMap, isKnown, type Rule } from '../types/Rule'
+import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell } from '../util/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
@@ -235,7 +236,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       for (const r of IDX0) {
         for (const c of IDX0) {
-          const pos = [r, c] as POS
+          const pos = POSSchema.parse([r, c])
           const cell = POS2Cell(board, pos)
           const digit = cell.digit
 
@@ -252,8 +253,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         const yes: Cell[] = []
         const no: Cell[] = []
         for (const c of IDX0) {
-          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, [r, c] as POS))
-          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, [r, c] as POS))
+          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
+          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
         }
 
         if (!(yes.length <= 1)) collector.add(yes)
@@ -263,8 +264,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         const yes: Cell[] = []
         const no: Cell[] = []
         for (const r of IDX0) {
-          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, [r, c] as POS))
-          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, [r, c] as POS))
+          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
+          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
         }
 
         if (!(yes.length <= 1)) collector.add(yes)
@@ -352,7 +353,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
 
       for (const [r1, c1, dd] of rule.render_state.cells) {
-        const pos1 = [r1, c1] as POS
+        const pos1 = POSSchema.parse([r1, c1])
         const cell1 = POS2Cell(board, pos1)
         const digit1 = cell1.digit
 
@@ -366,10 +367,10 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
                 [r1 + dr, c1 - dc],
                 [r1 + dr, c1 + dc],
               ]) {
-                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+                const pos2 = POSSchema.safeParse([r2, c2])
+                if (!pos2.success) continue
 
-                const pos2 = [r2, c2] as POS
-                const cell2 = POS2Cell(board, pos2)
+                const cell2 = POS2Cell(board, pos2.data)
                 const digit2 = cell2.digit
 
                 if (digit1 === digit2) collector.add([cell1, cell2])
@@ -385,9 +386,10 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               [r1 + dr, c1 - dc],
               [r1 + dr, c1 + dc],
             ]) {
-              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+              const pos2 = POSSchema.safeParse([r2, c2])
+              if (!pos2.success) continue
 
-              group.push([r2, c2] as POS)
+              group.push(pos2.data)
             }
           }
 
@@ -404,7 +406,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
 
       for (const [r1, c1, dd] of rule.render_state.cells) {
-        const pos1 = [r1, c1] as POS
+        const pos1 = POSSchema.parse([r1, c1])
         const cell1 = POS2Cell(board, pos1)
         const digit1 = cell1.digit
 
@@ -418,10 +420,10 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
                 [r1 + dr, c1 - dc],
                 [r1 + dr, c1 + dc],
               ]) {
-                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+                const pos2 = POSSchema.safeParse([r2, c2])
+                if (!pos2.success) continue
 
-                const pos2 = [r2, c2] as POS
-                const cell2 = POS2Cell(board, pos2)
+                const cell2 = POS2Cell(board, pos2.data)
                 const digit2 = cell2.digit
 
                 if (digit1 === digit2) collector.add([cell1, cell2])
@@ -437,9 +439,10 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               [r1 + dr, c1 - dc],
               [r1 + dr, c1 + dc],
             ]) {
-              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+              const pos2 = POSSchema.safeParse([r2, c2])
+              if (!pos2.success) continue
 
-              group.push([r2, c2] as POS)
+              group.push(pos2.data)
             }
           }
 
@@ -482,7 +485,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
 
       for (const [r, c, dir] of rule.render_state.arrows) {
-        const pos = [r, c] as POS
+        const pos = POSSchema.parse([r, c])
         const cell = POS2Cell(board, pos)
         const digit = cell.digit
 
@@ -492,13 +495,13 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           const r2 = r + dir_dr * digit
           const c2 = c + dir_dc * digit
 
-          if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) {
+          const pos2 = POSSchema.safeParse([r2, c2])
+          if (!pos2.success) {
             collector.add([cell])
             continue
           }
 
-          const pos2 = [r2, c2] as POS
-          const cell2 = POS2Cell(board, pos2)
+          const cell2 = POS2Cell(board, pos2.data)
           const digit2 = cell2.digit
 
           if (digit2) {

@@ -1,8 +1,9 @@
 import { SIZE_CELL } from '../const/const'
 import { getDisJointGroups, GROUPS_R } from '../const/groups'
-import { IDX0 } from '../types/base'
+import { IDX0, POSSchema } from '../types/base'
 import type { Board } from '../types/Board'
-import { DirMap, isKnown, type Group, type POS, type Rule } from '../types/Rule'
+import { DirMap, isKnown, type Rule } from '../types/Rule'
+import { type Group } from '../types/base'
 import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { hasPOSs, POS2number } from '../util/groups'
 import { pairwise } from '../util/pairwise'
@@ -515,7 +516,7 @@ function render_rule(rule: Rule): boolean {
     case '[VT]': {
       rule.render_state.arrows.forEach(([r, c, dir]) => {
         const [dr, dc] = DirMap[dir]
-        Draw.Triangle([r, c] as POS, null, { size: 'small', stroke_color: '#ff7b82', fill_color: '#ff7b82', direction: Math.atan2(-dr, dc) })
+        Draw.Triangle(POSSchema.parse([r, c]), null, { size: 'small', stroke_color: '#ff7b82', fill_color: '#ff7b82', direction: Math.atan2(-dr, dc) })
       })
       return true
     }

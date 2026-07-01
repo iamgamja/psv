@@ -1,8 +1,9 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } from '../const/check_helper'
-import { IDX0, V } from '../types/base'
+import { IDX0, POSSchema, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import { DirMap, isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
+import { DirMap, isKnown, type Rule } from '../types/Rule'
+import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit } from '../util/groups'
 
@@ -177,7 +178,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       for (const r of IDX0) {
         for (const c of IDX0) {
-          const pos = [r, c] as POS
+          const pos = POSSchema.parse([r, c])
           const digit = POS2Digit(digit_arr, pos)
 
           const group = create_adjacent_group_of_pos(pos, 'wasd')
@@ -281,7 +282,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
     case '[RT]': {
       for (const [r1, c1, dd] of rule.render_state.cells) {
-        const pos1 = [r1, c1] as POS
+        const pos1 = POSSchema.parse([r1, c1])
         const digit1 = POS2Digit(digit_arr, pos1)
 
         if (digit1) {
@@ -294,10 +295,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
                 [r1 + dr, c1 - dc],
                 [r1 + dr, c1 + dc],
               ]) {
-                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+                const pos2 = POSSchema.safeParse([r2, c2])
+                if (!pos2.success) continue
 
-                const pos2 = [r2, c2] as POS
-                const digit2 = POS2Digit(digit_arr, pos2)
+                const digit2 = POS2Digit(digit_arr, pos2.data)
 
                 if (digit1 === digit2) return true
               }
@@ -312,9 +313,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               [r1 + dr, c1 - dc],
               [r1 + dr, c1 + dc],
             ]) {
-              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+              const pos2 = POSSchema.safeParse([r2, c2])
+              if (!pos2.success) continue
 
-              group.push([r2, c2] as POS)
+              group.push(pos2.data)
             }
           }
 
@@ -329,7 +331,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
     case "[RT']": {
       for (const [r1, c1, dd] of rule.render_state.cells) {
-        const pos1 = [r1, c1] as POS
+        const pos1 = POSSchema.parse([r1, c1])
         const digit1 = POS2Digit(digit_arr, pos1)
 
         if (digit1) {
@@ -342,10 +344,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
                 [r1 + dr, c1 - dc],
                 [r1 + dr, c1 + dc],
               ]) {
-                if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+                const pos2 = POSSchema.safeParse([r2, c2])
+                if (!pos2.success) continue
 
-                const pos2 = [r2, c2] as POS
-                const digit2 = POS2Digit(digit_arr, pos2)
+                const digit2 = POS2Digit(digit_arr, pos2.data)
 
                 if (digit1 === digit2) return true
               }
@@ -360,9 +362,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               [r1 + dr, c1 - dc],
               [r1 + dr, c1 + dc],
             ]) {
-              if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) continue
+              const pos2 = POSSchema.safeParse([r2, c2])
+              if (!pos2.success) continue
 
-              group.push([r2, c2] as POS)
+              group.push(pos2.data)
             }
           }
 
@@ -394,7 +397,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
     case '[VT]': {
       for (const [r, c, dir] of rule.render_state.arrows) {
-        const pos = [r, c] as POS
+        const pos = POSSchema.parse([r, c])
         const digit = POS2Digit(digit_arr, pos)
 
         if (digit) {
@@ -403,12 +406,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           const r2 = r + dir_dr * digit
           const c2 = c + dir_dc * digit
 
-          if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) {
-            return true
-          }
+          const pos2 = POSSchema.safeParse([r2, c2])
+          if (!pos2.success) return true
 
-          const pos2 = [r2, c2] as POS
-          const digit2 = POS2Digit(digit_arr, pos2)
+          const digit2 = POS2Digit(digit_arr, pos2.data)
 
           if (digit2) {
             if (!(digit2 === 9)) return true

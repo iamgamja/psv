@@ -31,9 +31,7 @@
  * 스텐실 ST
  */
 import { z } from 'zod'
-import { IDX0 } from './base'
-
-const IDX0Schema = z.union(IDX0.map((i) => z.literal(i)))
+import { GroupSchema, GroupsSchema, IDX0Schema, TwoGroupsSchema } from './base'
 
 export const Rule_ID = [
   '[Sudoku]',
@@ -65,26 +63,6 @@ export const Rule_ID = [
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
 
-export const POSSchema = z.tuple([IDX0Schema, IDX0Schema])
-export type POS = z.infer<typeof POSSchema>
-
-export const GroupSchema = z.array(POSSchema)
-export type Group = z.infer<typeof GroupSchema>
-
-export const GroupsSchema = z.array(GroupSchema)
-export type Groups = z.infer<typeof GroupsSchema>
-
-export const TwoGroupSchema = GroupSchema.length(2)
-export type TwoGroup = z.infer<typeof TwoGroupSchema>
-
-export const TwoGroupsSchema = z.array(TwoGroupSchema)
-export type TwoGroups = z.infer<typeof TwoGroupsSchema>
-
-const PREdgesSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()]))
-const PRPrimeTripletsSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()]))
-
-const RTSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, z.number()]))
-
 export const DirMap = {
   L: [0, -1],
   R: [0, +1],
@@ -92,8 +70,6 @@ export const DirMap = {
   D: [+1, 0],
 } as const
 const LRUDSchema = z.enum(Object.keys(DirMap) as [keyof typeof DirMap, ...(keyof typeof DirMap)[]])
-
-const VTSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema]))
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{
   id: z.ZodLiteral<K>
@@ -169,25 +145,25 @@ const RuleObjectMap = {
   '[PR]': z.object({
     id: z.literal('[PR]'),
     render_state: z.object({
-      edges: PREdgesSchema,
+      edges: z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()])),
     }),
   }),
   "[PR']": z.object({
     id: z.literal("[PR']"),
     render_state: z.object({
-      triplets: PRPrimeTripletsSchema,
+      triplets: z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()])),
     }),
   }),
   '[RT]': z.object({
     id: z.literal('[RT]'),
     render_state: z.object({
-      cells: RTSchema,
+      cells: z.array(z.tuple([IDX0Schema, IDX0Schema, z.number()])),
     }),
   }),
   "[RT']": z.object({
     id: z.literal("[RT']"),
     render_state: z.object({
-      cells: RTSchema,
+      cells: z.array(z.tuple([IDX0Schema, IDX0Schema, z.number()])),
     }),
   }),
   '[PA]': z.object({
@@ -199,7 +175,7 @@ const RuleObjectMap = {
   '[VT]': z.object({
     id: z.literal('[VT]'),
     render_state: z.object({
-      arrows: VTSchema,
+      arrows: z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema])),
     }),
   }),
 } satisfies {

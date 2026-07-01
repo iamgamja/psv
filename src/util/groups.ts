@@ -1,7 +1,7 @@
-import type { IDX0, V } from '../types/base'
+import { POSSchema, type IDX0, type V } from '../types/base'
 import type { Board, DigitArr } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import type { Group, POS, TwoGroup, TwoGroups } from '../types/Rule'
+import type { Group, POS, TwoGroup, TwoGroups } from '../types/base'
 
 export function cell2POS(cell: Cell): POS {
   const r = (cell.r - 1) as IDX0
@@ -22,7 +22,7 @@ export function POS2number(pos: POS): number {
 }
 
 export function number2POS(n: number): POS {
-  return [Math.floor(n / 9), n % 9] as POS
+  return POSSchema.parse([Math.floor(n / 9), n % 9])
 }
 
 export function TwoGroup2number([pos1, pos2]: TwoGroup): number {

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { IDX0 } from '../types/base'
-import type { Group, Groups, Rule, Rule_ID, RuleObject, TwoGroups } from '../types/Rule'
+import type { Rule, Rule_ID, RuleObject } from '../types/Rule'
+import type { Group, Groups, TwoGroups } from '../types/base'
 import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
 
 export const GROUPS_R: Groups = Array.from({ length: 9 }, () => [])
