@@ -360,9 +360,6 @@ const Draw = {
 
 - RF
 Draw.Line([5, 0 - 0.5], [5, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
-
-- TM
-Draw.Line([7, 0], [7, 2], {color: '#fe4b196b', thickness: 'hint_heavy'})
 */
 
 const color_generator = new SoftDistinctColorGenerator()
@@ -531,6 +528,14 @@ function render_rule(rule: Rule): boolean {
       rule.render_state.marked_cells.forEach((pos) => {
         Draw.Circle(pos, null, { stroke_color: '#ffe749', fill_color: '#00000000' })
         Draw.Fill(pos, { fill_color: '#ffe74954' })
+      })
+      return true
+    }
+
+    case '[TM]': {
+      rule.render_state.regions.forEach(({ cells: group, color }) => {
+        const color_code = color === 'red' ? '#fe19196b' : color === 'green' ? '#12de2d6b' : '#192cfe6b'
+        Draw.Line(group[0], group[2], { color: color_code, thickness: 'hint_heavy' })
       })
       return true
     }

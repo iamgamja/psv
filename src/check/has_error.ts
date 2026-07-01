@@ -443,6 +443,36 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[TM]': {
+      for (const { cells: group, color } of rule.render_state.regions) {
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const sum = (digits as number[]).reduce((a, b) => a + b, 0)
+
+        switch (color) {
+          case 'blue': {
+            if (!(sum <= 10)) return true
+            break
+          }
+          case 'green': {
+            if (filled_all) {
+              if (!(sum === 15)) return true
+            } else {
+              if (!(sum <= 15)) return true
+            }
+            break
+          }
+          case 'red': {
+            if (filled_all) {
+              if (!(sum >= 20)) return true
+            }
+            break
+          }
+        }
+      }
+
+      return false
+    }
   }
 }
 

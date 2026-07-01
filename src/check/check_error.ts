@@ -539,6 +539,38 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[TM]': {
+      const collector = new CellCollector()
+
+      for (const { cells: group, color } of rule.render_state.regions) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+        const sum = (digits as number[]).reduce((a, b) => a + b, 0)
+
+        switch (color) {
+          case 'blue': {
+            if (!(sum <= 10)) collector.add(cells)
+            break
+          }
+          case 'green': {
+            if (filled_all) {
+              if (!(sum === 15)) collector.add(cells)
+            } else {
+              if (!(sum <= 15)) collector.add(cells)
+            }
+            break
+          }
+          case 'red': {
+            if (filled_all) {
+              if (!(sum >= 20)) collector.add(cells)
+            }
+            break
+          }
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 

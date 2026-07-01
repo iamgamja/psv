@@ -2,7 +2,6 @@
  * @todo
  *
  * - Groups
- * 템퍼러쳐 TM
  * 레퍼런스 RF
  * 스트림 SR
  * 인버전 IV
@@ -57,6 +56,7 @@ export const Rule_ID = [
   '[PA]',
   '[VT]',
   '[EF]',
+  '[TM]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -175,6 +175,17 @@ const RuleObjectMap = {
   '[EF]': z.object({
     id: z.literal('[EF]'),
     render_state: z.object({ marked_cells: GroupSchema }),
+  }),
+  '[TM]': z.object({
+    id: z.literal('[TM]'),
+    render_state: z.object({
+      regions: z.array(
+        z.object({
+          cells: GroupSchema,
+          color: z.enum(['red', 'green', 'blue']),
+        }),
+      ),
+    }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>
