@@ -355,13 +355,6 @@ const Draw = {
 
 // ---------
 
-/**
-@todo 렌더링 아이디어
-
-- RF
-Draw.Line([5, 0 - 0.5], [5, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
-*/
-
 const color_generator = new SoftDistinctColorGenerator()
 
 function render_rule(rule: Rule): boolean {
@@ -543,6 +536,14 @@ function render_rule(rule: Rule): boolean {
     case '[AQ]': {
       rule.render_state.regions.forEach((group) => {
         Draw.Cage(group, { dotted: true, stroke_color: '#3bd1fa', fill_color: '#3bd1fa4b' })
+      })
+      return true
+    }
+
+    case '[RF]': {
+      rule.render_state.lines.forEach(([type, i]) => {
+        if (type === 'ROW') Draw.Line([i, 0 - 0.5], [i, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
+        else Draw.Line([0 - 0.5, i], [8 + 0.5, i], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
       })
       return true
     }

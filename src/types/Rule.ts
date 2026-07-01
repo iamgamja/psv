@@ -2,7 +2,6 @@
  * @todo
  *
  * - Groups
- * 레퍼런스 RF
  * 스트림 SR
  * 인버전 IV
  *
@@ -57,6 +56,7 @@ export const Rule_ID = [
   '[EF]',
   '[TM]',
   '[AQ]',
+  '[RF]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -68,6 +68,8 @@ export const DirMap = {
   D: [+1, 0],
 } as const
 const LRUDSchema = z.enum(Object.keys(DirMap) as [keyof typeof DirMap, ...(keyof typeof DirMap)[]])
+
+const RCSchema = z.enum(['ROW', 'COL'])
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{
   id: z.ZodLiteral<K>
@@ -190,6 +192,10 @@ const RuleObjectMap = {
   '[AQ]': z.object({
     id: z.literal('[AQ]'),
     render_state: z.object({ regions: GroupsSchema }),
+  }),
+  '[RF]': z.object({
+    id: z.literal('[RF]'),
+    render_state: z.object({ lines: z.array(z.tuple([RCSchema, IDX0Schema])) }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

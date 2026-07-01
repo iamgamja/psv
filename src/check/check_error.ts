@@ -599,6 +599,46 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[RF]': {
+      const collector = new CellCollector()
+
+      for (const [type, i] of rule.render_state.lines) {
+        if (type === 'ROW') {
+          const r = i
+          for (const c of IDX0) {
+            const pos = POSSchema.parse([r, c])
+            const cell = POS2Cell(board, pos)
+            const digit = cell.digit
+            if (!digit) continue
+
+            const pos2 = POSSchema.parse([digit - 1, c])
+            const cell2 = POS2Cell(board, pos2)
+            const digit2 = cell2.digit
+            if (!digit2) continue
+
+            if (!(digit2 - 1 === r)) collector.add([cell, cell2])
+          }
+        } else {
+          const c = i
+          for (const r of IDX0) {
+            const pos = POSSchema.parse([r, c])
+            const cell = POS2Cell(board, pos)
+            const digit = cell.digit
+            if (!digit) continue
+
+            const pos2 = POSSchema.parse([r, digit - 1])
+            const cell2 = POS2Cell(board, pos2)
+            const digit2 = cell2.digit
+            if (!digit2) continue
+
+            if (!(digit2 - 1 === c)) collector.add([cell, cell2])
+          }
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 

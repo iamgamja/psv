@@ -497,6 +497,40 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[RF]': {
+      for (const [type, i] of rule.render_state.lines) {
+        if (type === 'ROW') {
+          const r = i
+          for (const c of IDX0) {
+            const pos = POSSchema.parse([r, c])
+            const digit = POS2Digit(digit_arr, pos)
+            if (!digit) continue
+
+            const pos2 = POSSchema.parse([digit - 1, c])
+            const digit2 = POS2Digit(digit_arr, pos2)
+            if (!digit2) continue
+
+            if (!(digit2 - 1 === r)) return true
+          }
+        } else {
+          const c = i
+          for (const r of IDX0) {
+            const pos = POSSchema.parse([r, c])
+            const digit = POS2Digit(digit_arr, pos)
+            if (!digit) continue
+
+            const pos2 = POSSchema.parse([r, digit - 1])
+            const digit2 = POS2Digit(digit_arr, pos2)
+            if (!digit2) continue
+
+            if (!(digit2 - 1 === c)) return true
+          }
+        }
+      }
+
+      return false
+    }
   }
 }
 
