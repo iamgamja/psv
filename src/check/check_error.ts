@@ -114,8 +114,6 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     }
 
     case '[MT]': {
-      // X가 X개보다 많이 있으면 체크
-      // 모든 [MT] 셀이 채워졌을 때, 추가로 모든 X가 X개인지 체크
       const collector = new CellCollector()
 
       const { sub_cells, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
@@ -130,8 +128,6 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     }
 
     case '[MR]': {
-      // 항상 중복 검사
-      // [MR]의 전부가 채워졌을 때, 추가로 연속하는지 체크
       const collector = new CellCollector()
 
       collector.add(check_dup(board, rule.render_state.metros))

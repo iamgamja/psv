@@ -82,8 +82,6 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[MT]': {
-      // X가 X개보다 많이 있으면 체크
-      // 모든 [MT] 셀이 채워졌을 때, 추가로 모든 X가 X개인지 체크
       const { sub_groups, filled_all } = parseGroup(digit_arr, rule.render_state.diamond_cells)
 
       if (filled_all) {
@@ -96,8 +94,6 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[MR]': {
-      // 항상 중복 검사
-      // [MR]의 전부가 채워졌을 때, 추가로 연속하는지 체크
       if (has_dup(digit_arr, rule.render_state.metros)) return true
 
       for (const group of rule.render_state.metros) {
