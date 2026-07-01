@@ -531,6 +531,27 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[SR]': {
+      for (const group of rule.render_state.streams) {
+        let type: -1 | 0 | 1 = -1 // -1: 결정되지 않음; 0|1: (r^c^digit)&1
+
+        for (const pos of group) {
+          const digit = POS2Digit(digit_arr, pos)
+          if (!digit) continue
+
+          const x = ((pos[0] ^ pos[1] ^ digit) & 1) as 0 | 1
+          if (type === -1) {
+            type = x
+            continue
+          }
+
+          if (!(x === type)) return true
+        }
+      }
+
+      return false
+    }
   }
 }
 

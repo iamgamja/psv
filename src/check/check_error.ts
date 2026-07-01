@@ -639,6 +639,30 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[SR]': {
+      const collector = new CellCollector()
+
+      for (const group of rule.render_state.streams) {
+        let type: -1 | 0 | 1 = -1 // -1: 결정되지 않음; 0|1: (r^c^digit)&1
+
+        for (const pos of group) {
+          const cell = POS2Cell(board, pos)
+          const digit = cell.digit
+          if (!digit) continue
+
+          const x = ((pos[0] ^ pos[1] ^ digit) & 1) as 0 | 1
+          if (type === -1) {
+            type = x
+            continue
+          }
+
+          if (!(x === type)) collector.add(group.map((pos) => POS2Cell(board, pos)))
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 

@@ -2,7 +2,6 @@
  * @todo
  *
  * - Groups
- * 스트림 SR
  * 인버전 IV
  *
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
@@ -57,6 +56,7 @@ export const Rule_ID = [
   '[TM]',
   '[AQ]',
   '[RF]',
+  '[SR]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -196,6 +196,10 @@ const RuleObjectMap = {
   '[RF]': z.object({
     id: z.literal('[RF]'),
     render_state: z.object({ lines: z.array(z.tuple([RCSchema, IDX0Schema])) }),
+  }),
+  '[SR]': z.object({
+    id: z.literal('[SR]'),
+    render_state: z.object({ streams: GroupsSchema }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

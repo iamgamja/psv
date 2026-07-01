@@ -268,21 +268,25 @@ const Draw = {
     const set = new Set(group.map(POS2number))
 
     for (const pos of group) {
-      const n = POS2number(pos)
+      const hasPos = (dr: number, dc: number) => {
+        const parsed = POSSchema.safeParse([pos[0] + dr, pos[1] + dc])
+        return parsed.success && set.has(POS2number(parsed.data))
+      }
       const has_map = {
-        Q: set.has(n - 9 - 1),
-        W: set.has(n - 9),
-        E: set.has(n - 9 + 1),
+        Q: hasPos(-1, -1),
+        W: hasPos(-1, 0),
+        E: hasPos(-1, 1),
 
-        A: set.has(n - 1),
-        D: set.has(n + 1),
+        A: hasPos(0, -1),
+        D: hasPos(0, 1),
 
-        Z: set.has(n + 9 - 1),
-        X: set.has(n + 9),
-        C: set.has(n + 9 + 1),
+        Z: hasPos(1, -1),
+        X: hasPos(1, 0),
+        C: hasPos(1, 1),
       }
 
       const [x, y] = calculateCenter(pos)
+
       const W = y - SIZE_CELL / 2
       const A = x - SIZE_CELL / 2
       const S = y + SIZE_CELL / 2
@@ -323,6 +327,48 @@ const Draw = {
 
       if (has_map.D && !(has_map.E && has_map.W)) Draw._createLine(d, w, D, w, parsedLineOptions)
       if (has_map.D && !(has_map.C && has_map.X)) Draw._createLine(d, s, D, s, parsedLineOptions)
+    }
+  },
+  Stream(group: Group, options_?: DrawLineOptions) {
+    const parsedOptions = parseDrawLineOptions({
+      thickness: 'hint_regular',
+      round: false,
+      ...options_,
+    })
+
+    const r = parsedOptions.strokeWidth / 2
+
+    const set = new Set(group.map(POS2number))
+
+    for (const pos of group) {
+      const hasPos = (dr: number, dc: number) => {
+        const parsed = POSSchema.safeParse([pos[0] + dr, pos[1] + dc])
+        return parsed.success && set.has(POS2number(parsed.data))
+      }
+      const has_map = {
+        W: hasPos(-1, 0),
+        A: hasPos(0, -1),
+        S: hasPos(1, 0),
+        D: hasPos(0, 1),
+      }
+
+      const [x, y] = calculateCenter(pos)
+
+      const W = y - SIZE_CELL / 2
+      const A = x - SIZE_CELL / 2
+      const S = y + SIZE_CELL / 2
+      const D = x + SIZE_CELL / 2
+
+      const w = y - r
+      const a = x - r
+      const s = y + r
+      const d = x + r
+
+      Draw._createLine(x, w, x, s, parsedOptions)
+      if (has_map.W) Draw._createLine(x, w, x, W, parsedOptions)
+      if (has_map.A) Draw._createLine(a, y, A, y, parsedOptions)
+      if (has_map.S) Draw._createLine(x, s, x, S, parsedOptions)
+      if (has_map.D) Draw._createLine(d, y, D, y, parsedOptions)
     }
   },
   Text(pos: POSlike, text: string, options?: DrawTextOptions) {
@@ -544,6 +590,14 @@ function render_rule(rule: Rule): boolean {
       rule.render_state.lines.forEach(([type, i]) => {
         if (type === 'ROW') Draw.Line([i, 0 - 0.5], [i, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
         else Draw.Line([0 - 0.5, i], [8 + 0.5, i], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
+      })
+      return true
+    }
+
+    case '[SR]': {
+      rule.render_state.streams.forEach((group) => {
+        // todo
+        Draw.Stream(group, { color: '#32bbff6b' })
       })
       return true
     }
