@@ -473,6 +473,30 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[AQ]': {
+      for (const group of rule.render_state.regions) {
+        for (let i = 0; i < group.length; i++) {
+          const pos1 = group[i]
+          const digit1 = POS2Digit(digit_arr, pos1)
+          if (!digit1) continue
+
+          for (let j = i + 1; j < group.length; j++) {
+            const pos2 = group[j]
+            const digit2 = POS2Digit(digit_arr, pos2)
+            if (!digit2) continue
+
+            if (pos1[0] < pos2[0]) {
+              if (!(digit1 < digit2)) return true
+            } else if (pos1[0] > pos2[0]) {
+              if (!(digit1 > digit2)) return true
+            }
+          }
+        }
+      }
+
+      return false
+    }
   }
 }
 

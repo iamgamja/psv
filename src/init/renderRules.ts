@@ -540,6 +540,13 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
+    case '[AQ]': {
+      rule.render_state.regions.forEach((group) => {
+        Draw.Cage(group, { dotted: true, stroke_color: '#3bd1fa', fill_color: '#3bd1fa4b' })
+      })
+      return true
+    }
+
     case '[DT]':
     case '[QD]':
     case "[QD']":

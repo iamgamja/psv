@@ -5,7 +5,6 @@
  * 레퍼런스 RF
  * 스트림 SR
  * 인버전 IV
- * 아쿠아리움 AQ
  *
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
  * 퀀텀 QT
@@ -57,6 +56,7 @@ export const Rule_ID = [
   '[VT]',
   '[EF]',
   '[TM]',
+  '[AQ]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -186,6 +186,10 @@ const RuleObjectMap = {
         }),
       ),
     }),
+  }),
+  '[AQ]': z.object({
+    id: z.literal('[AQ]'),
+    render_state: z.object({ regions: GroupsSchema }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

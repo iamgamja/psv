@@ -571,6 +571,34 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[AQ]': {
+      const collector = new CellCollector()
+
+      for (const group of rule.render_state.regions) {
+        for (let i = 0; i < group.length; i++) {
+          const pos1 = group[i]
+          const cell1 = POS2Cell(board, pos1)
+          const digit1 = cell1.digit
+          if (!digit1) continue
+
+          for (let j = i + 1; j < group.length; j++) {
+            const pos2 = group[j]
+            const cell2 = POS2Cell(board, pos2)
+            const digit2 = cell2.digit
+            if (!digit2) continue
+
+            if (cell1.r < cell2.r) {
+              if (!(digit1 < digit2)) collector.add([cell1, cell2])
+            } else if (cell1.r > cell2.r) {
+              if (!(digit1 > digit2)) collector.add([cell1, cell2])
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 
