@@ -5,7 +5,7 @@ import type { DigitArr } from '../types/Board'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
-import { differenceOf2Groups, POS2Digit } from '../util/groups'
+import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
 
 type ParsedGroup =
   | {
@@ -413,6 +413,30 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
           if (digit2) {
             if (!(digit2 === 9)) return true
+          }
+        }
+      }
+
+      return false
+    }
+
+    case '[EF]': {
+      const set = new Set(rule.render_state.marked_cells.map(POS2number))
+
+      for (const pos of rule.render_state.marked_cells) {
+        const digit = POS2Digit(digit_arr, pos)
+
+        if (digit) {
+          const group = create_adjacent_group_of_pos(pos, 'king').filter((pos) => set.has(POS2number(pos)))
+          group.push(pos) // 자기 자신도 포함
+
+          const { digits, filled_all } = parseGroup(digit_arr, group)
+          const cnt = digits.filter((d) => d).filter((d) => d <= digit).length
+
+          if (filled_all) {
+            if (!(cnt === digit)) return true
+          } else {
+            if (!(cnt <= digit)) return true
           }
         }
       }

@@ -345,6 +345,12 @@ const Draw = {
       }
     }
   },
+
+  Fill(pos: POSlike, options?: DrawOptions) {
+    const [x, y] = calculateCenter(pos)
+
+    Draw._createRectangle(y - SIZE_CELL / 2, x - SIZE_CELL / 2, y + SIZE_CELL / 2, x + SIZE_CELL / 2, parseDrawOptions(options))
+  },
 }
 
 // ---------
@@ -517,6 +523,14 @@ function render_rule(rule: Rule): boolean {
       rule.render_state.arrows.forEach(([r, c, dir]) => {
         const [dr, dc] = DirMap[dir]
         Draw.Triangle(POSSchema.parse([r, c]), null, { size: 'small', stroke_color: '#ff7b82', fill_color: '#ff7b82', direction: Math.atan2(-dr, dc) })
+      })
+      return true
+    }
+
+    case '[EF]': {
+      rule.render_state.marked_cells.forEach((pos) => {
+        Draw.Circle(pos, null, { stroke_color: '#ffe749', fill_color: '#00000000' })
+        Draw.Fill(pos, { fill_color: '#ffe74954' })
       })
       return true
     }

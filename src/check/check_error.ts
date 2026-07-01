@@ -5,7 +5,7 @@ import type { Cell } from '../types/Cell'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
-import { differenceOf2Groups, POS2Cell } from '../util/groups'
+import { differenceOf2Groups, POS2Cell, POS2number } from '../util/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
 
 type ParsedGroup =
@@ -506,6 +506,33 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
           if (digit2) {
             if (!(digit2 === 9)) collector.add([cell, cell2])
+          }
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[EF]': {
+      const collector = new CellCollector()
+
+      const set = new Set(rule.render_state.marked_cells.map(POS2number))
+
+      for (const pos of rule.render_state.marked_cells) {
+        const cell = POS2Cell(board, pos)
+        const digit = cell.digit
+
+        if (digit) {
+          const group = create_adjacent_group_of_pos(pos, 'king').filter((pos) => set.has(POS2number(pos)))
+          group.push(pos) // 자기 자신도 포함
+
+          const { cells, digits, filled_all } = parseGroup(board, group)
+          const cnt = digits.filter((d) => d).filter((d) => d <= digit).length
+
+          if (filled_all) {
+            if (!(cnt === digit)) collector.add(cells)
+          } else {
+            if (!(cnt <= digit)) collector.add(cells)
           }
         }
       }

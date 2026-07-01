@@ -8,9 +8,6 @@
  * 인버전 IV
  * 아쿠아리움 AQ
  *
- * - 특수한 칸 / 칸들
- * 리플렉스 EF
- *
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
  * 퀀텀 QT
  * 레인지 RG
@@ -59,6 +56,7 @@ export const Rule_ID = [
   "[RT']",
   '[PA]',
   '[VT]',
+  '[EF]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -168,15 +166,15 @@ const RuleObjectMap = {
   }),
   '[PA]': z.object({
     id: z.literal('[PA]'),
-    render_state: z.object({
-      dominoes: TwoGroupsSchema,
-    }),
+    render_state: z.object({ dominoes: TwoGroupsSchema }),
   }),
   '[VT]': z.object({
     id: z.literal('[VT]'),
-    render_state: z.object({
-      arrows: z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema])),
-    }),
+    render_state: z.object({ arrows: z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema])) }),
+  }),
+  '[EF]': z.object({
+    id: z.literal('[EF]'),
+    render_state: z.object({ marked_cells: GroupSchema }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>
