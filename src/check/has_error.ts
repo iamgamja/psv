@@ -2,7 +2,7 @@ import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/grou
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } from '../const/check_helper'
 import { IDX0, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
+import { DirMap, isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit } from '../util/groups'
 
@@ -386,6 +386,33 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           const s = digits.toSorted().join('')
           if (visit.has(s)) return true
           visit.add(s)
+        }
+      }
+
+      return false
+    }
+
+    case '[VT]': {
+      for (const [r, c, dir] of rule.render_state.arrows) {
+        const pos = [r, c] as POS
+        const digit = POS2Digit(digit_arr, pos)
+
+        if (digit) {
+          const [dir_dr, dir_dc] = DirMap[dir]
+
+          const r2 = r + dir_dr * digit
+          const c2 = c + dir_dc * digit
+
+          if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) {
+            return true
+          }
+
+          const pos2 = [r2, c2] as POS
+          const digit2 = POS2Digit(digit_arr, pos2)
+
+          if (digit2) {
+            if (!(digit2 === 9)) return true
+          }
         }
       }
 

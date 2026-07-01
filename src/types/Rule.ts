@@ -9,7 +9,6 @@
  * 아쿠아리움 AQ
  *
  * - 특수한 칸 / 칸들
- * 벡터 VT
  * 리플렉스 EF
  *
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
@@ -61,6 +60,7 @@ export const Rule_ID = [
   '[RT]',
   "[RT']",
   '[PA]',
+  '[VT]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -84,6 +84,16 @@ const PREdgesSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0S
 const PRPrimeTripletsSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()]))
 
 const RTSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, z.number()]))
+
+export const DirMap = {
+  L: [0, -1],
+  R: [0, +1],
+  U: [-1, 0],
+  D: [+1, 0],
+} as const
+const LRUDSchema = z.enum(Object.keys(DirMap) as [keyof typeof DirMap, ...(keyof typeof DirMap)[]])
+
+const VTSchema = z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema]))
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{
   id: z.ZodLiteral<K>
@@ -184,6 +194,12 @@ const RuleObjectMap = {
     id: z.literal('[PA]'),
     render_state: z.object({
       dominoes: TwoGroupsSchema,
+    }),
+  }),
+  '[VT]': z.object({
+    id: z.literal('[VT]'),
+    render_state: z.object({
+      arrows: VTSchema,
     }),
   }),
 } satisfies {

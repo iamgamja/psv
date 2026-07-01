@@ -2,7 +2,7 @@ import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/grou
 import { IDX0, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
+import { DirMap, isKnown, type Group, type Groups, type POS, type Rule, type TwoGroups } from '../types/Rule'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell } from '../util/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
@@ -473,6 +473,38 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       for (const cells of Array.from(visit.values()).map((cl) => cl.res)) {
         if (cells.size != 2) collector.add(cells)
+      }
+
+      return collector.res
+    }
+
+    case '[VT]': {
+      const collector = new CellCollector()
+
+      for (const [r, c, dir] of rule.render_state.arrows) {
+        const pos = [r, c] as POS
+        const cell = POS2Cell(board, pos)
+        const digit = cell.digit
+
+        if (digit) {
+          const [dir_dr, dir_dc] = DirMap[dir]
+
+          const r2 = r + dir_dr * digit
+          const c2 = c + dir_dc * digit
+
+          if (!(0 <= r2 && r2 < 9 && 0 <= c2 && c2 < 9)) {
+            collector.add([cell])
+            continue
+          }
+
+          const pos2 = [r2, c2] as POS
+          const cell2 = POS2Cell(board, pos2)
+          const digit2 = cell2.digit
+
+          if (digit2) {
+            if (!(digit2 === 9)) collector.add([cell, cell2])
+          }
+        }
       }
 
       return collector.res

@@ -2,7 +2,7 @@ import { SIZE_CELL } from '../const/const'
 import { getDisJointGroups, GROUPS_R } from '../const/groups'
 import { IDX0 } from '../types/base'
 import type { Board } from '../types/Board'
-import { isKnown, type Group, type Rule } from '../types/Rule'
+import { DirMap, isKnown, type Group, type POS, type Rule } from '../types/Rule'
 import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { hasPOSs, POS2number } from '../util/groups'
 import { pairwise } from '../util/pairwise'
@@ -211,14 +211,14 @@ const Draw = {
 
     Draw._createPolygon(x, y, 4, 0, parseDrawOptions(options))
   },
-  Triangle(pos1: POSlike, pos2?: POSlike | null, options_?: DrawOptions) {
+  Triangle(pos1: POSlike, pos2?: POSlike | null, options_?: DrawOptions & { direction?: number }) {
     const options: DrawOptions = {
       size: !pos2 ? 'regular' : 'small',
       ...options_,
     }
     const [x, y] = calculateCenter(pos1, pos2)
 
-    const direction = !pos2 ? 0 : Math.atan2(-(pos2[0] - pos1[0]), pos2[1] - pos1[1])
+    const direction = !pos2 ? (options_?.direction ?? 0) : Math.atan2(-(pos2[0] - pos1[0]), pos2[1] - pos1[1])
     Draw._createPolygon(x, y, 3, direction, parseDrawOptions(options))
   },
   Hexagon(pos1: POSlike, pos2?: POSlike | null, options_?: DrawOptions) {
@@ -508,6 +508,14 @@ function render_rule(rule: Rule): boolean {
     case '[PA]': {
       rule.render_state.dominoes.forEach((two_group) => {
         Draw.Cage(two_group, { dotted: true, stroke_color: '#6d4dfaff', fill_color: '#6d4dfa4b' })
+      })
+      return true
+    }
+
+    case '[VT]': {
+      rule.render_state.arrows.forEach(([r, c, dir]) => {
+        const [dr, dc] = DirMap[dir]
+        Draw.Triangle([r, c] as POS, null, { size: 'small', stroke_color: '#ff7b82', fill_color: '#ff7b82', direction: Math.atan2(-dr, dc) })
       })
       return true
     }
