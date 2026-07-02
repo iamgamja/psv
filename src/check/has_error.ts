@@ -1,6 +1,6 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } from '../const/check_helper'
-import { IDX0, POSSchema, V } from '../types/base'
+import { IDX0, IDX0Schema, POSSchema, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
@@ -563,6 +563,57 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           if (!(cnt === 1)) return true
         } else {
           if (!(cnt <= 1)) return true
+        }
+      }
+
+      return false
+    }
+
+    case '[BD]': {
+      if (digit_arr.flat().every((digit) => digit)) {
+        const maxR = Array(9).fill(-1) // 열 c마다 이미 점유된 최대 r
+
+        for (const start_r of rule.render_state.start_rows) {
+          const pos1 = POSSchema.parse([start_r, 0])
+          const digit1 = POS2Digit(digit_arr, pos1)
+
+          function findPathFromStart(startR: IDX0): number[] | null {
+            const path = Array(9).fill(-1)
+
+            function dfs(r: IDX0, c: IDX0): boolean {
+              if (r <= maxR[c]) return false
+
+              const pos = POSSchema.parse([r, c])
+              const digit = POS2Digit(digit_arr, pos)
+              if (!(digit === ((digit1 + c - 1) % 9) + 1)) return false
+
+              path[c] = r
+
+              if (c === 8) return true
+
+              for (const dr of [-1, 0, +1]) {
+                const r2 = IDX0Schema.safeParse(r + dr)
+                if (!r2.success) continue
+
+                if (dfs(r2.data, IDX0Schema.parse(c + 1))) return true
+              }
+
+              path[c] = -1
+              return false
+            }
+
+            if (dfs(startR, 0)) return path
+            return null
+          }
+
+          const path = findPathFromStart(start_r)
+          if (!path) {
+            return true
+          }
+
+          for (let c = 0; c <= 8; c++) {
+            maxR[c] = Math.max(maxR[c], path[c])
+          }
         }
       }
 

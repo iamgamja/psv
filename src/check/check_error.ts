@@ -1,5 +1,5 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
-import { IDX0, POSSchema, V } from '../types/base'
+import { IDX0, IDX0Schema, POSSchema, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
@@ -680,6 +680,59 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       }
 
       return collector.res
+    }
+
+    case '[BD]': {
+      if (board.flat_cells.every((cell) => cell.digit)) {
+        const maxR = Array(9).fill(-1) // 열 c마다 이미 점유된 최대 r
+
+        for (const start_r of rule.render_state.start_rows) {
+          const pos1 = POSSchema.parse([start_r, 0])
+          const cell1 = POS2Cell(board, pos1)
+          const digit1 = cell1.digit
+
+          function findPathFromStart(startR: IDX0): number[] | null {
+            const path = Array(9).fill(-1)
+
+            function dfs(r: IDX0, c: IDX0): boolean {
+              if (r <= maxR[c]) return false
+
+              const pos = POSSchema.parse([r, c])
+              const cell = POS2Cell(board, pos)
+              const digit = cell.digit
+              if (!(digit === ((digit1 + c - 1) % 9) + 1)) return false
+
+              path[c] = r
+
+              if (c === 8) return true
+
+              for (const dr of [-1, 0, +1]) {
+                const r2 = IDX0Schema.safeParse(r + dr)
+                if (!r2.success) continue
+
+                if (dfs(r2.data, IDX0Schema.parse(c + 1))) return true
+              }
+
+              path[c] = -1
+              return false
+            }
+
+            if (dfs(startR, 0)) return path
+            return null
+          }
+
+          const path = findPathFromStart(start_r)
+          if (!path) {
+            return new Set(rule.render_state.start_rows.map((r) => POSSchema.parse([r, 0])).map((pos) => POS2Cell(board, pos)))
+          }
+
+          for (let c = 0; c <= 8; c++) {
+            maxR[c] = Math.max(maxR[c], path[c])
+          }
+        }
+      }
+
+      return new Set<Cell>()
     }
   }
 }

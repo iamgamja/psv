@@ -9,7 +9,6 @@
  * 프로덕트 PD
  *
  * - 경로 탐색
- * 브릿지 BD
  * 트레일 TR
  * 트레일' TR'
  *
@@ -55,6 +54,7 @@ export const Rule_ID = [
   '[RF]',
   '[SR]',
   '[IV]',
+  '[BD]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -202,6 +202,10 @@ const RuleObjectMap = {
   '[IV]': z.object({
     id: z.literal('[IV]'),
     render_state: z.object({ lines: GroupsSchema }),
+  }),
+  '[BD]': z.object({
+    id: z.literal('[BD]'),
+    render_state: z.object({ start_rows: z.array(IDX0Schema) }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

@@ -628,6 +628,15 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
+    case '[BD]': {
+      rule.render_state.start_rows.forEach((r) => {
+        const color = color_generator.next()
+        Draw.Divider([r, 0], [r, -1], { color: color, thickness: 'border_heavy' })
+        Draw.Diamond([r, 0], [r, -1], { stroke_color: color, fill_color: color + '6b', size: 'small' })
+      })
+      return true
+    }
+
     case '[DT]':
     case '[QD]':
     case "[QD']":
