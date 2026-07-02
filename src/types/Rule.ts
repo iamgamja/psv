@@ -9,7 +9,6 @@
  * 프로덕트 PD
  *
  * - 경로 탐색
- * 트레일 TR
  * 트레일' TR'
  *
  * - 덩어리
@@ -20,7 +19,7 @@
  * 스텐실 ST
  */
 import { z } from 'zod'
-import { GroupSchema, GroupsSchema, IDX0Schema, TwoGroupsSchema } from './base'
+import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema } from './base'
 
 export const Rule_ID = [
   '[Sudoku]',
@@ -55,6 +54,7 @@ export const Rule_ID = [
   '[SR]',
   '[IV]',
   '[BD]',
+  '[TR]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -206,6 +206,13 @@ const RuleObjectMap = {
   '[BD]': z.object({
     id: z.literal('[BD]'),
     render_state: z.object({ start_rows: z.array(IDX0Schema) }),
+  }),
+  '[TR]': z.object({
+    id: z.literal('[TR]'),
+    render_state: z.object({
+      start: POSSchema,
+      end: POSSchema,
+    }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

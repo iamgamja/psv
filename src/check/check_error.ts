@@ -3,7 +3,7 @@ import { IDX0, IDX0Schema, POSSchema, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
-import { type Group, type Groups, type TwoGroups } from '../types/base'
+import { type Group, type Groups, type TwoGroups, type POS } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell, POS2number } from '../util/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
@@ -733,6 +733,55 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       }
 
       return new Set<Cell>()
+    }
+
+    case '[TR]': {
+      const collector = new CellCollector()
+
+      if (board.flat_cells.every((cell) => cell.digit)) {
+        const start = rule.render_state.start
+        const end = rule.render_state.end
+
+        const visited = new Set<number>()
+        const queue: POS[] = [start]
+        visited.add(POS2number(start))
+        let path_exists = false
+
+        while (queue.length > 0) {
+          const curr = queue.shift()!
+          if (curr[0] === end[0] && curr[1] === end[1]) {
+            path_exists = true
+            break
+          }
+
+          const curr_cell = POS2Cell(board, curr)
+          const curr_digit = curr_cell.digit
+          if (!curr_digit) continue
+
+          const next_digit = (curr_digit % 9) + 1
+
+          const adj_group = create_adjacent_group_of_pos(curr, 'wasd')
+          for (const npos of adj_group) {
+            const npos_num = POS2number(npos)
+            if (visited.has(npos_num)) continue
+
+            const ncell = POS2Cell(board, npos)
+            const ndigit = ncell.digit
+            if (ndigit === next_digit) {
+              visited.add(npos_num)
+              queue.push(npos)
+            }
+          }
+        }
+
+        if (!path_exists) {
+          const startCell = POS2Cell(board, start)
+          const endCell = POS2Cell(board, end)
+          collector.add([startCell, endCell])
+        }
+      }
+
+      return collector.res
     }
   }
 }

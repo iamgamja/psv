@@ -3,7 +3,7 @@ import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } 
 import { IDX0, IDX0Schema, POSSchema, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
-import { type Group, type Groups, type TwoGroups } from '../types/base'
+import { type Group, type Groups, type TwoGroups, type POS } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
 import { pairwise } from '../util/pairwise'
@@ -615,6 +615,47 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             maxR[c] = Math.max(maxR[c], path[c])
           }
         }
+      }
+
+      return false
+    }
+
+    case '[TR]': {
+      if (digit_arr.flat().every((digit) => digit)) {
+        const start = rule.render_state.start
+        const end = rule.render_state.end
+
+        const visited = new Set<number>()
+        const queue: POS[] = [start]
+        visited.add(POS2number(start))
+        let path_exists = false
+
+        while (queue.length > 0) {
+          const curr = queue.shift()!
+          if (curr[0] === end[0] && curr[1] === end[1]) {
+            path_exists = true
+            break
+          }
+
+          const curr_digit = POS2Digit(digit_arr, curr)
+          if (!curr_digit) continue
+
+          const next_digit = (curr_digit % 9) + 1
+
+          const adj_group = create_adjacent_group_of_pos(curr, 'wasd')
+          for (const npos of adj_group) {
+            const npos_num = POS2number(npos)
+            if (visited.has(npos_num)) continue
+
+            const ndigit = POS2Digit(digit_arr, npos)
+            if (ndigit === next_digit) {
+              visited.add(npos_num)
+              queue.push(npos)
+            }
+          }
+        }
+
+        return !path_exists
       }
 
       return false
