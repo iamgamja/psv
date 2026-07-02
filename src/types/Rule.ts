@@ -8,9 +8,6 @@
  * 시퀀스 SQ
  * 프로덕트 PD
  *
- * - 경로 탐색
- * 트레일' TR'
- *
  * - 덩어리
  * 이스케이프 ES
  * 엡실론 EP
@@ -55,6 +52,7 @@ export const Rule_ID = [
   '[IV]',
   '[BD]',
   '[TR]',
+  "[TR']",
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -209,6 +207,13 @@ const RuleObjectMap = {
   }),
   '[TR]': z.object({
     id: z.literal('[TR]'),
+    render_state: z.object({
+      start: POSSchema,
+      end: POSSchema,
+    }),
+  }),
+  "[TR']": z.object({
+    id: z.literal("[TR']"),
     render_state: z.object({
       start: POSSchema,
       end: POSSchema,

@@ -783,6 +783,108 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case "[TR']": {
+      const collector = new CellCollector()
+
+      if (board.flat_cells.every((cell) => cell.digit)) {
+        const start = rule.render_state.start
+        const end = rule.render_state.end
+
+        const start_num = POS2number(start)
+        const end_num = POS2number(end)
+
+        if (start_num === end_num) {
+          collector.add([POS2Cell(board, start)])
+        } else {
+          const src = start_num + 81
+          const sink = end_num
+
+          const adj = Array.from({ length: 162 }, () => [] as number[])
+          const capacity = Array.from({ length: 162 }, () => new Float64Array(162))
+
+          function addEdge(u: number, v: number, cap: number) {
+            adj[u].push(v)
+            adj[v].push(u)
+            capacity[u][v] = cap
+          }
+
+          for (let u = 0; u < 81; u++) {
+            if (u !== start_num && u !== end_num) {
+              addEdge(u, u + 81, 1)
+            }
+          }
+
+          for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+              const u = r * 9 + c
+              if (u === end_num) continue
+
+              const u_pos: POS = [r as IDX0, c as IDX0]
+              const u_cell = POS2Cell(board, u_pos)
+              const u_digit = u_cell.digit
+              if (!u_digit) continue
+
+              const next_digit = (u_digit % 9) + 1
+              const neighbors = create_adjacent_group_of_pos(u_pos, 'wasd')
+
+              for (const npos of neighbors) {
+                const v = POS2number(npos)
+                if (v === start_num) continue
+
+                const v_cell = POS2Cell(board, npos)
+                const v_digit = v_cell.digit
+                if (v_digit === next_digit) {
+                  addEdge(u + 81, v, 1)
+                }
+              }
+            }
+          }
+
+          let totalFlow = 0
+          while (totalFlow < 2) {
+            const parent = new Int32Array(162).fill(-1)
+            const queue = [src]
+            parent[src] = -2
+
+            let found = false
+            let head = 0
+            while (head < queue.length) {
+              const curr = queue[head++]
+              if (curr === sink) {
+                found = true
+                break
+              }
+
+              for (const next of adj[curr]) {
+                if (parent[next] === -1 && capacity[curr][next] > 0) {
+                  parent[next] = curr
+                  queue.push(next)
+                }
+              }
+            }
+
+            if (!found) break
+
+            let curr = sink
+            while (curr !== src) {
+              const prev = parent[curr]
+              capacity[prev][curr] -= 1
+              capacity[curr][prev] += 1
+              curr = prev
+            }
+
+            totalFlow += 1
+          }
+
+          if (totalFlow < 2) {
+            collector.add([POS2Cell(board, start), POS2Cell(board, end)])
+          }
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 

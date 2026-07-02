@@ -637,7 +637,8 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
-    case '[TR]': {
+    case '[TR]':
+    case "[TR']": {
       Draw.Circle(rule.render_state.start, null, { stroke_color: '#3b82f6', fill_color: '#3b82f654' })
       Draw.Circle(rule.render_state.end, null, { stroke_color: '#f97316', fill_color: '#f9731654' })
       return true
