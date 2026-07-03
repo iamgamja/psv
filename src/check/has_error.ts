@@ -1,6 +1,6 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } from '../const/check_helper'
-import { IDX0, POSSchema, V } from '../types/base'
+import { IDX0, POSSchema, V, type POS } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
@@ -60,6 +60,53 @@ function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) =
   }
 
   return false
+}
+
+type StencilPiece = Extract<Rule, { id: '[ST]' }>['render_state']['pieces'][number]
+type StencilValue = { pos: POS; value: V }
+type StencilVariant = { cells: POS[]; values: StencilValue[]; height: number; width: number }
+
+function parseStencilValues(values: StencilPiece['values']): StencilValue[] {
+  return Object.entries(values).map(([key, value]) => {
+    const [r, c] = key.split(',').map(Number)
+    return { pos: POSSchema.parse([r, c]), value }
+  })
+}
+
+function createStencilVariants(piece: StencilPiece): StencilVariant[] {
+  const values = parseStencilValues(piece.values)
+  const transforms = [
+    ([r, c]: POS): [number, number] => [r, c],
+    ([r, c]: POS): [number, number] => [c, -r],
+    ([r, c]: POS): [number, number] => [-r, -c],
+    ([r, c]: POS): [number, number] => [-c, r],
+    ([r, c]: POS): [number, number] => [r, -c],
+    ([r, c]: POS): [number, number] => [-r, c],
+    ([r, c]: POS): [number, number] => [c, r],
+    ([r, c]: POS): [number, number] => [-c, -r],
+  ]
+
+  const variants: StencilVariant[] = []
+  const seen = new Set<string>()
+
+  for (const transform of transforms) {
+    const rawCells = piece.cells.map(transform)
+    const rawValues = values.map(({ pos, value }) => ({ pos: transform(pos), value }))
+    const minR = Math.min(...rawCells.map(([r]) => r))
+    const minC = Math.min(...rawCells.map(([, c]) => c))
+    const cells = rawCells.map(([r, c]) => POSSchema.parse([r - minR, c - minC]))
+    const transformedValues = rawValues.map(({ pos: [r, c], value }) => ({ pos: POSSchema.parse([r - minR, c - minC]), value }))
+    const height = Math.max(...cells.map(([r]) => r)) + 1
+    const width = Math.max(...cells.map(([, c]) => c)) + 1
+    const key = [...cells.map((pos) => pos.join(',')).toSorted(), '|', ...transformedValues.map(({ pos, value }) => `${pos.join(',')}=${value}`).toSorted()].join(';')
+
+    if (!seen.has(key)) {
+      seen.add(key)
+      variants.push({ cells, values: transformedValues, height, width })
+    }
+  }
+
+  return variants
 }
 
 function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
@@ -751,6 +798,33 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
         }
 
         return totalFlow < 2
+      }
+
+      return false
+    }
+
+    case '[ST]': {
+      for (const piece of rule.render_state.pieces) {
+        for (const variant of createStencilVariants(piece)) {
+          for (let ro = 0; ro <= 9 - variant.height; ro++) {
+            for (let co = 0; co <= 9 - variant.width; co++) {
+              let matched = true
+
+              for (const {
+                pos: [r, c],
+                value,
+              } of variant.values) {
+                const pos = POSSchema.parse([ro + r, co + c])
+                if (POS2Digit(digit_arr, pos) !== value) {
+                  matched = false
+                  break
+                }
+              }
+
+              if (matched) return true
+            }
+          }
+        }
       }
 
       return false

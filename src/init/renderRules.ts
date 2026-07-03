@@ -646,6 +646,7 @@ function render_rule(rule: Rule): boolean {
 
     case '[EP]':
     case '[ES]':
+    case '[ST]':
     case '[DT]':
     case '[QD]':
     case "[QD']":

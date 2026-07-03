@@ -7,12 +7,9 @@
  * 레인지' RG'
  * 시퀀스 SQ
  * 프로덕트 PD
- *
- * - 그 외
- * 스텐실 ST
  */
 import { z } from 'zod'
-import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema } from './base'
+import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema, VSchema } from './base'
 
 export const Rule_ID = [
   '[Sudoku]',
@@ -49,6 +46,7 @@ export const Rule_ID = [
   '[BD]',
   '[TR]',
   "[TR']",
+  '[ST]',
   '[ES]',
   '[EP]',
 ] as const
@@ -64,6 +62,16 @@ export const DirMap = {
 const LRUDSchema = z.enum(Object.keys(DirMap) as [keyof typeof DirMap, ...(keyof typeof DirMap)[]])
 
 const RCSchema = z.enum(['ROW', 'COL'])
+const StencilValueKeySchema = z.string().refine((key) => {
+  const [r, c, ...rest] = key.split(',').map(Number)
+  return rest.length === 0 && Number.isInteger(r) && Number.isInteger(c) && POSSchema.safeParse([r, c]).success
+})
+const StencilPieceSchema = z
+  .object({
+    cells: GroupSchema,
+    values: z.record(StencilValueKeySchema, VSchema),
+  })
+  .refine(({ cells, values }) => Object.keys(values).length > 0 && Object.keys(values).every((key) => cells.some((pos) => key === pos.join(','))))
 
 type ZodRuleObject<K extends string = string> = z.ZodObject<{
   id: z.ZodLiteral<K>
@@ -216,6 +224,10 @@ const RuleObjectMap = {
       start: POSSchema,
       end: POSSchema,
     }),
+  }),
+  '[ST]': z.object({
+    id: z.literal('[ST]'),
+    render_state: z.object({ pieces: z.array(StencilPieceSchema) }),
   }),
   '[ES]': z.object({
     id: z.literal('[ES]'),
