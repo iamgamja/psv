@@ -1,9 +1,9 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } from '../const/check_helper'
-import { IDX0, IDX0Schema, POSSchema, V } from '../types/base'
+import { IDX0, POSSchema, V } from '../types/base'
 import type { DigitArr } from '../types/Board'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
-import { type Group, type Groups, type TwoGroups, type POS } from '../types/base'
+import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
 import { pairwise } from '../util/pairwise'
@@ -174,8 +174,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[BP]': {
-      type type_arr = ('no' | 'yes' | 'unknown')[][]
-      const type_arr: type_arr = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
+      const type_arr: ('no' | 'yes' | 'unknown')[][] = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
 
       for (const r of IDX0) {
         for (const c of IDX0) {
@@ -592,10 +591,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               if (c === 8) return true
 
               for (const dr of [-1, 0, +1]) {
-                const r2 = IDX0Schema.safeParse(r + dr)
-                if (!r2.success) continue
+                const next_pos = POSSchema.safeParse([r + dr, c + 1])
+                if (!next_pos.success) continue
 
-                if (dfs(r2.data, IDX0Schema.parse(c + 1))) return true
+                if (dfs(next_pos.data[0], next_pos.data[1])) return true
               }
 
               path[c] = -1
@@ -611,7 +610,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             return true
           }
 
-          for (let c = 0; c <= 8; c++) {
+          for (const c of IDX0) {
             maxR[c] = Math.max(maxR[c], path[c])
           }
         }
@@ -626,7 +625,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
         const end = rule.render_state.end
 
         const visited = new Set<number>()
-        const queue: POS[] = [start]
+        const queue = [start]
         visited.add(POS2number(start))
         let path_exists = false
 
@@ -691,12 +690,12 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           }
         }
 
-        for (let r = 0; r < 9; r++) {
-          for (let c = 0; c < 9; c++) {
+        for (const r of IDX0) {
+          for (const c of IDX0) {
             const u = r * 9 + c
             if (u === end_num) continue
 
-            const u_pos: POS = [r as IDX0, c as IDX0]
+            const u_pos = POSSchema.parse([r, c])
             const u_digit = POS2Digit(digit_arr, u_pos)
             if (!u_digit) continue
 
@@ -760,15 +759,16 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[ES]': {
       const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
 
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
+      for (const r of IDX0) {
+        for (const c of IDX0) {
           if (visited[r][c]) continue
 
-          const digit = digit_arr[r][c]
+          const pos = POSSchema.parse([r, c])
+          const digit = POS2Digit(digit_arr, pos)
           const is_potential_even = !digit || digit % 2 === 0
 
           if (is_potential_even) {
-            const queue: POS[] = [[r as IDX0, c as IDX0]]
+            const queue = [pos]
             visited[r][c] = 1
 
             let touches_edge = false
@@ -784,7 +784,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               for (const npos of adj) {
                 const [nr, nc] = npos
                 if (!visited[nr][nc]) {
-                  const ndigit = digit_arr[nr][nc]
+                  const ndigit = POS2Digit(digit_arr, npos)
                   if (!ndigit || ndigit % 2 === 0) {
                     visited[nr][nc] = 1
                     queue.push(npos)
@@ -809,13 +809,14 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[EP]': {
       const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
 
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
+      for (const r of IDX0) {
+        for (const c of IDX0) {
           if (visited[r][c]) continue
 
-          const digit = digit_arr[r][c]
+          const pos = POSSchema.parse([r, c])
+          const digit = POS2Digit(digit_arr, pos)
           if (digit >= 1 && digit <= 4) {
-            const queue: POS[] = [[r as IDX0, c as IDX0]]
+            const queue = [pos]
             visited[r][c] = 1
 
             let size = 0
@@ -828,7 +829,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               const adj = create_adjacent_group_of_pos(curr, 'wasd')
               for (const npos of adj) {
                 const [nr, nc] = npos
-                const ndigit = digit_arr[nr][nc]
+                const ndigit = POS2Digit(digit_arr, npos)
                 if (ndigit === 0) {
                   has_adjacent_empty = true
                 } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {

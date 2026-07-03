@@ -1,9 +1,9 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
-import { IDX0, IDX0Schema, POSSchema, V } from '../types/base'
+import { IDX0, POSSchema, V } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
 import { DirMap, isKnown, type Rule } from '../types/Rule'
-import { type Group, type Groups, type TwoGroups, type POS } from '../types/base'
+import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell, POS2number } from '../util/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
@@ -232,8 +232,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     case '[BP]': {
       const collector = new CellCollector()
 
-      type type_arr = ('no' | 'yes' | 'unknown')[][]
-      const type_arr: type_arr = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
+      const type_arr: ('no' | 'yes' | 'unknown')[][] = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
 
       for (const r of IDX0) {
         for (const c of IDX0) {
@@ -707,10 +706,10 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               if (c === 8) return true
 
               for (const dr of [-1, 0, +1]) {
-                const r2 = IDX0Schema.safeParse(r + dr)
-                if (!r2.success) continue
+                const next_pos = POSSchema.safeParse([r + dr, c + 1])
+                if (!next_pos.success) continue
 
-                if (dfs(r2.data, IDX0Schema.parse(c + 1))) return true
+                if (dfs(next_pos.data[0], next_pos.data[1])) return true
               }
 
               path[c] = -1
@@ -726,7 +725,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             return new Set(rule.render_state.start_rows.map((r) => POSSchema.parse([r, 0])).map((pos) => POS2Cell(board, pos)))
           }
 
-          for (let c = 0; c <= 8; c++) {
+          for (const c of IDX0) {
             maxR[c] = Math.max(maxR[c], path[c])
           }
         }
@@ -743,7 +742,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         const end = rule.render_state.end
 
         const visited = new Set<number>()
-        const queue: POS[] = [start]
+        const queue = [start]
         visited.add(POS2number(start))
         let path_exists = false
 
@@ -815,12 +814,12 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             }
           }
 
-          for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
+          for (const r of IDX0) {
+            for (const c of IDX0) {
               const u = r * 9 + c
               if (u === end_num) continue
 
-              const u_pos: POS = [r as IDX0, c as IDX0]
+              const u_pos = POSSchema.parse([r, c])
               const u_cell = POS2Cell(board, u_pos)
               const u_digit = u_cell.digit
               if (!u_digit) continue
@@ -891,11 +890,11 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
 
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
+      for (const r of IDX0) {
+        for (const c of IDX0) {
           if (visited[r][c]) continue
 
-          const pos: POS = [r as IDX0, c as IDX0]
+          const pos = POSSchema.parse([r, c])
           const cell = POS2Cell(board, pos)
           const digit = cell.digit
 
@@ -903,7 +902,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
           if (is_potential_even) {
             const component: Cell[] = []
-            const queue: POS[] = [pos]
+            const queue = [pos]
             visited[r][c] = 1
 
             let touches_edge = false
@@ -947,17 +946,17 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
       const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
 
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
+      for (const r of IDX0) {
+        for (const c of IDX0) {
           if (visited[r][c]) continue
 
-          const pos: POS = [r as IDX0, c as IDX0]
+          const pos = POSSchema.parse([r, c])
           const cell = POS2Cell(board, pos)
           const digit = cell.digit
 
           if (digit >= 1 && digit <= 4) {
             const component: Cell[] = []
-            const queue: POS[] = [pos]
+            const queue = [pos]
             visited[r][c] = 1
 
             let has_adjacent_empty = false
