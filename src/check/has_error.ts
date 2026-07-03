@@ -805,6 +805,47 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[EP]': {
+      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (visited[r][c]) continue
+
+          const digit = digit_arr[r][c]
+          if (digit >= 1 && digit <= 4) {
+            const queue: POS[] = [[r as IDX0, c as IDX0]]
+            visited[r][c] = 1
+
+            let size = 0
+            let has_adjacent_empty = false
+
+            while (queue.length > 0) {
+              const curr = queue.shift()!
+              size++
+
+              const adj = create_adjacent_group_of_pos(curr, 'wasd')
+              for (const npos of adj) {
+                const [nr, nc] = npos
+                const ndigit = digit_arr[nr][nc]
+                if (ndigit === 0) {
+                  has_adjacent_empty = true
+                } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {
+                  visited[nr][nc] = 1
+                  queue.push(npos)
+                }
+              }
+            }
+
+            if (size >= 4) return true
+            if (size < 3 && !has_adjacent_empty) return true
+          }
+        }
+      }
+
+      return false
+    }
   }
 }
 

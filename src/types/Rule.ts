@@ -8,9 +8,6 @@
  * 시퀀스 SQ
  * 프로덕트 PD
  *
- * - 덩어리
- * 엡실론 EP
- *
  * - 그 외
  * 스텐실 ST
  */
@@ -53,6 +50,7 @@ export const Rule_ID = [
   '[TR]',
   "[TR']",
   '[ES]',
+  '[EP]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -221,6 +219,9 @@ const RuleObjectMap = {
   }),
   '[ES]': z.object({
     id: z.literal('[ES]'),
+  }),
+  '[EP]': z.object({
+    id: z.literal('[EP]'),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

@@ -942,6 +942,57 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[EP]': {
+      const collector = new CellCollector()
+      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (visited[r][c]) continue
+
+          const pos: POS = [r as IDX0, c as IDX0]
+          const cell = POS2Cell(board, pos)
+          const digit = cell.digit
+
+          if (digit >= 1 && digit <= 4) {
+            const component: Cell[] = []
+            const queue: POS[] = [pos]
+            visited[r][c] = 1
+
+            let has_adjacent_empty = false
+
+            while (queue.length > 0) {
+              const curr = queue.shift()!
+              const curr_cell = POS2Cell(board, curr)
+              component.push(curr_cell)
+
+              const adj = create_adjacent_group_of_pos(curr, 'wasd')
+              for (const npos of adj) {
+                const [nr, nc] = npos
+                const ncell = POS2Cell(board, npos)
+                const ndigit = ncell.digit
+
+                if (ndigit === 0) {
+                  has_adjacent_empty = true
+                } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {
+                  visited[nr][nc] = 1
+                  queue.push(npos)
+                }
+              }
+            }
+
+            if (component.length >= 4) {
+              collector.add(component)
+            } else if (component.length < 3 && !has_adjacent_empty) {
+              collector.add(component)
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 
