@@ -121,6 +121,7 @@ export function initSettingModal(State: State) {
     useGroupAuto: { on: null, off: null },
     useCellWarning: { on: null, off: null },
     useGroupWarning: { on: null, off: null },
+    dimMemo: { off: null, rcb: null, all: null },
   }
 
   setting_modal.body.append(
@@ -210,6 +211,23 @@ export function initSettingModal(State: State) {
             ],
           }),
         }),
+        createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              '후보 흐리게 표시: ',
+              (button_map.dimMemo.off = createElement('button', {
+                content: '끄기',
+              })),
+              (button_map.dimMemo.rcb = createElement('button', {
+                content: '[R], [C], [B]만',
+              })),
+              (button_map.dimMemo.all = createElement('button', {
+                content: '전부',
+              })),
+            ],
+          }),
+        }),
       ],
     }),
   )
@@ -233,7 +251,6 @@ export function initSettingModal(State: State) {
   button_map.useCellAuto.off.addEventListener('click', () => State.input?.render())
   button_map.useGroupAuto.on.addEventListener('click', () => State.input?.render())
   button_map.useGroupAuto.off.addEventListener('click', () => State.input?.render())
-
   return setting_modal
 }
 

@@ -20,4 +20,5 @@ export const default_setting: SettingState = {
   useGroupAuto: 'on',
   useCellWarning: 'on',
   useGroupWarning: 'on',
+  dimMemo: 'all',
 }

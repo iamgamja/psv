@@ -9,7 +9,7 @@ import type { LevelData } from '../types/LevelData'
 import { IDX0, V } from '../types/base'
 import { initCells } from './initCells'
 import { renderColor } from '../util/renderColor'
-import { isKnown } from '../types/Rule'
+import { isKnown, type Rule } from '../types/Rule'
 import { showToast } from '../util/toast'
 import type { State } from '../types/State'
 import { renderRules } from './renderRules'
@@ -282,10 +282,20 @@ export function initBoard(level: LevelData, State: State): Board {
 
       cell.valid_memo.clear()
 
+      const dim_setting = State.Setting.dimMemo
+      let check_rules: Rule[] | null = null
+      if (dim_setting === 'all') {
+        check_rules = this.rules.filter(isKnown)
+      } else if (dim_setting === 'rcb') {
+        check_rules = this.rules.filter((rule) => isKnown(rule) && (rule.id === '[R]' || rule.id === '[C]' || rule.id === '[B]'))
+      }
+
       for (const digit of cell.candidate_memo) {
         digit_arr[cell.r - 1][cell.c - 1] = digit
 
-        if (!has_error(digit_arr, this.rules.filter(isKnown))) cell.valid_memo.add(digit)
+        if (check_rules === null || !has_error(digit_arr, check_rules)) {
+          cell.valid_memo.add(digit)
+        }
 
         digit_arr[cell.r - 1][cell.c - 1] = 0
       }

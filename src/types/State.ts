@@ -14,6 +14,7 @@ export const SettingStateSchema = z.object({
   useGroupAuto: z.enum(['on', 'off']),
   useCellWarning: z.enum(['on', 'off']),
   useGroupWarning: z.enum(['on', 'off']),
+  dimMemo: z.enum(['off', 'rcb', 'all']),
 })
 export type SettingState = z.infer<typeof SettingStateSchema>
 
