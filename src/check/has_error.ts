@@ -756,6 +756,55 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       return false
     }
+
+    case '[ES]': {
+      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (visited[r][c]) continue
+
+          const digit = digit_arr[r][c]
+          const is_potential_even = !digit || digit % 2 === 0
+
+          if (is_potential_even) {
+            const queue: POS[] = [[r as IDX0, c as IDX0]]
+            visited[r][c] = 1
+
+            let touches_edge = false
+            let has_filled_even = digit && digit % 2 === 0
+
+            while (queue.length > 0) {
+              const curr = queue.shift()!
+              if (curr[0] === 0 || curr[0] === 8) {
+                touches_edge = true
+              }
+
+              const adj = create_adjacent_group_of_pos(curr, 'wasd')
+              for (const npos of adj) {
+                const [nr, nc] = npos
+                if (!visited[nr][nc]) {
+                  const ndigit = digit_arr[nr][nc]
+                  if (!ndigit || ndigit % 2 === 0) {
+                    visited[nr][nc] = 1
+                    queue.push(npos)
+                    if (ndigit && ndigit % 2 === 0) {
+                      has_filled_even = true
+                    }
+                  }
+                }
+              }
+            }
+
+            if (!touches_edge && has_filled_even) {
+              return true
+            }
+          }
+        }
+      }
+
+      return false
+    }
   }
 }
 

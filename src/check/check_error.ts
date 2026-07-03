@@ -885,6 +885,63 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[ES]': {
+      const collector = new CellCollector()
+
+      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (visited[r][c]) continue
+
+          const pos: POS = [r as IDX0, c as IDX0]
+          const cell = POS2Cell(board, pos)
+          const digit = cell.digit
+
+          const is_potential_even = !digit || digit % 2 === 0
+
+          if (is_potential_even) {
+            const component: Cell[] = []
+            const queue: POS[] = [pos]
+            visited[r][c] = 1
+
+            let touches_edge = false
+
+            while (queue.length > 0) {
+              const curr = queue.shift()!
+              const curr_cell = POS2Cell(board, curr)
+              component.push(curr_cell)
+
+              if (curr[0] === 0 || curr[0] === 8) {
+                touches_edge = true
+              }
+
+              const adj = create_adjacent_group_of_pos(curr, 'wasd')
+              for (const npos of adj) {
+                const [nr, nc] = npos
+                if (!visited[nr][nc]) {
+                  const ndigit = POS2Cell(board, npos).digit
+                  if (!ndigit || ndigit % 2 === 0) {
+                    visited[nr][nc] = 1
+                    queue.push(npos)
+                  }
+                }
+              }
+            }
+
+            if (!touches_edge) {
+              const filled_evens = component.filter((c) => c.digit && c.digit % 2 === 0)
+              if (filled_evens.length > 0) {
+                collector.add(filled_evens)
+              }
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 
