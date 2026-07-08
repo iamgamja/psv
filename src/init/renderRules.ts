@@ -92,12 +92,14 @@ interface DrawTextOptions {
   color?: string
   fontSize?: keyof typeof DrawTextSize
   align?: 'left' | 'center' | 'right'
+  maxLength?: number
 }
 
 interface ParsedDrawTextOptions {
   color: string
   fontSize: number
   align: 'left' | 'center' | 'right'
+  maxLength: number
 }
 
 function parseDrawOptions(options?: DrawOptions): ParsedDrawOptions {
@@ -124,6 +126,7 @@ function parseDrawTextOptions(options?: DrawTextOptions): ParsedDrawTextOptions 
     color: options?.color ?? '#000000',
     fontSize: options?.fontSize ? DrawTextSize[options.fontSize] : DrawTextSize.small,
     align: options?.align ?? 'center',
+    maxLength: options?.maxLength ?? 4,
   }
 }
 
@@ -190,7 +193,18 @@ const Draw = {
 
     ele.setAttribute('dominant-baseline', 'middle')
 
-    ele.textContent = text
+    const lines = text.match(/.{1,4}/g) ?? ['']
+    if (lines.length === 1) {
+      ele.textContent = text
+    } else {
+      lines.forEach((line, i) => {
+        const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan')
+        tspan.setAttribute('x', x.toString())
+        tspan.setAttribute('dy', i === 0 ? `${-(lines.length - 1) * 0.55}em` : '1.1em')
+        tspan.textContent = line
+        ele.appendChild(tspan)
+      })
+    }
 
     svg.appendChild(ele)
   },
@@ -609,6 +623,22 @@ function render_rule(rule: Rule): boolean {
       rule.render_state.lines.forEach(([type, i]) => {
         if (type === 'ROW') Draw.Line([i, 0 - 0.5], [i, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
         else Draw.Line([0 - 0.5, i], [8 + 0.5, i], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
+      })
+      return true
+    }
+
+    case '[RG]': {
+      rule.render_state.side_hints.forEach(([type, i, distances]) => {
+        if (type === 'ROW') Draw.Text([i, 9], distances.join(''), { color: '#3b82f6', fontSize: 'small', align: 'left' })
+        else Draw.Text([9, i], distances.join(''), { color: '#3b82f6', fontSize: 'small' })
+      })
+      return true
+    }
+
+    case "[RG']": {
+      rule.render_state.side_hints.forEach(([type, i, letter]) => {
+        if (type === 'ROW') Draw.Text([i, 9], letter, { color: '#3b82f6', fontSize: 'small', align: 'left' })
+        else Draw.Text([9, i], letter, { color: '#3b82f6', fontSize: 'small' })
       })
       return true
     }

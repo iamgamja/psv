@@ -62,6 +62,29 @@ function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) =
   return false
 }
 
+type RangeLineType = Extract<Rule, { id: '[RG]' }>['render_state']['side_hints'][number][0]
+type RangeLetter = Extract<Rule, { id: "[RG']" }>['render_state']['side_hints'][number][2]
+
+function getRangeLineGroup(type: RangeLineType, index: number): Group {
+  return IDX0.map((i) => (type === 'ROW' ? [index, i] : [i, index])) as Group
+}
+
+function collectRangeLineData(digit_arr: DigitArr, type: RangeLineType, index: number) {
+  const group = getRangeLineGroup(type, index)
+  const { digits, filled_all } = parseGroup(digit_arr, group)
+  const distances = new Set<number>()
+
+  for (let i = 0; i < digits.length; i++) {
+    for (let j = i + 1; j < digits.length; j++) {
+      if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
+        distances.add(j - i)
+      }
+    }
+  }
+
+  return { filled_all, distances }
+}
+
 type StencilPiece = Extract<Rule, { id: '[ST]' }>['render_state']['pieces'][number]
 type StencilValue = { pos: POS; value: V }
 type StencilVariant = { cells: POS[]; values: StencilValue[]; height: number; width: number }
@@ -573,6 +596,42 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
             if (!(digit2 - 1 === c)) return true
           }
+        }
+      }
+
+      return false
+    }
+
+    case '[RG]': {
+      for (const [type, i, distances] of rule.render_state.side_hints) {
+        const expectedDistances = new Set<number>(distances)
+        const { filled_all, distances: foundDistances } = collectRangeLineData(digit_arr, type, i)
+
+        for (const distance of foundDistances) {
+          if (!expectedDistances.has(distance)) return true
+        }
+
+        if (filled_all && foundDistances.size === 0) return true
+      }
+
+      return false
+    }
+
+    case "[RG']": {
+      const records: { letter: RangeLetter; distance: number }[] = []
+
+      for (const [type, i, letter] of rule.render_state.side_hints) {
+        const { filled_all, distances } = collectRangeLineData(digit_arr, type, i)
+
+        if (distances.size >= 2) return true
+        if (filled_all && distances.size === 0) return true
+
+        if (distances.size === 1) {
+          const distance = Array.from(distances)[0]!
+          for (const record of records) {
+            if ((record.letter === letter && record.distance !== distance) || (record.letter !== letter && record.distance === distance)) return true
+          }
+          records.push({ letter, distance })
         }
       }
 

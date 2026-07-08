@@ -3,9 +3,8 @@
  *
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
  * 퀀텀 QT
- * 레인지 RG
- * 레인지' RG'
  * 시퀀스 SQ
+ * 시퀀스 SQ'
  * 프로덕트 PD
  */
 import { z } from 'zod'
@@ -41,6 +40,8 @@ export const Rule_ID = [
   '[TM]',
   '[AQ]',
   '[RF]',
+  '[RG]',
+  "[RG']",
   '[SR]',
   '[IV]',
   '[BD]',
@@ -62,6 +63,8 @@ export const DirMap = {
 const LRUDSchema = z.enum(Object.keys(DirMap) as [keyof typeof DirMap, ...(keyof typeof DirMap)[]])
 
 const RCSchema = z.enum(['ROW', 'COL'])
+const RangeDistanceSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8)])
+const RangeLetterSchema = z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
 const StencilValueKeySchema = z.string().refine((key) => {
   const [r, c, ...rest] = key.split(',').map(Number)
   return rest.length === 0 && Number.isInteger(r) && Number.isInteger(c) && POSSchema.safeParse([r, c]).success
@@ -198,6 +201,14 @@ const RuleObjectMap = {
   '[RF]': z.object({
     id: z.literal('[RF]'),
     render_state: z.object({ lines: z.array(z.tuple([RCSchema, IDX0Schema])) }),
+  }),
+  '[RG]': z.object({
+    id: z.literal('[RG]'),
+    render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, z.array(RangeDistanceSchema)])) }),
+  }),
+  "[RG']": z.object({
+    id: z.literal("[RG']"),
+    render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, RangeLetterSchema])) }),
   }),
   '[SR]': z.object({
     id: z.literal('[SR]'),

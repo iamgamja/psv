@@ -91,6 +91,34 @@ class CellCollector {
   }
 }
 
+type RangeLineType = Extract<Rule, { id: '[RG]' }>['render_state']['side_hints'][number][0]
+type RangeLetter = Extract<Rule, { id: "[RG']" }>['render_state']['side_hints'][number][2]
+
+function getRangeLineGroup(type: RangeLineType, index: number): Group {
+  return IDX0.map((i) => (type === 'ROW' ? [index, i] : [i, index])) as Group
+}
+
+function collectRangeLineData(board: Board, type: RangeLineType, index: number) {
+  const group = getRangeLineGroup(type, index)
+  const { cells, digits, filled_all } = parseGroup(board, group)
+  const pairs: { distance: number; cells: Cell[] }[] = []
+  const oneNineCells: Cell[] = []
+
+  for (let i = 0; i < digits.length; i++) {
+    if (digits[i] === 1 || digits[i] === 9) oneNineCells.push(cells[i])
+  }
+
+  for (let i = 0; i < digits.length; i++) {
+    for (let j = i + 1; j < digits.length; j++) {
+      if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
+        pairs.push({ distance: j - i, cells: [cells[i], cells[j]] })
+      }
+    }
+  }
+
+  return { cells, filled_all, oneNineCells, pairs }
+}
+
 type StencilPiece = Extract<Rule, { id: '[ST]' }>['render_state']['pieces'][number]
 type StencilValue = { pos: POS; value: V }
 type StencilVariant = { cells: POS[]; values: StencilValue[]; height: number; width: number }
@@ -680,6 +708,54 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             if (!digit2) continue
 
             if (!(digit2 - 1 === c)) collector.add([cell, cell2])
+          }
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[RG]': {
+      const collector = new CellCollector()
+
+      for (const [type, i, distances] of rule.render_state.side_hints) {
+        const expectedDistances = new Set<number>(distances)
+        const { cells, filled_all, pairs } = collectRangeLineData(board, type, i)
+
+        for (const pair of pairs) {
+          if (!expectedDistances.has(pair.distance)) collector.add(pair.cells)
+        }
+
+        if (filled_all && pairs.length === 0) collector.add(cells)
+      }
+
+      return collector.res
+    }
+
+    case "[RG']": {
+      const collector = new CellCollector()
+      const records: { letter: RangeLetter; distance: number; cells: Cell[] }[] = []
+
+      for (const [type, i, letter] of rule.render_state.side_hints) {
+        const { cells, filled_all, oneNineCells, pairs } = collectRangeLineData(board, type, i)
+        const distances = new Set(pairs.map(({ distance }) => distance))
+
+        if (distances.size >= 2) {
+          collector.add(oneNineCells)
+        } else if (filled_all && pairs.length === 0) {
+          collector.add(cells)
+        } else if (distances.size === 1) {
+          records.push({ letter, distance: Array.from(distances)[0]!, cells: oneNineCells })
+        }
+      }
+
+      for (let i = 0; i < records.length; i++) {
+        for (let j = i + 1; j < records.length; j++) {
+          const a = records[i]
+          const b = records[j]
+          if ((a.letter === b.letter && a.distance !== b.distance) || (a.letter !== b.letter && a.distance === b.distance)) {
+            collector.add(a.cells)
+            collector.add(b.cells)
           }
         }
       }
