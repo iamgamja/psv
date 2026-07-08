@@ -77,19 +77,51 @@ class CellCollector {
 
 function check_error_rule(board: Board, rule: Rule): Set<Cell> {
   switch (rule.id) {
-    case '[Sudoku]':
+    case '[Sudoku]': {
       return new Set()
+    }
+    case '[R]': {
+      return check_dup(board, getDisJointGroups(rule))
+    }
+    case "[R']": {
+      const collector = new CellCollector()
 
-    case '[R]':
+      const remainders_map = new Map<V, IDX0>() // (v, r)
+
+      for (const r of IDX0) {
+        const group = GROUPS_R[r]
+        const cells = group.map((pos) => POS2Cell(board, pos))
+
+        const { digits, filled_all } = parseGroup(board, group)
+
+        const s = new Set(digits)
+        const reminders = V.filter((i) => !s.has(i))
+
+        if (filled_all) {
+          if (!(reminders.length === 1)) {
+            collector.add(cells)
+          } else if (remainders_map.has(reminders[0])) {
+            collector.add(GROUPS_R[remainders_map.get(reminders[0])!].map((pos) => POS2Cell(board, pos)))
+            collector.add(cells)
+          } else remainders_map.set(reminders[0], r)
+        }
+      }
+
+      return collector.res
+    }
     case '[C]':
     case '[B]':
     case '[SG]':
-    case "[SG']":
-    case '[DT]':
+    case "[SG']": {
       return check_dup(board, getDisJointGroups(rule))
+    }
 
-    case '[LK]':
+    case '[DT]': {
+      return check_dup(board, getDisJointGroups(rule))
+    }
+    case '[LK]': {
       return check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
+    }
     case "[LK']": {
       const collector = new CellCollector()
 
@@ -98,84 +130,9 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
-
-    case '[MT]': {
-      const collector = new CellCollector()
-
-      const { cells, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
-
-      for (const v of V) {
-        const v_cells = cells.filter((cell) => cell.digit === v)
-        if (v_cells.length === 0) continue
-
-        if (filled_all) {
-          if (!(v_cells.length === v)) collector.add(v_cells)
-        } else {
-          if (!(v_cells.length <= v)) collector.add(v_cells)
-        }
-      }
-
-      return collector.res
+    case '[PO]': {
+      return check_2groups(board, rule.render_state.edges, (d1, d2) => d1 < d2)
     }
-
-    case '[MR]': {
-      const collector = new CellCollector()
-
-      collector.add(check_dup(board, rule.render_state.metros))
-
-      for (const group of rule.render_state.metros) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) collector.add(cells)
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[QD]': {
-      const collector = new CellCollector()
-
-      for (const group of GROUPS_QD) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) collector.add(cells)
-        }
-      }
-
-      return collector.res
-    }
-    case "[QD']": {
-      const collector = new CellCollector()
-
-      for (const group of GROUPS_QD) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!(digits.reduce((a, b) => a + b, 0) % 3 !== 0)) collector.add(cells)
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[TP]': {
-      const collector = new CellCollector()
-
-      for (const group of GROUPS_TP) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (digits[0] < digits[1] && digits[1] < digits[2]) collector.add(cells)
-          else if (digits[0] > digits[1] && digits[1] > digits[2]) collector.add(cells)
-        }
-      }
-
-      return collector.res
-    }
-
     case '[LO]': {
       const collector = new CellCollector()
 
@@ -217,127 +174,417 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
-
-    case '[BP]': {
+    case '[TP]': {
       const collector = new CellCollector()
 
-      const type_arr: ('no' | 'yes' | 'unknown')[][] = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
+      for (const group of GROUPS_TP) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
 
-      for (const r of IDX0) {
-        for (const c of IDX0) {
-          const pos = POSSchema.parse([r, c])
+        if (filled_all) {
+          if (digits[0] < digits[1] && digits[1] < digits[2]) collector.add(cells)
+          else if (digits[0] > digits[1] && digits[1] > digits[2]) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
+    case '[QD]': {
+      const collector = new CellCollector()
+
+      for (const group of GROUPS_QD) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
+    case "[QD']": {
+      const collector = new CellCollector()
+
+      for (const group of GROUPS_QD) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (!(digits.reduce((a, b) => a + b, 0) % 3 !== 0)) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
+    case '[TM]': {
+      const collector = new CellCollector()
+
+      for (const { cells: group, color } of rule.render_state.regions) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+        const sum = (digits as number[]).reduce((a, b) => a + b, 0)
+
+        switch (color) {
+          case 'blue': {
+            if (!(sum <= 10)) collector.add(cells)
+            break
+          }
+          case 'green': {
+            if (filled_all) {
+              if (!(sum === 15)) collector.add(cells)
+            } else {
+              if (!(sum <= 15)) collector.add(cells)
+            }
+            break
+          }
+          case 'red': {
+            if (filled_all) {
+              if (!(sum >= 20)) collector.add(cells)
+            }
+            break
+          }
+        }
+      }
+
+      return collector.res
+    }
+    case '[AQ]': {
+      const collector = new CellCollector()
+
+      for (const group of rule.render_state.regions) {
+        for (let i = 0; i < group.length; i++) {
+          const pos1 = group[i]
+          const cell1 = POS2Cell(board, pos1)
+          const digit1 = cell1.digit
+          if (!digit1) continue
+
+          for (let j = i + 1; j < group.length; j++) {
+            const pos2 = group[j]
+            const cell2 = POS2Cell(board, pos2)
+            const digit2 = cell2.digit
+            if (!digit2) continue
+
+            if (cell1.r < cell2.r) {
+              if (!(digit1 < digit2)) collector.add([cell1, cell2])
+            } else if (cell1.r > cell2.r) {
+              if (!(digit1 > digit2)) collector.add([cell1, cell2])
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
+    case '[PA]': {
+      const collector = new CellCollector()
+
+      const visit = new Map<string, CellCollector>() // `${d1}${d2}` -> cells; d1 <= d2
+
+      for (const two_group of rule.render_state.dominoes) {
+        const { digits, cells, filled_all } = parseGroup(board, two_group)
+
+        if (filled_all) {
+          const s = digits.toSorted().join('')
+          if (!visit.has(s)) {
+            visit.set(s, new CellCollector())
+          }
+
+          visit.get(s)!.add(cells)
+        }
+      }
+
+      for (const cells of Array.from(visit.values()).map((cl) => cl.res)) {
+        if (cells.size != 2) collector.add(cells)
+      }
+
+      return collector.res
+    }
+
+    case '[MR]': {
+      const collector = new CellCollector()
+
+      collector.add(check_dup(board, rule.render_state.metros))
+
+      for (const group of rule.render_state.metros) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
+    case '[SR]': {
+      const collector = new CellCollector()
+
+      for (const group of rule.render_state.streams) {
+        let type: -1 | 0 | 1 = -1 // -1: 결정되지 않음; 0|1: (r^c^digit)&1
+
+        for (const pos of group) {
           const cell = POS2Cell(board, pos)
           const digit = cell.digit
+          if (!digit) continue
 
-          const group = create_adjacent_group_of_pos(pos, 'wasd')
-          const { digits, filled_all } = parseGroup(board, group)
+          const x = ((pos[0] ^ pos[1] ^ digit) & 1) as 0 | 1
+          if (type === -1) {
+            type = x
+            continue
+          }
 
-          if (digit && !digits.filter((d) => d).every((d) => Math.abs(d - digit) >= 3)) type_arr[r][c] = 'no'
-          else if (digit && filled_all) type_arr[r][c] = digits.every((d) => Math.abs(d - digit) >= 3) ? 'yes' : 'no'
-          else type_arr[r][c] = 'unknown'
+          if (!(x === type)) collector.add(group.map((pos) => POS2Cell(board, pos)))
         }
-      }
-
-      for (const r of IDX0) {
-        const yes: Cell[] = []
-        const no: Cell[] = []
-        for (const c of IDX0) {
-          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
-          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
-        }
-
-        if (!(yes.length <= 1)) collector.add(yes)
-        else if (!(no.length < 9)) collector.add(no)
-      }
-      for (const c of IDX0) {
-        const yes: Cell[] = []
-        const no: Cell[] = []
-        for (const r of IDX0) {
-          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
-          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
-        }
-
-        if (!(yes.length <= 1)) collector.add(yes)
-        else if (!(no.length < 9)) collector.add(no)
       }
 
       return collector.res
     }
-
-    case '[PO]':
-      return check_2groups(board, rule.render_state.edges, (d1, d2) => d1 < d2)
-
-    case "[R']": {
+    case '[IV]': {
       const collector = new CellCollector()
 
-      const remainders_map = new Map<V, IDX0>() // (v, r)
-
-      for (const r of IDX0) {
-        const group = GROUPS_R[r]
-        const cells = group.map((pos) => POS2Cell(board, pos))
-
-        const { digits, filled_all } = parseGroup(board, group)
-
-        const s = new Set(digits)
-        const reminders = V.filter((i) => !s.has(i))
+      for (const group of rule.render_state.lines) {
+        const { cells, digits, filled_all } = parseGroup(board, group)
+        const cnt = pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length
 
         if (filled_all) {
-          if (!(reminders.length === 1)) {
-            collector.add(cells)
-          } else if (remainders_map.has(reminders[0])) {
-            collector.add(GROUPS_R[remainders_map.get(reminders[0])!].map((pos) => POS2Cell(board, pos)))
-            collector.add(cells)
-          } else remainders_map.set(reminders[0], r)
+          if (!(cnt === 1)) collector.add(cells)
+        } else {
+          if (!(cnt <= 1)) collector.add(cells)
         }
       }
 
       return collector.res
     }
 
-    case '[PR]': {
+    case '[TR]': {
       const collector = new CellCollector()
 
-      for (const [r1, c1, r2, c2, isred] of rule.render_state.edges) {
-        const group: Group = [
-          [r1, c1],
-          [r2, c2],
-        ]
-        const { digits, cells, filled_all } = parseGroup(board, group)
+      if (board.flat_cells.every((cell) => cell.digit)) {
+        const start = rule.render_state.start
+        const end = rule.render_state.end
 
-        if (filled_all) {
-          if (isred) {
-            if (!Prime2Set.has(parseInt(digits.join('')))) collector.add(cells)
-          } else {
-            if (!Square2Set.has(parseInt(digits.join('')))) collector.add(cells)
+        const visited = new Set<number>()
+        const queue = [start]
+        visited.add(POS2number(start))
+        let path_exists = false
+
+        while (queue.length > 0) {
+          const curr = queue.shift()!
+          if (curr[0] === end[0] && curr[1] === end[1]) {
+            path_exists = true
+            break
+          }
+
+          const curr_cell = POS2Cell(board, curr)
+          const curr_digit = curr_cell.digit
+          if (!curr_digit) continue
+
+          const next_digit = (curr_digit % 9) + 1
+
+          const adj_group = create_adjacent_group_of_pos(curr, 'wasd')
+          for (const npos of adj_group) {
+            const npos_num = POS2number(npos)
+            if (visited.has(npos_num)) continue
+
+            const ncell = POS2Cell(board, npos)
+            const ndigit = ncell.digit
+            if (ndigit === next_digit) {
+              visited.add(npos_num)
+              queue.push(npos)
+            }
+          }
+        }
+
+        if (!path_exists) {
+          const startCell = POS2Cell(board, start)
+          const endCell = POS2Cell(board, end)
+          collector.add([startCell, endCell])
+        }
+      }
+
+      return collector.res
+    }
+    case "[TR']": {
+      const collector = new CellCollector()
+
+      if (board.flat_cells.every((cell) => cell.digit)) {
+        const start = rule.render_state.start
+        const end = rule.render_state.end
+
+        const start_num = POS2number(start)
+        const end_num = POS2number(end)
+
+        if (start_num === end_num) {
+          collector.add([POS2Cell(board, start)])
+        } else {
+          const src = start_num + 81
+          const sink = end_num
+
+          const adj = Array.from({ length: 162 }, () => [] as number[])
+          const capacity = Array.from({ length: 162 }, () => new Float64Array(162))
+
+          function addEdge(u: number, v: number, cap: number) {
+            adj[u].push(v)
+            adj[v].push(u)
+            capacity[u][v] = cap
+          }
+
+          for (let u = 0; u < 81; u++) {
+            if (u !== start_num && u !== end_num) {
+              addEdge(u, u + 81, 1)
+            }
+          }
+
+          for (const r of IDX0) {
+            for (const c of IDX0) {
+              const u = r * 9 + c
+              if (u === end_num) continue
+
+              const u_pos = POSSchema.parse([r, c])
+              const u_cell = POS2Cell(board, u_pos)
+              const u_digit = u_cell.digit
+              if (!u_digit) continue
+
+              const next_digit = (u_digit % 9) + 1
+              const neighbors = create_adjacent_group_of_pos(u_pos, 'wasd')
+
+              for (const npos of neighbors) {
+                const v = POS2number(npos)
+                if (v === start_num) continue
+
+                const v_cell = POS2Cell(board, npos)
+                const v_digit = v_cell.digit
+                if (v_digit === next_digit) {
+                  addEdge(u + 81, v, 1)
+                }
+              }
+            }
+          }
+
+          let totalFlow = 0
+          while (totalFlow < 2) {
+            const parent = new Int32Array(162).fill(-1)
+            const queue = [src]
+            parent[src] = -2
+
+            let found = false
+            let head = 0
+            while (head < queue.length) {
+              const curr = queue[head++]
+              if (curr === sink) {
+                found = true
+                break
+              }
+
+              for (const next of adj[curr]) {
+                if (parent[next] === -1 && capacity[curr][next] > 0) {
+                  parent[next] = curr
+                  queue.push(next)
+                }
+              }
+            }
+
+            if (!found) break
+
+            let curr = sink
+            while (curr !== src) {
+              const prev = parent[curr]
+              capacity[prev][curr] -= 1
+              capacity[curr][prev] += 1
+              curr = prev
+            }
+
+            totalFlow += 1
+          }
+
+          if (totalFlow < 2) {
+            collector.add([POS2Cell(board, start), POS2Cell(board, end)])
           }
         }
       }
 
       return collector.res
     }
-    case "[PR']": {
+    case '[BD]': {
+      if (board.flat_cells.every((cell) => cell.digit)) {
+        const maxR = Array(9).fill(-1) // 열 c마다 이미 점유된 최대 r
+
+        for (const start_r of rule.render_state.start_rows) {
+          const pos1 = POSSchema.parse([start_r, 0])
+          const cell1 = POS2Cell(board, pos1)
+          const digit1 = cell1.digit
+
+          function findPathFromStart(startR: IDX0): number[] | null {
+            const path = Array(9).fill(-1)
+
+            function dfs(r: IDX0, c: IDX0): boolean {
+              if (r <= maxR[c]) return false
+
+              const pos = POSSchema.parse([r, c])
+              const cell = POS2Cell(board, pos)
+              const digit = cell.digit
+              if (!(digit === ((digit1 + c - 1) % 9) + 1)) return false
+
+              path[c] = r
+
+              if (c === 8) return true
+
+              for (const dr of [-1, 0, +1]) {
+                const next_pos = POSSchema.safeParse([r + dr, c + 1])
+                if (!next_pos.success) continue
+
+                if (dfs(next_pos.data[0], next_pos.data[1])) return true
+              }
+
+              path[c] = -1
+              return false
+            }
+
+            if (dfs(startR, 0)) return path
+            return null
+          }
+
+          const path = findPathFromStart(start_r)
+          if (!path) {
+            return new Set(rule.render_state.start_rows.map((r) => POSSchema.parse([r, 0])).map((pos) => POS2Cell(board, pos)))
+          }
+
+          for (const c of IDX0) {
+            maxR[c] = Math.max(maxR[c], path[c])
+          }
+        }
+      }
+
+      return new Set<Cell>()
+    }
+
+    case '[VT]': {
       const collector = new CellCollector()
 
-      for (const [r1, c1, r2, c2, r3, c3, isred] of rule.render_state.triplets) {
-        const group: Group = [
-          [r1, c1],
-          [r2, c2],
-          [r3, c3],
-        ]
-        const { digits, cells, filled_all } = parseGroup(board, group)
+      for (const [r, c, dir] of rule.render_state.arrows) {
+        const pos = POSSchema.parse([r, c])
+        const cell = POS2Cell(board, pos)
+        const digit = cell.digit
 
-        if (filled_all) {
-          if (isred) {
-            if (!Prime3Set.has(parseInt(digits.join('')))) collector.add(cells)
-          } else {
-            if (!Square3Set.has(parseInt(digits.join('')))) collector.add(cells)
+        if (digit) {
+          const [dir_dr, dir_dc] = DirMap[dir]
+
+          const r2 = r + dir_dr * digit
+          const c2 = c + dir_dc * digit
+
+          const pos2 = POSSchema.safeParse([r2, c2])
+          if (!pos2.success) {
+            collector.add([cell])
+            continue
+          }
+
+          const cell2 = POS2Cell(board, pos2.data)
+          const digit2 = cell2.digit
+
+          if (digit2) {
+            if (!(digit2 === 9)) collector.add([cell, cell2])
           }
         }
       }
 
       return collector.res
     }
-
     case '[RT]': {
       const collector = new CellCollector()
 
@@ -444,151 +691,6 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
-
-    case '[PA]': {
-      const collector = new CellCollector()
-
-      const visit = new Map<string, CellCollector>() // `${d1}${d2}` -> cells; d1 <= d2
-
-      for (const two_group of rule.render_state.dominoes) {
-        const { digits, cells, filled_all } = parseGroup(board, two_group)
-
-        if (filled_all) {
-          const s = digits.toSorted().join('')
-          if (!visit.has(s)) {
-            visit.set(s, new CellCollector())
-          }
-
-          visit.get(s)!.add(cells)
-        }
-      }
-
-      for (const cells of Array.from(visit.values()).map((cl) => cl.res)) {
-        if (cells.size != 2) collector.add(cells)
-      }
-
-      return collector.res
-    }
-
-    case '[VT]': {
-      const collector = new CellCollector()
-
-      for (const [r, c, dir] of rule.render_state.arrows) {
-        const pos = POSSchema.parse([r, c])
-        const cell = POS2Cell(board, pos)
-        const digit = cell.digit
-
-        if (digit) {
-          const [dir_dr, dir_dc] = DirMap[dir]
-
-          const r2 = r + dir_dr * digit
-          const c2 = c + dir_dc * digit
-
-          const pos2 = POSSchema.safeParse([r2, c2])
-          if (!pos2.success) {
-            collector.add([cell])
-            continue
-          }
-
-          const cell2 = POS2Cell(board, pos2.data)
-          const digit2 = cell2.digit
-
-          if (digit2) {
-            if (!(digit2 === 9)) collector.add([cell, cell2])
-          }
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[EF]': {
-      const collector = new CellCollector()
-
-      const set = new Set(rule.render_state.marked_cells.map(POS2number))
-
-      for (const pos of rule.render_state.marked_cells) {
-        const cell = POS2Cell(board, pos)
-        const digit = cell.digit
-
-        if (digit) {
-          const group = create_adjacent_group_of_pos(pos, 'king').filter((pos) => set.has(POS2number(pos)))
-          group.push(pos) // 자기 자신도 포함
-
-          const { cells, digits, filled_all } = parseGroup(board, group)
-          const cnt = digits.filter((d) => d).filter((d) => d <= digit).length
-
-          if (filled_all) {
-            if (!(cnt === digit)) collector.add(cells)
-          } else {
-            if (!(cnt <= digit)) collector.add(cells)
-          }
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[TM]': {
-      const collector = new CellCollector()
-
-      for (const { cells: group, color } of rule.render_state.regions) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-        const sum = (digits as number[]).reduce((a, b) => a + b, 0)
-
-        switch (color) {
-          case 'blue': {
-            if (!(sum <= 10)) collector.add(cells)
-            break
-          }
-          case 'green': {
-            if (filled_all) {
-              if (!(sum === 15)) collector.add(cells)
-            } else {
-              if (!(sum <= 15)) collector.add(cells)
-            }
-            break
-          }
-          case 'red': {
-            if (filled_all) {
-              if (!(sum >= 20)) collector.add(cells)
-            }
-            break
-          }
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[AQ]': {
-      const collector = new CellCollector()
-
-      for (const group of rule.render_state.regions) {
-        for (let i = 0; i < group.length; i++) {
-          const pos1 = group[i]
-          const cell1 = POS2Cell(board, pos1)
-          const digit1 = cell1.digit
-          if (!digit1) continue
-
-          for (let j = i + 1; j < group.length; j++) {
-            const pos2 = group[j]
-            const cell2 = POS2Cell(board, pos2)
-            const digit2 = cell2.digit
-            if (!digit2) continue
-
-            if (cell1.r < cell2.r) {
-              if (!(digit1 < digit2)) collector.add([cell1, cell2])
-            } else if (cell1.r > cell2.r) {
-              if (!(digit1 > digit2)) collector.add([cell1, cell2])
-            }
-          }
-        }
-      }
-
-      return collector.res
-    }
-
     case '[RF]': {
       const collector = new CellCollector()
 
@@ -629,6 +731,247 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       return collector.res
     }
 
+    case '[MT]': {
+      const collector = new CellCollector()
+
+      const { cells, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
+
+      for (const v of V) {
+        const v_cells = cells.filter((cell) => cell.digit === v)
+        if (v_cells.length === 0) continue
+
+        if (filled_all) {
+          if (!(v_cells.length === v)) collector.add(v_cells)
+        } else {
+          if (!(v_cells.length <= v)) collector.add(v_cells)
+        }
+      }
+
+      return collector.res
+    }
+    case '[BP]': {
+      const collector = new CellCollector()
+
+      const type_arr: ('no' | 'yes' | 'unknown')[][] = Array.from({ length: 9 }, () => Array(9).fill('unknown'))
+
+      for (const r of IDX0) {
+        for (const c of IDX0) {
+          const pos = POSSchema.parse([r, c])
+          const cell = POS2Cell(board, pos)
+          const digit = cell.digit
+
+          const group = create_adjacent_group_of_pos(pos, 'wasd')
+          const { digits, filled_all } = parseGroup(board, group)
+
+          if (digit && !digits.filter((d) => d).every((d) => Math.abs(d - digit) >= 3)) type_arr[r][c] = 'no'
+          else if (digit && filled_all) type_arr[r][c] = digits.every((d) => Math.abs(d - digit) >= 3) ? 'yes' : 'no'
+          else type_arr[r][c] = 'unknown'
+        }
+      }
+
+      for (const r of IDX0) {
+        const yes: Cell[] = []
+        const no: Cell[] = []
+        for (const c of IDX0) {
+          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
+          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
+        }
+
+        if (!(yes.length <= 1)) collector.add(yes)
+        else if (!(no.length < 9)) collector.add(no)
+      }
+      for (const c of IDX0) {
+        const yes: Cell[] = []
+        const no: Cell[] = []
+        for (const r of IDX0) {
+          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
+          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
+        }
+
+        if (!(yes.length <= 1)) collector.add(yes)
+        else if (!(no.length < 9)) collector.add(no)
+      }
+
+      return collector.res
+    }
+    case '[EF]': {
+      const collector = new CellCollector()
+
+      const set = new Set(rule.render_state.marked_cells.map(POS2number))
+
+      for (const pos of rule.render_state.marked_cells) {
+        const cell = POS2Cell(board, pos)
+        const digit = cell.digit
+
+        if (digit) {
+          const group = create_adjacent_group_of_pos(pos, 'king').filter((pos) => set.has(POS2number(pos)))
+          group.push(pos) // 자기 자신도 포함
+
+          const { cells, digits, filled_all } = parseGroup(board, group)
+          const cnt = digits.filter((d) => d).filter((d) => d <= digit).length
+
+          if (filled_all) {
+            if (!(cnt === digit)) collector.add(cells)
+          } else {
+            if (!(cnt <= digit)) collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[ES]': {
+      const collector = new CellCollector()
+
+      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+
+      for (const r of IDX0) {
+        for (const c of IDX0) {
+          if (visited[r][c]) continue
+
+          const pos = POSSchema.parse([r, c])
+          const cell = POS2Cell(board, pos)
+          const digit = cell.digit
+
+          const is_potential_even = !digit || digit % 2 === 0
+
+          if (is_potential_even) {
+            const component: Cell[] = []
+            const queue = [pos]
+            visited[r][c] = 1
+
+            let touches_edge = false
+
+            while (queue.length > 0) {
+              const curr = queue.shift()!
+              const curr_cell = POS2Cell(board, curr)
+              component.push(curr_cell)
+
+              if (curr[0] === 0 || curr[0] === 8) {
+                touches_edge = true
+              }
+
+              const adj = create_adjacent_group_of_pos(curr, 'wasd')
+              for (const npos of adj) {
+                const [nr, nc] = npos
+                if (!visited[nr][nc]) {
+                  const ndigit = POS2Cell(board, npos).digit
+                  if (!ndigit || ndigit % 2 === 0) {
+                    visited[nr][nc] = 1
+                    queue.push(npos)
+                  }
+                }
+              }
+            }
+
+            if (!touches_edge) {
+              const filled_evens = component.filter((c) => c.digit && c.digit % 2 === 0)
+              if (filled_evens.length > 0) {
+                collector.add(filled_evens)
+              }
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
+    case '[EP]': {
+      const collector = new CellCollector()
+      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+
+      for (const r of IDX0) {
+        for (const c of IDX0) {
+          if (visited[r][c]) continue
+
+          const pos = POSSchema.parse([r, c])
+          const cell = POS2Cell(board, pos)
+          const digit = cell.digit
+
+          if (digit >= 1 && digit <= 4) {
+            const component: Cell[] = []
+            const queue = [pos]
+            visited[r][c] = 1
+
+            let has_adjacent_empty = false
+
+            while (queue.length > 0) {
+              const curr = queue.shift()!
+              const curr_cell = POS2Cell(board, curr)
+              component.push(curr_cell)
+
+              const adj = create_adjacent_group_of_pos(curr, 'wasd')
+              for (const npos of adj) {
+                const [nr, nc] = npos
+                const ncell = POS2Cell(board, npos)
+                const ndigit = ncell.digit
+
+                if (ndigit === 0) {
+                  has_adjacent_empty = true
+                } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {
+                  visited[nr][nc] = 1
+                  queue.push(npos)
+                }
+              }
+            }
+
+            if (component.length >= 4) {
+              collector.add(component)
+            } else if (component.length < 3 && !has_adjacent_empty) {
+              collector.add(component)
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[PR]': {
+      const collector = new CellCollector()
+
+      for (const [r1, c1, r2, c2, isred] of rule.render_state.edges) {
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+        ]
+        const { digits, cells, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (isred) {
+            if (!Prime2Set.has(parseInt(digits.join('')))) collector.add(cells)
+          } else {
+            if (!Square2Set.has(parseInt(digits.join('')))) collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+    case "[PR']": {
+      const collector = new CellCollector()
+
+      for (const [r1, c1, r2, c2, r3, c3, isred] of rule.render_state.triplets) {
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+          [r3, c3],
+        ]
+        const { digits, cells, filled_all } = parseGroup(board, group)
+
+        if (filled_all) {
+          if (isred) {
+            if (!Prime3Set.has(parseInt(digits.join('')))) collector.add(cells)
+          } else {
+            if (!Square3Set.has(parseInt(digits.join('')))) collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+
     case '[QT]': {
       const collector = new CellCollector()
 
@@ -647,7 +990,6 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
-
     case '[RG]': {
       const collector = new CellCollector()
 
@@ -680,7 +1022,6 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
-
     case "[RG']": {
       const collector = new CellCollector()
       const records: { letter: RangeLetter; distance: number; cells: Cell[] }[] = []
@@ -727,246 +1068,93 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
-
-    case '[SR]': {
+    case '[PD]': {
       const collector = new CellCollector()
 
-      for (const group of rule.render_state.streams) {
-        let type: -1 | 0 | 1 = -1 // -1: 결정되지 않음; 0|1: (r^c^digit)&1
+      for (const [type, i, x] of rule.render_state.side_hints) {
+        const line = getLineGroup(type, i)
+        const group = type === 'ROW_LEFT' || type === 'COL_TOP' ? line.slice(0, 3) : line.slice(-3)
 
-        for (const pos of group) {
-          const cell = POS2Cell(board, pos)
-          const digit = cell.digit
-          if (!digit) continue
-
-          const x = ((pos[0] ^ pos[1] ^ digit) & 1) as 0 | 1
-          if (type === -1) {
-            type = x
-            continue
-          }
-
-          if (!(x === type)) collector.add(group.map((pos) => POS2Cell(board, pos)))
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[IV]': {
-      const collector = new CellCollector()
-
-      for (const group of rule.render_state.lines) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-        const cnt = pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length
-
+        const { digits, cells, filled_all } = parseGroup(board, group)
         if (filled_all) {
-          if (!(cnt === 1)) collector.add(cells)
-        } else {
-          if (!(cnt <= 1)) collector.add(cells)
+          if (!((digits as number[]).reduce((a, b) => a * b, 1) === x)) collector.add(cells)
         }
       }
 
       return collector.res
     }
-
-    case '[BD]': {
-      if (board.flat_cells.every((cell) => cell.digit)) {
-        const maxR = Array(9).fill(-1) // 열 c마다 이미 점유된 최대 r
-
-        for (const start_r of rule.render_state.start_rows) {
-          const pos1 = POSSchema.parse([start_r, 0])
-          const cell1 = POS2Cell(board, pos1)
-          const digit1 = cell1.digit
-
-          function findPathFromStart(startR: IDX0): number[] | null {
-            const path = Array(9).fill(-1)
-
-            function dfs(r: IDX0, c: IDX0): boolean {
-              if (r <= maxR[c]) return false
-
-              const pos = POSSchema.parse([r, c])
-              const cell = POS2Cell(board, pos)
-              const digit = cell.digit
-              if (!(digit === ((digit1 + c - 1) % 9) + 1)) return false
-
-              path[c] = r
-
-              if (c === 8) return true
-
-              for (const dr of [-1, 0, +1]) {
-                const next_pos = POSSchema.safeParse([r + dr, c + 1])
-                if (!next_pos.success) continue
-
-                if (dfs(next_pos.data[0], next_pos.data[1])) return true
-              }
-
-              path[c] = -1
-              return false
-            }
-
-            if (dfs(startR, 0)) return path
-            return null
-          }
-
-          const path = findPathFromStart(start_r)
-          if (!path) {
-            return new Set(rule.render_state.start_rows.map((r) => POSSchema.parse([r, 0])).map((pos) => POS2Cell(board, pos)))
-          }
-
-          for (const c of IDX0) {
-            maxR[c] = Math.max(maxR[c], path[c])
-          }
-        }
-      }
-
-      return new Set<Cell>()
-    }
-
-    case '[TR]': {
+    case '[SQ]': {
       const collector = new CellCollector()
 
-      if (board.flat_cells.every((cell) => cell.digit)) {
-        const start = rule.render_state.start
-        const end = rule.render_state.end
+      for (const [type, i, arr] of rule.render_state.side_hints) {
+        const group = getLineGroup(type, i)
 
-        const visited = new Set<number>()
-        const queue = [start]
-        visited.add(POS2number(start))
-        let path_exists = false
+        const { digits, cells, filled_all } = parseGroup(board, group)
+        if (filled_all) {
+          const group2 = group.filter((_, i) => arr.includes(digits[i]))
 
-        while (queue.length > 0) {
-          const curr = queue.shift()!
-          if (curr[0] === end[0] && curr[1] === end[1]) {
-            path_exists = true
-            break
-          }
+          const { digits: digits2, filled_all: filled_all2 } = parseGroup(board, group2)
+          if (!filled_all2) throw new Error('unreachable')
 
-          const curr_cell = POS2Cell(board, curr)
-          const curr_digit = curr_cell.digit
-          if (!curr_digit) continue
+          let ok = true
+          let i = 0
+          let j = 0
 
-          const next_digit = (curr_digit % 9) + 1
+          while (i < arr.length && j < digits2.length) {
+            const value = arr[i]
 
-          const adj_group = create_adjacent_group_of_pos(curr, 'wasd')
-          for (const npos of adj_group) {
-            const npos_num = POS2number(npos)
-            if (visited.has(npos_num)) continue
+            if (digits2[j] !== value) {
+              ok = false
+              collector.add(cells)
+              break
+            }
 
-            const ncell = POS2Cell(board, npos)
-            const ndigit = ncell.digit
-            if (ndigit === next_digit) {
-              visited.add(npos_num)
-              queue.push(npos)
+            let count1 = 0
+            while (i < arr.length && arr[i] === value) {
+              ++count1
+              ++i
+            }
+
+            let count2 = 0
+            while (j < digits2.length && digits2[j] === value) {
+              ++count2
+              ++j
+            }
+
+            if (count2 < count1) {
+              ok = false
+              collector.add(cells)
+              break
             }
           }
-        }
 
-        if (!path_exists) {
-          const startCell = POS2Cell(board, start)
-          const endCell = POS2Cell(board, end)
-          collector.add([startCell, endCell])
+          if (ok && (i !== arr.length || j !== digits2.length)) {
+            collector.add(cells)
+          }
         }
       }
 
       return collector.res
     }
-
-    case "[TR']": {
+    case "[SQ']": {
       const collector = new CellCollector()
 
-      if (board.flat_cells.every((cell) => cell.digit)) {
-        const start = rule.render_state.start
-        const end = rule.render_state.end
+      for (const [type, i, arr] of rule.render_state.side_hints) {
+        const group = getLineGroup(type, i)
 
-        const start_num = POS2number(start)
-        const end_num = POS2number(end)
+        const { digits, cells, filled_all } = parseGroup(board, group)
+        if (filled_all) {
+          const lmhs = digits.map((d) => (d <= 3 ? 'L' : d <= 6 ? 'M' : 'H'))
 
-        if (start_num === end_num) {
-          collector.add([POS2Cell(board, start)])
-        } else {
-          const src = start_num + 81
-          const sink = end_num
+          let j = 0
 
-          const adj = Array.from({ length: 162 }, () => [] as number[])
-          const capacity = Array.from({ length: 162 }, () => new Float64Array(162))
-
-          function addEdge(u: number, v: number, cap: number) {
-            adj[u].push(v)
-            adj[v].push(u)
-            capacity[u][v] = cap
-          }
-
-          for (let u = 0; u < 81; u++) {
-            if (u !== start_num && u !== end_num) {
-              addEdge(u, u + 81, 1)
+          for (const x of lmhs) {
+            if (j < arr.length && x === arr[j]) {
+              ++j
             }
           }
 
-          for (const r of IDX0) {
-            for (const c of IDX0) {
-              const u = r * 9 + c
-              if (u === end_num) continue
-
-              const u_pos = POSSchema.parse([r, c])
-              const u_cell = POS2Cell(board, u_pos)
-              const u_digit = u_cell.digit
-              if (!u_digit) continue
-
-              const next_digit = (u_digit % 9) + 1
-              const neighbors = create_adjacent_group_of_pos(u_pos, 'wasd')
-
-              for (const npos of neighbors) {
-                const v = POS2number(npos)
-                if (v === start_num) continue
-
-                const v_cell = POS2Cell(board, npos)
-                const v_digit = v_cell.digit
-                if (v_digit === next_digit) {
-                  addEdge(u + 81, v, 1)
-                }
-              }
-            }
-          }
-
-          let totalFlow = 0
-          while (totalFlow < 2) {
-            const parent = new Int32Array(162).fill(-1)
-            const queue = [src]
-            parent[src] = -2
-
-            let found = false
-            let head = 0
-            while (head < queue.length) {
-              const curr = queue[head++]
-              if (curr === sink) {
-                found = true
-                break
-              }
-
-              for (const next of adj[curr]) {
-                if (parent[next] === -1 && capacity[curr][next] > 0) {
-                  parent[next] = curr
-                  queue.push(next)
-                }
-              }
-            }
-
-            if (!found) break
-
-            let curr = sink
-            while (curr !== src) {
-              const prev = parent[curr]
-              capacity[prev][curr] -= 1
-              capacity[curr][prev] += 1
-              curr = prev
-            }
-
-            totalFlow += 1
-          }
-
-          if (totalFlow < 2) {
-            collector.add([POS2Cell(board, start), POS2Cell(board, end)])
-          }
+          if (!(j === arr.length)) collector.add(cells)
         }
       }
 
@@ -1034,209 +1222,6 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               if (matched) collector.add(matchedCells)
             }
           }
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[ES]': {
-      const collector = new CellCollector()
-
-      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
-
-      for (const r of IDX0) {
-        for (const c of IDX0) {
-          if (visited[r][c]) continue
-
-          const pos = POSSchema.parse([r, c])
-          const cell = POS2Cell(board, pos)
-          const digit = cell.digit
-
-          const is_potential_even = !digit || digit % 2 === 0
-
-          if (is_potential_even) {
-            const component: Cell[] = []
-            const queue = [pos]
-            visited[r][c] = 1
-
-            let touches_edge = false
-
-            while (queue.length > 0) {
-              const curr = queue.shift()!
-              const curr_cell = POS2Cell(board, curr)
-              component.push(curr_cell)
-
-              if (curr[0] === 0 || curr[0] === 8) {
-                touches_edge = true
-              }
-
-              const adj = create_adjacent_group_of_pos(curr, 'wasd')
-              for (const npos of adj) {
-                const [nr, nc] = npos
-                if (!visited[nr][nc]) {
-                  const ndigit = POS2Cell(board, npos).digit
-                  if (!ndigit || ndigit % 2 === 0) {
-                    visited[nr][nc] = 1
-                    queue.push(npos)
-                  }
-                }
-              }
-            }
-
-            if (!touches_edge) {
-              const filled_evens = component.filter((c) => c.digit && c.digit % 2 === 0)
-              if (filled_evens.length > 0) {
-                collector.add(filled_evens)
-              }
-            }
-          }
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[EP]': {
-      const collector = new CellCollector()
-      const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
-
-      for (const r of IDX0) {
-        for (const c of IDX0) {
-          if (visited[r][c]) continue
-
-          const pos = POSSchema.parse([r, c])
-          const cell = POS2Cell(board, pos)
-          const digit = cell.digit
-
-          if (digit >= 1 && digit <= 4) {
-            const component: Cell[] = []
-            const queue = [pos]
-            visited[r][c] = 1
-
-            let has_adjacent_empty = false
-
-            while (queue.length > 0) {
-              const curr = queue.shift()!
-              const curr_cell = POS2Cell(board, curr)
-              component.push(curr_cell)
-
-              const adj = create_adjacent_group_of_pos(curr, 'wasd')
-              for (const npos of adj) {
-                const [nr, nc] = npos
-                const ncell = POS2Cell(board, npos)
-                const ndigit = ncell.digit
-
-                if (ndigit === 0) {
-                  has_adjacent_empty = true
-                } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {
-                  visited[nr][nc] = 1
-                  queue.push(npos)
-                }
-              }
-            }
-
-            if (component.length >= 4) {
-              collector.add(component)
-            } else if (component.length < 3 && !has_adjacent_empty) {
-              collector.add(component)
-            }
-          }
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[PD]': {
-      const collector = new CellCollector()
-
-      for (const [type, i, x] of rule.render_state.side_hints) {
-        const line = getLineGroup(type, i)
-        const group = type === 'ROW_LEFT' || type === 'COL_TOP' ? line.slice(0, 3) : line.slice(-3)
-
-        const { digits, cells, filled_all } = parseGroup(board, group)
-        if (filled_all) {
-          if (!((digits as number[]).reduce((a, b) => a * b, 1) === x)) collector.add(cells)
-        }
-      }
-
-      return collector.res
-    }
-
-    case '[SQ]': {
-      const collector = new CellCollector()
-
-      for (const [type, i, arr] of rule.render_state.side_hints) {
-        const group = getLineGroup(type, i)
-
-        const { digits, cells, filled_all } = parseGroup(board, group)
-        if (filled_all) {
-          const group2 = group.filter((_, i) => arr.includes(digits[i]))
-
-          const { digits: digits2, filled_all: filled_all2 } = parseGroup(board, group2)
-          if (!filled_all2) throw new Error('unreachable')
-
-          let ok = true
-          let i = 0
-          let j = 0
-
-          while (i < arr.length && j < digits2.length) {
-            const value = arr[i]
-
-            if (digits2[j] !== value) {
-              ok = false
-              collector.add(cells)
-              break
-            }
-
-            let count1 = 0
-            while (i < arr.length && arr[i] === value) {
-              ++count1
-              ++i
-            }
-
-            let count2 = 0
-            while (j < digits2.length && digits2[j] === value) {
-              ++count2
-              ++j
-            }
-
-            if (count2 < count1) {
-              ok = false
-              collector.add(cells)
-              break
-            }
-          }
-
-          if (ok && (i !== arr.length || j !== digits2.length)) {
-            collector.add(cells)
-          }
-        }
-      }
-
-      return collector.res
-    }
-
-    case "[SQ']": {
-      const collector = new CellCollector()
-
-      for (const [type, i, arr] of rule.render_state.side_hints) {
-        const group = getLineGroup(type, i)
-
-        const { digits, cells, filled_all } = parseGroup(board, group)
-        if (filled_all) {
-          const lmhs = digits.map((d) => (d <= 3 ? 'L' : d <= 6 ? 'M' : 'H'))
-
-          let j = 0
-
-          for (const x of lmhs) {
-            if (j < arr.length && x === arr[j]) {
-              ++j
-            }
-          }
-
-          if (!(j === arr.length)) collector.add(cells)
         }
       }
 

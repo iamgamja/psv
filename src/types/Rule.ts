@@ -4,47 +4,57 @@ import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema, VSch
 export const Rule_ID = [
   '[Sudoku]',
   '[R]',
+  "[R']",
   '[C]',
   '[B]',
   '[SG]',
   "[SG']",
+
   '[DT]',
   '[LK]',
   "[LK']",
-  '[MT]',
-  '[MR]',
-  '[QD]',
-  "[QD']",
-  '[TP]',
+  '[PO]',
   '[LO]',
   "[LO']",
-  '[BP]',
-  '[PO]',
-  "[R']",
-  '[PR]',
-  "[PR']",
-  '[RT]',
-  "[RT']",
-  '[PA]',
-  '[VT]',
-  '[EF]',
+  '[TP]',
+  '[QD]',
+  "[QD']",
+
   '[TM]',
   '[AQ]',
+  '[PA]',
+
+  '[MR]',
+  '[SR]',
+  '[IV]',
+
+  '[TR]',
+  "[TR']",
+  '[BD]',
+
+  '[VT]',
+  '[RT]',
+  "[RT']",
   '[RF]',
+
+  '[MT]',
+  '[BP]',
+  '[EF]',
+
+  '[ES]',
+  '[EP]',
+
+  '[PR]',
+  "[PR']",
+
   '[QT]',
   '[RG]',
   "[RG']",
-  '[SR]',
-  '[IV]',
-  '[BD]',
-  '[TR]',
-  "[TR']",
-  '[ST]',
-  '[ES]',
-  '[EP]',
   '[PD]',
   '[SQ]',
   "[SQ']",
+
+  '[ST]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -55,16 +65,17 @@ export const DirMap = {
   U: [-1, 0],
   D: [+1, 0],
 } as const
-const LRUDSchema = z.enum(Object.keys(DirMap) as [keyof typeof DirMap, ...(keyof typeof DirMap)[]])
+const LRUDSchema = z.enum(['L', 'R', 'U', 'D'])
 
 const RCSchema = z.enum(['ROW', 'COL'])
 export type RC = z.infer<typeof RCSchema>
 const RCRCSchema = z.enum(['ROW', 'ROW_LEFT', 'COL', 'COL_TOP'])
 export type RCRC = z.infer<typeof RCRCSchema>
+
 const RangeDistanceSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8)])
 const RangeLetterSchema = z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
-const SQPrimeLetterSchema = z.enum(['L', 'M', 'H'])
 export type RangeLetter = z.infer<typeof RangeLetterSchema>
+
 const StencilValueKeySchema = z.string().refine((key) => {
   const [r, c, ...rest] = key.split(',').map(Number)
   return rest.length === 0 && Number.isInteger(r) && Number.isInteger(c) && POSSchema.safeParse([r, c]).success
@@ -87,6 +98,9 @@ const RuleObjectMap = {
   '[R]': z.object({
     id: z.literal('[R]'),
   }),
+  "[R']": z.object({
+    id: z.literal("[R']"),
+  }),
   '[C]': z.object({
     id: z.literal('[C]'),
   }),
@@ -101,6 +115,7 @@ const RuleObjectMap = {
     id: z.literal("[SG']"),
     render_state: z.object({ regions: GroupsSchema }),
   }),
+
   '[DT]': z.object({
     id: z.literal('[DT]'),
   }),
@@ -112,22 +127,9 @@ const RuleObjectMap = {
     id: z.literal("[LK']"),
     render_state: z.object({ edges: TwoGroupsSchema }),
   }),
-  '[MT]': z.object({
-    id: z.literal('[MT]'),
-    render_state: z.object({ diamond_cells: GroupSchema }),
-  }),
-  '[MR]': z.object({
-    id: z.literal('[MR]'),
-    render_state: z.object({ metros: GroupsSchema }),
-  }),
-  '[QD]': z.object({
-    id: z.literal('[QD]'),
-  }),
-  "[QD']": z.object({
-    id: z.literal("[QD']"),
-  }),
-  '[TP]': z.object({
-    id: z.literal('[TP]'),
+  '[PO]': z.object({
+    id: z.literal('[PO]'),
+    render_state: z.object({ edges: TwoGroupsSchema }),
   }),
   '[LO]': z.object({
     id: z.literal('[LO]'),
@@ -137,27 +139,58 @@ const RuleObjectMap = {
     id: z.literal("[LO']"),
     render_state: z.object({ cells: GroupSchema }),
   }),
-  '[BP]': z.object({
-    id: z.literal('[BP]'),
+  '[TP]': z.object({
+    id: z.literal('[TP]'),
   }),
-  '[PO]': z.object({
-    id: z.literal('[PO]'),
-    render_state: z.object({ edges: TwoGroupsSchema }),
+  '[QD]': z.object({
+    id: z.literal('[QD]'),
   }),
-  "[R']": z.object({
-    id: z.literal("[R']"),
+  "[QD']": z.object({
+    id: z.literal("[QD']"),
   }),
-  '[PR]': z.object({
-    id: z.literal('[PR]'),
-    render_state: z.object({
-      edges: z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()])),
-    }),
+
+  '[TM]': z.object({
+    id: z.literal('[TM]'),
+    render_state: z.object({ regions: z.array(z.object({ cells: GroupSchema, color: z.enum(['red', 'green', 'blue']) })) }),
   }),
-  "[PR']": z.object({
-    id: z.literal("[PR']"),
-    render_state: z.object({
-      triplets: z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()])),
-    }),
+  '[AQ]': z.object({
+    id: z.literal('[AQ]'),
+    render_state: z.object({ regions: GroupsSchema }),
+  }),
+  '[PA]': z.object({
+    id: z.literal('[PA]'),
+    render_state: z.object({ dominoes: TwoGroupsSchema }),
+  }),
+
+  '[MR]': z.object({
+    id: z.literal('[MR]'),
+    render_state: z.object({ metros: GroupsSchema }),
+  }),
+  '[SR]': z.object({
+    id: z.literal('[SR]'),
+    render_state: z.object({ streams: GroupsSchema }),
+  }),
+  '[IV]': z.object({
+    id: z.literal('[IV]'),
+    render_state: z.object({ lines: GroupsSchema }),
+  }),
+
+  '[TR]': z.object({
+    id: z.literal('[TR]'),
+    render_state: z.object({ start: POSSchema, end: POSSchema }),
+  }),
+  "[TR']": z.object({
+    id: z.literal("[TR']"),
+    render_state: z.object({ start: POSSchema, end: POSSchema }),
+  }),
+  '[BD]': z.object({
+    id: z.literal('[BD]'),
+    render_state: z.object({ start_rows: z.array(IDX0Schema) }),
+  }),
+
+  '[VT]': z.object({
+    id: z.literal('[VT]'),
+    render_state: z.object({ arrows: z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema])) }),
   }),
   '[RT]': z.object({
     id: z.literal('[RT]'),
@@ -171,37 +204,43 @@ const RuleObjectMap = {
       cells: z.array(z.tuple([IDX0Schema, IDX0Schema, z.number()])),
     }),
   }),
-  '[PA]': z.object({
-    id: z.literal('[PA]'),
-    render_state: z.object({ dominoes: TwoGroupsSchema }),
+  '[RF]': z.object({
+    id: z.literal('[RF]'),
+    render_state: z.object({ lines: z.array(z.tuple([RCSchema, IDX0Schema])) }),
   }),
-  '[VT]': z.object({
-    id: z.literal('[VT]'),
-    render_state: z.object({ arrows: z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema])) }),
+
+  '[MT]': z.object({
+    id: z.literal('[MT]'),
+    render_state: z.object({ diamond_cells: GroupSchema }),
+  }),
+  '[BP]': z.object({
+    id: z.literal('[BP]'),
   }),
   '[EF]': z.object({
     id: z.literal('[EF]'),
     render_state: z.object({ marked_cells: GroupSchema }),
   }),
-  '[TM]': z.object({
-    id: z.literal('[TM]'),
+
+  '[ES]': z.object({
+    id: z.literal('[ES]'),
+  }),
+  '[EP]': z.object({
+    id: z.literal('[EP]'),
+  }),
+
+  '[PR]': z.object({
+    id: z.literal('[PR]'),
     render_state: z.object({
-      regions: z.array(
-        z.object({
-          cells: GroupSchema,
-          color: z.enum(['red', 'green', 'blue']),
-        }),
-      ),
+      edges: z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()])),
     }),
   }),
-  '[AQ]': z.object({
-    id: z.literal('[AQ]'),
-    render_state: z.object({ regions: GroupsSchema }),
+  "[PR']": z.object({
+    id: z.literal("[PR']"),
+    render_state: z.object({
+      triplets: z.array(z.tuple([IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, IDX0Schema, z.boolean()])),
+    }),
   }),
-  '[RF]': z.object({
-    id: z.literal('[RF]'),
-    render_state: z.object({ lines: z.array(z.tuple([RCSchema, IDX0Schema])) }),
-  }),
+
   '[QT]': z.object({
     id: z.literal('[QT]'),
     render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, z.tuple([VSchema, VSchema])])) }),
@@ -214,42 +253,6 @@ const RuleObjectMap = {
     id: z.literal("[RG']"),
     render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, RangeLetterSchema])) }),
   }),
-  '[SR]': z.object({
-    id: z.literal('[SR]'),
-    render_state: z.object({ streams: GroupsSchema }),
-  }),
-  '[IV]': z.object({
-    id: z.literal('[IV]'),
-    render_state: z.object({ lines: GroupsSchema }),
-  }),
-  '[BD]': z.object({
-    id: z.literal('[BD]'),
-    render_state: z.object({ start_rows: z.array(IDX0Schema) }),
-  }),
-  '[TR]': z.object({
-    id: z.literal('[TR]'),
-    render_state: z.object({
-      start: POSSchema,
-      end: POSSchema,
-    }),
-  }),
-  "[TR']": z.object({
-    id: z.literal("[TR']"),
-    render_state: z.object({
-      start: POSSchema,
-      end: POSSchema,
-    }),
-  }),
-  '[ST]': z.object({
-    id: z.literal('[ST]'),
-    render_state: z.object({ pieces: z.array(StencilPieceSchema) }),
-  }),
-  '[ES]': z.object({
-    id: z.literal('[ES]'),
-  }),
-  '[EP]': z.object({
-    id: z.literal('[EP]'),
-  }),
   '[PD]': z.object({
     id: z.literal('[PD]'),
     render_state: z.object({ side_hints: z.array(z.tuple([RCRCSchema, IDX0Schema, z.number()])) }),
@@ -260,7 +263,12 @@ const RuleObjectMap = {
   }),
   "[SQ']": z.object({
     id: z.literal("[SQ']"),
-    render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, z.array(SQPrimeLetterSchema)])) }),
+    render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, z.array(z.enum(['L', 'M', 'H']))])) }),
+  }),
+
+  '[ST]': z.object({
+    id: z.literal('[ST]'),
+    render_state: z.object({ pieces: z.array(StencilPieceSchema) }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>

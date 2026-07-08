@@ -246,6 +246,11 @@ const Draw = {
 
     Draw._createPolygon(x, y, 6, 0, parseDrawOptions(options))
   },
+  Fill(pos: POSlike, options?: DrawOptions) {
+    const [x, y] = calculateCenter(pos)
+
+    Draw._createRectangle(y - SIZE_CELL / 2, x - SIZE_CELL / 2, y + SIZE_CELL / 2, x + SIZE_CELL / 2, parseDrawOptions(options))
+  },
 
   Divider(pos1: POSlike, pos2: POSlike, options?: DrawLineOptions) {
     const [x1, y1] = calculateCenter(pos1)
@@ -424,12 +429,6 @@ const Draw = {
       }
     }
   },
-
-  Fill(pos: POSlike, options?: DrawOptions) {
-    const [x, y] = calculateCenter(pos)
-
-    Draw._createRectangle(y - SIZE_CELL / 2, x - SIZE_CELL / 2, y + SIZE_CELL / 2, x + SIZE_CELL / 2, parseDrawOptions(options))
-  },
 }
 
 // ---------
@@ -455,7 +454,6 @@ function render_rule(rule: Rule): boolean {
 
       return true
     }
-
     case '[R]': {
       GROUPS_ADJACENT['wasd']
         .filter(([pos1, pos2]) => {
@@ -521,24 +519,12 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
-
-    case '[MT]': {
-      rule.render_state.diamond_cells.forEach((pos) => {
-        Draw.Diamond(pos)
+    case '[PO]': {
+      rule.render_state.edges.forEach(([pos1, pos2]) => {
+        Draw.Triangle(pos1, pos2, { stroke_color: '#ffffff', fill_color: '#000000' })
       })
       return true
     }
-
-    case '[MR]': {
-      rule.render_state.metros.forEach((group) => {
-        const color = color_generator.next() + 'cc'
-        pairwise(group).forEach(([pos1, pos2]) => {
-          Draw.Line(pos1, pos2, { color, thickness: 'hint_lightest' })
-        })
-      })
-      return true
-    }
-
     case '[LO]': {
       rule.render_state.cells.forEach((pos) => {
         Draw.Circle(pos, null, { stroke_color: '#b9ff49', fill_color: '#b9ff4954' })
@@ -552,9 +538,96 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
-    case '[PO]': {
-      rule.render_state.edges.forEach(([pos1, pos2]) => {
-        Draw.Triangle(pos1, pos2, { stroke_color: '#ffffff', fill_color: '#000000' })
+    case '[TM]': {
+      rule.render_state.regions.forEach(({ cells: group, color }) => {
+        const color_code = color === 'red' ? '#fe19196b' : color === 'green' ? '#12de2d6b' : '#192cfe6b'
+        Draw.Line(group[0], group[2], { color: color_code, thickness: 'hint_heavy' })
+      })
+      return true
+    }
+    case '[AQ]': {
+      rule.render_state.regions.forEach((group) => {
+        Draw.Cage(group, { dotted: true, stroke_color: '#3bd1fa', fill_color: '#3bd1fa4b' })
+      })
+      return true
+    }
+    case '[PA]': {
+      rule.render_state.dominoes.forEach((two_group) => {
+        Draw.Cage(two_group, { dotted: true, stroke_color: '#6d4dfaff', fill_color: '#6d4dfa4b' })
+      })
+      return true
+    }
+
+    case '[MR]': {
+      rule.render_state.metros.forEach((group) => {
+        const color = color_generator.next() + 'cc'
+        pairwise(group).forEach(([pos1, pos2]) => {
+          Draw.Line(pos1, pos2, { color, thickness: 'hint_lightest' })
+        })
+      })
+      return true
+    }
+    case '[SR]': {
+      rule.render_state.streams.forEach((group) => {
+        Draw.Stream(group, { color: '#32bbff6b' })
+      })
+      return true
+    }
+    case '[IV]': {
+      rule.render_state.lines.forEach((group) => {
+        Draw.StreamOrder(group, { color: '#29e8536b', thickness: 'hint_light' })
+        Draw.Circle(group[0], null, { stroke_color: '#00000000', fill_color: '#29e8536b', size: 'small' })
+      })
+      return true
+    }
+
+    case '[TR]':
+    case "[TR']": {
+      Draw.Circle(rule.render_state.start, null, { stroke_color: '#3b82f6', fill_color: '#3b82f654' })
+      Draw.Circle(rule.render_state.end, null, { stroke_color: '#f97316', fill_color: '#f9731654' })
+      return true
+    }
+    case '[BD]': {
+      rule.render_state.start_rows.forEach((r) => {
+        const color = color_generator.next()
+        Draw.Divider([r, 0], [r, -1], { color: color, thickness: 'border_heavy' })
+        Draw.Diamond([r, 0], [r, -1], { stroke_color: color, fill_color: color + '6b', size: 'small' })
+      })
+      return true
+    }
+
+    case '[VT]': {
+      rule.render_state.arrows.forEach(([r, c, dir]) => {
+        const [dr, dc] = DirMap[dir]
+        Draw.Triangle(POSSchema.parse([r, c]), null, { size: 'small', stroke_color: '#ff7b82', fill_color: '#ff7b82', direction: Math.atan2(-dr, dc) })
+      })
+      return true
+    }
+    case '[RT]':
+    case "[RT']": {
+      rule.render_state.cells.forEach(([r, c, dd]) => {
+        Draw.Text([r, c], '√' + dd.toString(), { color: '#8e8e8eee', fontSize: 'regular' })
+      })
+      return true
+    }
+    case '[RF]': {
+      rule.render_state.lines.forEach(([type, i]) => {
+        if (type === 'ROW') Draw.Line([i, 0 - 0.5], [i, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
+        else Draw.Line([0 - 0.5, i], [8 + 0.5, i], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
+      })
+      return true
+    }
+
+    case '[MT]': {
+      rule.render_state.diamond_cells.forEach((pos) => {
+        Draw.Diamond(pos)
+      })
+      return true
+    }
+    case '[EF]': {
+      rule.render_state.marked_cells.forEach((pos) => {
+        Draw.Circle(pos, null, { stroke_color: '#ffe749', fill_color: '#00000000' })
+        Draw.Fill(pos, { fill_color: '#ffe74954' })
       })
       return true
     }
@@ -573,60 +646,6 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
-    case '[RT]':
-    case "[RT']": {
-      rule.render_state.cells.forEach(([r, c, dd]) => {
-        Draw.Text([r, c], '√' + dd.toString(), { color: '#8e8e8eee', fontSize: 'regular' })
-      })
-      return true
-    }
-
-    case '[PA]': {
-      rule.render_state.dominoes.forEach((two_group) => {
-        Draw.Cage(two_group, { dotted: true, stroke_color: '#6d4dfaff', fill_color: '#6d4dfa4b' })
-      })
-      return true
-    }
-
-    case '[VT]': {
-      rule.render_state.arrows.forEach(([r, c, dir]) => {
-        const [dr, dc] = DirMap[dir]
-        Draw.Triangle(POSSchema.parse([r, c]), null, { size: 'small', stroke_color: '#ff7b82', fill_color: '#ff7b82', direction: Math.atan2(-dr, dc) })
-      })
-      return true
-    }
-
-    case '[EF]': {
-      rule.render_state.marked_cells.forEach((pos) => {
-        Draw.Circle(pos, null, { stroke_color: '#ffe749', fill_color: '#00000000' })
-        Draw.Fill(pos, { fill_color: '#ffe74954' })
-      })
-      return true
-    }
-
-    case '[TM]': {
-      rule.render_state.regions.forEach(({ cells: group, color }) => {
-        const color_code = color === 'red' ? '#fe19196b' : color === 'green' ? '#12de2d6b' : '#192cfe6b'
-        Draw.Line(group[0], group[2], { color: color_code, thickness: 'hint_heavy' })
-      })
-      return true
-    }
-
-    case '[AQ]': {
-      rule.render_state.regions.forEach((group) => {
-        Draw.Cage(group, { dotted: true, stroke_color: '#3bd1fa', fill_color: '#3bd1fa4b' })
-      })
-      return true
-    }
-
-    case '[RF]': {
-      rule.render_state.lines.forEach(([type, i]) => {
-        if (type === 'ROW') Draw.Line([i, 0 - 0.5], [i, 8 + 0.5], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
-        else Draw.Line([0 - 0.5, i], [8 + 0.5, i], { color: '#fe4b196b', thickness: 'hint_regular', round: false })
-      })
-      return true
-    }
-
     case '[QT]': {
       rule.render_state.side_hints.forEach(([type, i, [x, y]]) => {
         if (type === 'ROW') Draw.Text([i, 9], `${x} ${y}`, { color: '#22c55e', fontSize: 'small', align: 'left' })
@@ -634,7 +653,6 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
-
     case '[RG]': {
       rule.render_state.side_hints.forEach(([type, i, distances]) => {
         if (type === 'ROW') Draw.Text([i, 9], distances.join(''), { color: '#3b82f6', fontSize: 'small', align: 'left' })
@@ -642,7 +660,6 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
-
     case "[RG']": {
       rule.render_state.side_hints.forEach(([type, i, letter]) => {
         if (type === 'ROW') Draw.Text([i, 9], letter, { color: '#3b82f6', fontSize: 'small', align: 'left' })
@@ -650,38 +667,6 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
-
-    case '[SR]': {
-      rule.render_state.streams.forEach((group) => {
-        Draw.Stream(group, { color: '#32bbff6b' })
-      })
-      return true
-    }
-
-    case '[IV]': {
-      rule.render_state.lines.forEach((group) => {
-        Draw.StreamOrder(group, { color: '#29e8536b', thickness: 'hint_light' })
-        Draw.Circle(group[0], null, { stroke_color: '#00000000', fill_color: '#29e8536b', size: 'small' })
-      })
-      return true
-    }
-
-    case '[BD]': {
-      rule.render_state.start_rows.forEach((r) => {
-        const color = color_generator.next()
-        Draw.Divider([r, 0], [r, -1], { color: color, thickness: 'border_heavy' })
-        Draw.Diamond([r, 0], [r, -1], { stroke_color: color, fill_color: color + '6b', size: 'small' })
-      })
-      return true
-    }
-
-    case '[TR]':
-    case "[TR']": {
-      Draw.Circle(rule.render_state.start, null, { stroke_color: '#3b82f6', fill_color: '#3b82f654' })
-      Draw.Circle(rule.render_state.end, null, { stroke_color: '#f97316', fill_color: '#f9731654' })
-      return true
-    }
-
     case '[PD]': {
       rule.render_state.side_hints.forEach(([type, i, x]) => {
         if (type === 'ROW') Draw.Text([i, 9], x.toString(), { color: '#e7af36', fontSize: 'small', align: 'left' })
@@ -691,7 +676,6 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
-
     case '[SQ]':
     case "[SQ']": {
       rule.render_state.side_hints.forEach(([type, i, arr]) => {
@@ -701,15 +685,16 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
-    case '[EP]':
-    case '[ES]':
-    case '[ST]':
     case '[DT]':
+    case '[TP]':
     case '[QD]':
     case "[QD']":
-    case '[TP]':
     case '[BP]':
+    case '[ES]':
+    case '[EP]':
+    case '[ST]': {
       return true
+    }
   }
 }
 
