@@ -682,6 +682,16 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
+    case '[PD]': {
+      rule.render_state.side_hints.forEach(([type, i, x]) => {
+        if (type === 'ROW') Draw.Text([i, 9], x.toString(), { color: '#e7af36', fontSize: 'small', align: 'left' })
+        else if (type === 'ROW_LEFT') Draw.Text([i, -1], x.toString(), { color: '#e7af36', fontSize: 'small', align: 'right' })
+        else if (type === 'COL') Draw.Text([9, i], x.toString(), { color: '#e7af36', fontSize: 'small' })
+        else Draw.Text([-1, i], x.toString(), { color: '#e7af36', fontSize: 'small' })
+      })
+      return true
+    }
+
     case '[EP]':
     case '[ES]':
     case '[ST]':

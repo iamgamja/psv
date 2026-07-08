@@ -2,11 +2,11 @@ import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/grou
 import { IDX0, POSSchema, V, type POS } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { DirMap, isKnown, type Rule } from '../types/Rule'
+import { DirMap, isKnown, type RangeLetter, type RCRC, type Rule } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell, POS2number } from '../util/groups'
-import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap } from '../const/check_helper'
+import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap, getLineGroup } from '../const/check_helper'
 import { pairwise } from '../util/pairwise'
 
 type ParsedGroup =
@@ -91,15 +91,8 @@ class CellCollector {
   }
 }
 
-type RangeLineType = Extract<Rule, { id: '[RG]' }>['render_state']['side_hints'][number][0]
-type RangeLetter = Extract<Rule, { id: "[RG']" }>['render_state']['side_hints'][number][2]
-
-function getRangeLineGroup(type: RangeLineType, index: number): Group {
-  return IDX0.map((i) => (type === 'ROW' ? [index, i] : [i, index])) as Group
-}
-
-function collectRangeLineData(board: Board, type: RangeLineType, index: number) {
-  const group = getRangeLineGroup(type, index)
+function collectRangeLineData(board: Board, type: RCRC, index: number) {
+  const group = getLineGroup(type, index)
   const { cells, digits, filled_all } = parseGroup(board, group)
   const pairs: { distance: number; cells: Cell[] }[] = []
   const oneNineCells: Cell[] = []
@@ -719,7 +712,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
 
       for (const [type, i, [x, y]] of rule.render_state.side_hints) {
-        const group = getRangeLineGroup(type, i)
+        const group = getLineGroup(type, i)
         const cellX = POS2Cell(board, group[x - 1])
         const cellY = POS2Cell(board, group[y - 1])
 
@@ -1161,6 +1154,22 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               collector.add(component)
             }
           }
+        }
+      }
+
+      return collector.res
+    }
+
+    case '[PD]': {
+      const collector = new CellCollector()
+
+      for (const [type, i, x] of rule.render_state.side_hints) {
+        const line = getLineGroup(type, i)
+        const group = type === 'ROW_LEFT' || type === 'COL_TOP' ? line.slice(0, 3) : line.slice(-3)
+
+        const { digits, cells, filled_all } = parseGroup(board, group)
+        if (filled_all) {
+          if (!((digits as number[]).reduce((a, b) => a * b, 1) === x)) collector.add(cells)
         }
       }
 

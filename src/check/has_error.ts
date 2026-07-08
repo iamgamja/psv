@@ -1,8 +1,8 @@
 import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
-import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances } from '../const/check_helper'
+import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances, getLineGroup } from '../const/check_helper'
 import { IDX0, POSSchema, V, type POS } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import { DirMap, isKnown, type Rule } from '../types/Rule'
+import { DirMap, isKnown, type RangeLetter, type RCRC, type Rule } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
@@ -62,15 +62,8 @@ function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) =
   return false
 }
 
-type RangeLineType = Extract<Rule, { id: '[RG]' }>['render_state']['side_hints'][number][0]
-type RangeLetter = Extract<Rule, { id: "[RG']" }>['render_state']['side_hints'][number][2]
-
-function getRangeLineGroup(type: RangeLineType, index: number): Group {
-  return IDX0.map((i) => (type === 'ROW' ? [index, i] : [i, index])) as Group
-}
-
-function collectRangeLineData(digit_arr: DigitArr, type: RangeLineType, index: number) {
-  const group = getRangeLineGroup(type, index)
+function collectRangeLineData(digit_arr: DigitArr, type: RCRC, index: number) {
+  const group = getLineGroup(type, index)
   const { digits, filled_all } = parseGroup(digit_arr, group)
   const distances = new Set<number>()
 
@@ -604,7 +597,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
     case '[QT]': {
       for (const [type, i, [x, y]] of rule.render_state.side_hints) {
-        const group = getRangeLineGroup(type, i)
+        const group = getLineGroup(type, i)
         const digitX = POS2Digit(digit_arr, group[x - 1])
         const digitY = POS2Digit(digit_arr, group[y - 1])
 
@@ -992,6 +985,20 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             if (size >= 4) return true
             if (size < 3 && !has_adjacent_empty) return true
           }
+        }
+      }
+
+      return false
+    }
+
+    case '[PD]': {
+      for (const [type, i, x] of rule.render_state.side_hints) {
+        const line = getLineGroup(type, i)
+        const group = type === 'ROW_LEFT' || type === 'COL_TOP' ? line.slice(0, 3) : line.slice(-3)
+
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+        if (filled_all) {
+          if (!((digits as number[]).reduce((a, b) => a * b, 1) === x)) return true
         }
       }
 

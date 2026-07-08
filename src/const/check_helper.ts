@@ -1,4 +1,5 @@
-import { IDX0 } from '../types/base'
+import { IDX0, type Group } from '../types/base'
+import type { RCRC } from '../types/Rule'
 
 export const Prime2Set = new Set([11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97])
 export const Prime3Set = new Set([
@@ -34,3 +35,7 @@ export const distanceMap: Record<number, readonly [IDX0, IDX0][]> = (function ge
 export const distances = Object.keys(distanceMap)
   .map(Number)
   .toSorted((a, b) => a - b)
+
+export function getLineGroup(type: RCRC, index: number): Group {
+  return IDX0.map((i) => (type.substring(0, 3) === 'ROW' ? [index, i] : [i, index])) as Group
+}

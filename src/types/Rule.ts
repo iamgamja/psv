@@ -4,7 +4,6 @@
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
  * 시퀀스 SQ
  * 시퀀스 SQ'
- * 프로덕트 PD
  */
 import { z } from 'zod'
 import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema, VSchema } from './base'
@@ -50,6 +49,7 @@ export const Rule_ID = [
   '[ST]',
   '[ES]',
   '[EP]',
+  '[PD]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -63,8 +63,12 @@ export const DirMap = {
 const LRUDSchema = z.enum(Object.keys(DirMap) as [keyof typeof DirMap, ...(keyof typeof DirMap)[]])
 
 const RCSchema = z.enum(['ROW', 'COL'])
+export type RC = z.infer<typeof RCSchema>
+const RCRCSchema = z.enum(['ROW', 'ROW_LEFT', 'COL', 'COL_TOP'])
+export type RCRC = z.infer<typeof RCRCSchema>
 const RangeDistanceSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8)])
 const RangeLetterSchema = z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
+export type RangeLetter = z.infer<typeof RangeLetterSchema>
 const StencilValueKeySchema = z.string().refine((key) => {
   const [r, c, ...rest] = key.split(',').map(Number)
   return rest.length === 0 && Number.isInteger(r) && Number.isInteger(c) && POSSchema.safeParse([r, c]).success
@@ -249,6 +253,10 @@ const RuleObjectMap = {
   }),
   '[EP]': z.object({
     id: z.literal('[EP]'),
+  }),
+  '[PD]': z.object({
+    id: z.literal('[PD]'),
+    render_state: z.object({ side_hints: z.array(z.tuple([RCRCSchema, IDX0Schema, z.number()])) }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>
