@@ -17,6 +17,8 @@ import { initCells } from './initCells'
 import { renderRules } from './renderRules'
 
 export function initBoard(level: LevelData, State: State): Board {
+  document.querySelector<HTMLDivElement>('#board-container')?.addEventListener('contextmenu', (e) => e.preventDefault())
+
   const cells = initCells(level, State)
 
   const board: Board = {

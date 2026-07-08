@@ -1,13 +1,9 @@
 #board {
-  --size-cell: 32px;
-
   margin: 1rem;
 
   display: flex;
   justify-content: center;
   align-items: center;
-
-  touch-action: none;
 }
 
 #board-container {
@@ -15,6 +11,11 @@
   height: calc(var(--size-cell) * 11);
 
   position: relative;
+
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #rule-render-svg {
@@ -28,12 +29,16 @@
   height: var(--size-cell);
   position: absolute;
 
-  font-size: 20px;
+  font-size: calc(var(--size-cell) * 0.62);
   box-sizing: border-box;
 
   display: flex;
   justify-content: center;
   align-items: center;
+
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #board-container > .cell-num {
@@ -64,7 +69,7 @@
   justify-content: center;
   align-items: center;
 
-  font-size: 8px;
+  font-size: calc(var(--size-cell) * 0.25);
 }
 
 #board-container > .cell-memo > .memo.hide {
@@ -76,13 +81,13 @@
 }
 
 #board-container > .cell-selected.selected {
-  border: 4px rgba(150, 227, 255, 0.5) solid;
+  border: calc(var(--size-cell) * 0.12) rgba(150, 227, 255, 0.5) solid;
 }
 
 #board-container > .cell-error.error {
-  border: 4px rgb(255, 150, 150) solid;
+  border: calc(var(--size-cell) * 0.12) rgb(255, 150, 150) solid;
 }
 
 #board-container > .cell-warning.warning {
-  border: 4px rgb(255, 251, 0) solid;
+  border: calc(var(--size-cell) * 0.12) rgb(255, 251, 0) solid;
 }

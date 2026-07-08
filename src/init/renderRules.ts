@@ -35,14 +35,14 @@ function calculateCenter(pos1: POSlike, pos2?: POSlike | null): Coord {
 // ---------
 
 const DrawWidth = {
-  border_light: 0.5,
-  border_regular: 1,
-  border_heavy: 3,
+  border_light: SIZE_CELL * (0.5 / 32),
+  border_regular: SIZE_CELL * (1 / 32),
+  border_heavy: SIZE_CELL * (3 / 32),
 
-  hint_lightest: 3,
-  hint_light: 6,
-  hint_regular: 10,
-  hint_heavy: 25,
+  hint_lightest: SIZE_CELL * (3 / 32),
+  hint_light: SIZE_CELL * (6 / 32),
+  hint_regular: SIZE_CELL * (10 / 32),
+  hint_heavy: SIZE_CELL * (25 / 32),
 } as const
 
 const DrawRadius = {
@@ -56,7 +56,7 @@ const DrawTextSize = {
   small: SIZE_CELL * 0.3,
   regular: SIZE_CELL * 0.5,
   big: SIZE_CELL * 0.8,
-}
+} as const
 
 interface DrawOptions {
   dotted?: boolean

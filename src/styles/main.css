@@ -5,9 +5,41 @@
   font-display: swap;
 }
 
+:root {
+  --size-cell: 32px;
+}
+@media (min-width: 900px) {
+  :root {
+    --size-cell: 48px;
+  }
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
   font-family: 'Pretendard', sans-serif;
+
+  position: fixed;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 1.5rem;
+  min-height: 100vh;
+
+  box-sizing: border-box;
+}
+
+@media (min-width: 900px) {
+  #app {
+    flex-direction: row;
+
+    gap: 64px;
+  }
 }

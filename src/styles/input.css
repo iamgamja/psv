@@ -25,6 +25,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
 
   transition: background-color 0.2s ease;
 }
@@ -58,4 +59,17 @@
 #input > button#input-branch-reject,
 #input > button#input-branch-cancel {
   font-size: 0.6rem;
+}
+@media (min-width: 900px) {
+  #input > button#input-branch-create-without-digit,
+  #input > button#input-branch-reject,
+  #input > button#input-branch-cancel {
+    font-size: 0.8rem;
+  }
+}
+
+#branch-history {
+  position: fixed;
+  left: 0;
+  top: 0;
 }

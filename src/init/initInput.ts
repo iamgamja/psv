@@ -1,14 +1,16 @@
 import { color_map } from '../const/color_map'
+import { type Cell } from '../types/Cell'
 import { type Input } from '../types/Input'
 import { type State } from '../types/State'
-import { V } from '../types/base'
+import { POSSchema, V } from '../types/base'
 import { attachDragSelection } from '../util/attachDragSelection'
 import { enableLongPress } from '../util/enableLongPress'
 import { entries } from '../util/entries'
+import { POS2Cell } from '../util/groups'
 
 import { initInfoModal, initSettingModal } from './initModal'
 
-const input_element = document.querySelector('#input')!
+const input_element = document.querySelector<HTMLDivElement>('#input')!
 
 const buttons = {
   number: {
@@ -48,9 +50,11 @@ const buttons = {
   setting: input_element.querySelector<HTMLButtonElement>('#input-setting')!,
 }
 
-const branch_history_element = document.querySelector<HTMLOutputElement>('#branch-history')!
+const branch_history_element = document.querySelector<HTMLElement>('#branch-history')!
 
 export function initInput(State: State): Input {
+  input_element.addEventListener('contextmenu', (e) => e.preventDefault())
+
   const board = State.board!
 
   const input: Input = {
@@ -159,6 +163,10 @@ export function initInput(State: State): Input {
     button.addEventListener('longpress', () => {
       board.set_selected_by_candidate(key)
     })
+    button.addEventListener('mousedown', (event) => {
+      if (event.button !== 2) return
+      board.set_selected_by_candidate(key)
+    })
   })
 
   buttons.auto.addEventListener('click', () => {
@@ -168,6 +176,10 @@ export function initInput(State: State): Input {
 
   enableLongPress(buttons.mode2.select)
   buttons.mode2.select.addEventListener('longpress', () => {
+    board.set_selected_by_selected_scope()
+  })
+  buttons.mode2.select.addEventListener('mousedown', (event) => {
+    if (event.button !== 2) return
     board.set_selected_by_selected_scope()
   })
 
@@ -204,6 +216,161 @@ export function initInput(State: State): Input {
   })
 
   attachDragSelection(board, State.Game)
+
+  // keyboard events
+  function isTypingTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false
+    const tag = target.tagName
+    return target.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (document.querySelector('.modal-overlay')) return
+    if (isTypingTarget(e.target)) return
+
+    const key = e.key.toLowerCase()
+
+    switch (key) {
+      case 'z':
+      case 'u':
+        buttons.undo.click()
+        e.preventDefault()
+        return
+
+      case 'x':
+      case 'y':
+      case 'r':
+        buttons.redo.click()
+        e.preventDefault()
+        return
+
+      case 'i':
+        buttons.info.click()
+        e.preventDefault()
+        return
+
+      case '/':
+        buttons.setting.click()
+        e.preventDefault()
+        return
+
+      case 'b':
+        buttons.mode2.branch.click()
+        e.preventDefault()
+        return
+
+      case ' ':
+        buttons.auto.click()
+        e.preventDefault()
+        return
+
+      case 'tab': {
+        type Mode1 = State['Game']['mode1']
+        const mode1Order: Mode1[] = ['num', 'memo', 'color']
+
+        const idx = mode1Order.indexOf(State.Game.mode1)
+        const nextIdx = e.shiftKey ? (idx - 1 + mode1Order.length) % mode1Order.length : (idx + 1) % mode1Order.length
+
+        State.Game.mode1 = mode1Order[nextIdx]
+        e.preventDefault()
+        input.render()
+        return
+      }
+
+      case 'control':
+      case 'meta': {
+        if (State.Game.mode2 === 'branch') return
+        if (State.Game.mode2 !== 'select') {
+          State.Game.mode2 = 'select'
+          input.render()
+        }
+        return
+      }
+
+      case 'a': {
+        if (e.ctrlKey || e.metaKey) {
+          for (const cell of board.flat_cells) {
+            board.selected.add(cell)
+            board.render()
+          }
+        }
+
+        return
+      }
+
+      case 'backspace':
+      case 'delete': {
+        buttons.delete.click()
+        e.preventDefault()
+        return
+      }
+
+      case 'escape': {
+        board.clear_selected()
+        return
+      }
+
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': {
+        buttons.number[Number(key) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9].click()
+        e.preventDefault()
+        return
+      }
+
+      case 'arrowup':
+      case 'arrowdown':
+      case 'arrowleft':
+      case 'arrowright': {
+        const map = {
+          arrowup: [-1, 0],
+          arrowdown: [1, 0],
+          arrowleft: [0, -1],
+          arrowright: [0, 1],
+        } as const
+        const [dr, dc] = map[key as keyof typeof map]
+
+        const nxt_cells = new Set<Cell>()
+        for (const cell of board.selected) {
+          const [r, c] = [cell.r - 1, cell.c - 1] // 0-index
+          const [nxtr, nxtc] = [r + dr, c + dc]
+
+          const pos = POSSchema.safeParse([nxtr, nxtc])
+          if (!pos.success) continue
+
+          nxt_cells.add(POS2Cell(board, pos.data))
+        }
+
+        board.selected = nxt_cells
+        board.render()
+        return
+      }
+    }
+  })
+
+  window.addEventListener('keyup', (e) => {
+    if (document.querySelector('.modal-overlay')) return
+    if (isTypingTarget(e.target)) return
+
+    const key = e.key.toLowerCase()
+
+    switch (key) {
+      case 'control':
+      case 'meta': {
+        if (State.Game.mode2 === 'branch') return
+        if (State.Game.mode2 !== null) {
+          State.Game.mode2 = null
+          input.render()
+        }
+      }
+    }
+  })
 
   input.render()
   return input

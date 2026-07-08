@@ -78,7 +78,7 @@
 }
 
 .modal-body ul > li {
-  list-style-type: '✓ ';
+  list-style-type: '\2713\00A0';
 }
 
 .modal-body input {
