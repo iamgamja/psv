@@ -715,6 +715,25 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       return collector.res
     }
 
+    case '[QT]': {
+      const collector = new CellCollector()
+
+      for (const [type, i, [x, y]] of rule.render_state.side_hints) {
+        const group = getRangeLineGroup(type, i)
+        const cellX = POS2Cell(board, group[x - 1])
+        const cellY = POS2Cell(board, group[y - 1])
+
+        if (!cellX.digit || !cellY.digit) continue
+
+        const xthIsY = cellX.digit === y
+        const ythIsX = cellY.digit === x
+
+        if (xthIsY === ythIsX) collector.add([cellX, cellY])
+      }
+
+      return collector.res
+    }
+
     case '[RG]': {
       const collector = new CellCollector()
 

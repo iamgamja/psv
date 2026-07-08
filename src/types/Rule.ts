@@ -2,7 +2,6 @@
  * @todo
  *
  * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
- * 퀀텀 QT
  * 시퀀스 SQ
  * 시퀀스 SQ'
  * 프로덕트 PD
@@ -40,6 +39,7 @@ export const Rule_ID = [
   '[TM]',
   '[AQ]',
   '[RF]',
+  '[QT]',
   '[RG]',
   "[RG']",
   '[SR]',
@@ -201,6 +201,10 @@ const RuleObjectMap = {
   '[RF]': z.object({
     id: z.literal('[RF]'),
     render_state: z.object({ lines: z.array(z.tuple([RCSchema, IDX0Schema])) }),
+  }),
+  '[QT]': z.object({
+    id: z.literal('[QT]'),
+    render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, z.tuple([VSchema, VSchema])])) }),
   }),
   '[RG]': z.object({
     id: z.literal('[RG]'),

@@ -602,6 +602,23 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       return false
     }
 
+    case '[QT]': {
+      for (const [type, i, [x, y]] of rule.render_state.side_hints) {
+        const group = getRangeLineGroup(type, i)
+        const digitX = POS2Digit(digit_arr, group[x - 1])
+        const digitY = POS2Digit(digit_arr, group[y - 1])
+
+        if (!digitX || !digitY) continue
+
+        const xthIsY = digitX === y
+        const ythIsX = digitY === x
+
+        if (xthIsY === ythIsX) return true
+      }
+
+      return false
+    }
+
     case '[RG]': {
       for (const [type, i, distances] of rule.render_state.side_hints) {
         const expectedDistances = new Set<number>(distances)

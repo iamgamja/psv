@@ -627,6 +627,14 @@ function render_rule(rule: Rule): boolean {
       return true
     }
 
+    case '[QT]': {
+      rule.render_state.side_hints.forEach(([type, i, [x, y]]) => {
+        if (type === 'ROW') Draw.Text([i, 9], `${x} ${y}`, { color: '#22c55e', fontSize: 'small', align: 'left' })
+        else Draw.Text([9, i], `${x} ${y}`, { color: '#22c55e', fontSize: 'small' })
+      })
+      return true
+    }
+
     case '[RG]': {
       rule.render_state.side_hints.forEach(([type, i, distances]) => {
         if (type === 'ROW') Draw.Text([i, 9], distances.join(''), { color: '#3b82f6', fontSize: 'small', align: 'left' })
