@@ -1,12 +1,13 @@
 import { RuleText } from '../const/rule_text'
-import type { Board } from '../types/Board'
-import type { SettingState, State } from '../types/State'
+import { STORAGE_PREFIX_HISTORY } from '../const/storage_key'
+import { type Board } from '../types/Board'
 import { isKnown } from '../types/Rule'
+import { type SettingState, type State } from '../types/State'
+import { Modal } from '../util/Modal'
 import { createElement } from '../util/createElement'
 import { entries } from '../util/entries'
-import { Modal } from '../util/Modal'
+
 import { saveSetting } from './saveloadSetting'
-import { STORAGE_PREFIX_HISTORY } from '../const/storage_key'
 
 export function initInfoModal(board: Board) {
   const info_modal = new Modal('info-modal', 'Info')

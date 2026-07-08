@@ -1,7 +1,7 @@
+import { type Board } from '../types/Board'
+import { type Cell } from '../types/Cell'
+import { type State } from '../types/State'
 import { V } from '../types/base'
-import type { Board } from '../types/Board'
-import type { Cell } from '../types/Cell'
-import type { State } from '../types/State'
 
 export function check_warning(board: Board, State: State): Set<Cell> {
   const res = new Set<Cell>()

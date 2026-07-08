@@ -1,4 +1,4 @@
-import type { IDX, V } from './base'
+import { type IDX, type V } from './base'
 
 export type Cell = {
   r: IDX

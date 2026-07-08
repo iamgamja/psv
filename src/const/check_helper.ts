@@ -1,5 +1,5 @@
-import { IDX0, type Group } from '../types/base'
-import type { RCRC } from '../types/Rule'
+import { type RCRC } from '../types/Rule'
+import { type Group, IDX0 } from '../types/base'
 
 export const Prime2Set = new Set([11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97])
 export const Prime3Set = new Set([

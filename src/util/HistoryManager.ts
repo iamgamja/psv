@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { IDX, V } from '../types/base'
-import type { Board } from '../types/Board'
-import type { Cell } from '../types/Cell'
+
 import { STORAGE_PREFIX_HISTORY } from '../const/storage_key'
+import { type Board } from '../types/Board'
+import { type Cell } from '../types/Cell'
+import { IDX, V } from '../types/base'
 
 const GROUP_BITS = 9
 const GROUP_MASK = (1 << GROUP_BITS) - 1

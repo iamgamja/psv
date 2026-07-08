@@ -1,13 +1,13 @@
 import { SIZE_CELL } from '../const/const'
-import { getDisJointGroups, GROUPS_R } from '../const/groups'
+import { GROUPS_R, getDisJointGroups } from '../const/groups'
+import { type Board } from '../types/Board'
+import { DirMap, type Rule, isKnown } from '../types/Rule'
+import { type Group } from '../types/base'
 import { IDX0, POSSchema } from '../types/base'
-import type { Board } from '../types/Board'
-import { DirMap, isKnown, type Rule } from '../types/Rule'
-import type { Group } from '../types/base'
-import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
-import { hasPOSs, POS2number } from '../util/groups'
-import { pairwise } from '../util/pairwise'
 import { SoftDistinctColorGenerator } from '../util/SoftDistinctColorGenerator'
+import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
+import { POS2number, hasPOSs } from '../util/groups'
+import { pairwise } from '../util/pairwise'
 
 const container = document.querySelector('#board-container')!
 const W = container.clientWidth

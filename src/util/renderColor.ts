@@ -1,6 +1,6 @@
-import type { V } from '../types/base'
-import { SIZE_CELL } from '../const/const'
 import { color_map } from '../const/color_map'
+import { SIZE_CELL } from '../const/const'
+import { type V } from '../types/base'
 
 const CX = SIZE_CELL / 2
 const CY = SIZE_CELL / 2

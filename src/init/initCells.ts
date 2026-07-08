@@ -1,10 +1,10 @@
-import type { Cell } from '../types/Cell'
-import { IDX, V } from '../types/base'
 import { SIZE_CELL } from '../const/const'
-import { initColor } from '../util/renderColor'
+import { type Cell } from '../types/Cell'
+import { type LevelData } from '../types/LevelData'
+import { type State } from '../types/State'
+import { IDX, V } from '../types/base'
 import { createElement } from '../util/createElement'
-import type { LevelData } from '../types/LevelData'
-import type { State } from '../types/State'
+import { initColor } from '../util/renderColor'
 
 /** r, c: 0-index. 1-9 is in-board, 0 and 10 are out-of-board */
 function create_cell_element(className: string, r: IDX, c: IDX): HTMLDivElement {

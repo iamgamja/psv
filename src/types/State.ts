@@ -1,6 +1,7 @@
 import { z } from 'zod'
-import type { Board } from './Board'
-import type { Input } from './Input'
+
+import { type Board } from './Board'
+import { type Input } from './Input'
 
 export type GameState = {
   mode1: 'num' | 'memo' | 'color'

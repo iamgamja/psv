@@ -1,4 +1,4 @@
-import type { V } from '../types/base'
+import { type V } from '../types/base'
 
 export const color_map: Record<V, string> = {
   1: 'rgba(166, 219, 87, 0.3)',

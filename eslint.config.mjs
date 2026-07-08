@@ -1,13 +1,15 @@
-import { defineConfig } from 'eslint/config'
-import typescriptEslint from '@typescript-eslint/eslint-plugin'
-import unusedImports from 'eslint-plugin-unused-imports'
-import prettier from 'eslint-plugin-prettier'
-import globals from 'globals'
-import tsParser from '@typescript-eslint/parser'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import js from '@eslint/js'
+
 import { FlatCompat } from '@eslint/eslintrc'
+import js from '@eslint/js'
+import typescriptEslint from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import { defineConfig } from 'eslint/config'
+import { importX } from 'eslint-plugin-import-x'
+import prettier from 'eslint-plugin-prettier'
+import unusedImports from 'eslint-plugin-unused-imports'
+import globals from 'globals'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -19,30 +21,21 @@ const compat = new FlatCompat({
 
 export default defineConfig([
   {
-    extends: compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended'),
-
     plugins: {
       '@typescript-eslint': typescriptEslint,
       'unused-imports': unusedImports,
-      prettier,
+      prettier: prettier,
     },
 
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.browser,
-      },
+    extends: compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended'),
 
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
       parser: tsParser,
     },
 
     rules: {
-      'prettier/prettier': [
-        'error',
-        {
-          endOfLine: 'auto',
-        },
-      ],
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
 
       'unused-imports/no-unused-imports': 'error',
 
@@ -56,6 +49,35 @@ export default defineConfig([
           argsIgnorePattern: '^_',
         },
       ],
+    },
+  },
+  {
+    plugins: {
+      'import-x': importX,
+    },
+
+    extends: ['import-x/flat/recommended'],
+
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+      parser: tsParser,
+    },
+
+    rules: {
+      'import-x/no-unresolved': 'off',
+
+      'import-x/order': [
+        'warn',
+        {
+          alphabetize: { order: 'asc', orderImportKind: 'asc' },
+          named: true,
+          'newlines-between': 'always',
+        },
+      ],
+
+      'import-x/extensions': ['error', 'never', { fix: true }],
+
+      'import-x/consistent-type-specifier-style': ['warn', 'prefer-inline'],
     },
   },
 ])

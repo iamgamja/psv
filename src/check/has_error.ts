@@ -1,11 +1,10 @@
-import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/groups'
-import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances, getLineGroup } from '../const/check_helper'
-import { IDX0, POSSchema, V, type POS } from '../types/base'
-import type { DigitArr } from '../types/Board'
-import { DirMap, isKnown, type RangeLetter, type Rule } from '../types/Rule'
-import type { Group, Groups, TwoGroups } from '../types/base'
-import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
-import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
+import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup } from '../const/check_helper'
+import { GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
+import { type DigitArr } from '../types/Board'
+import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
+import { type Group, type Groups, IDX0, type POS, POSSchema, type TwoGroups, V } from '../types/base'
+import { GROUPS_ADJACENT, create_adjacent_group_of_pos } from '../util/create_adjacent_group'
+import { POS2Digit, POS2number, differenceOf2Groups } from '../util/groups'
 import { pairwise } from '../util/pairwise'
 
 type ParsedGroup =

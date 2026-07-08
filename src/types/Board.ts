@@ -1,9 +1,8 @@
-import type { V } from './base'
-import type { Cell } from './Cell'
-import type { SettingState, State } from './State'
-import type { LevelData } from './LevelData'
-import type { Rule, UnknownRule } from './Rule'
-import type { Groups } from './base'
+import { type Cell } from './Cell'
+import { type LevelData } from './LevelData'
+import { type Rule, type UnknownRule } from './Rule'
+import { type SettingState, type State } from './State'
+import { type Groups, type V } from './base'
 
 export type DigitArr = (V | 0)[][]
 

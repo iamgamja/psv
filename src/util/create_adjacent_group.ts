@@ -1,5 +1,5 @@
+import { type Group, type Groups, type POS, type TwoGroup, type TwoGroups } from '../types/base'
 import { IDX0, POSSchema } from '../types/base'
-import type { Group, Groups, POS, TwoGroup, TwoGroups } from '../types/base'
 
 type AdjacentMode = 'wasd' | 'king'
 

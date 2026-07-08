@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { RuleSchema, UnknownRuleSchema } from './Rule'
 import { V } from './base'
 

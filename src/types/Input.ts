@@ -1,4 +1,4 @@
-import type { Modal } from '../util/Modal'
+import { type Modal } from '../util/Modal'
 
 export type Input = {
   render(): void

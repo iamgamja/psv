@@ -1,11 +1,12 @@
-import type { State } from '../types/State'
-import { V } from '../types/base'
 import { color_map } from '../const/color_map'
-import { entries } from '../util/entries'
-import { enableLongPress } from '../util/enableLongPress'
+import { type Input } from '../types/Input'
+import { type State } from '../types/State'
+import { V } from '../types/base'
 import { attachDragSelection } from '../util/attachDragSelection'
+import { enableLongPress } from '../util/enableLongPress'
+import { entries } from '../util/entries'
+
 import { initInfoModal, initSettingModal } from './initModal'
-import type { Input } from '../types/Input'
 
 const input_element = document.querySelector('#input')!
 

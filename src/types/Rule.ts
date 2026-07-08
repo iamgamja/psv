@@ -1,4 +1,5 @@
 import { z } from 'zod'
+
 import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema, VSchema } from './base'
 
 export const Rule_ID = [

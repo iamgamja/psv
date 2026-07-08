@@ -1,6 +1,6 @@
 import { default_setting } from '../const/default'
 import { STORAGE_KEY_SETTING } from '../const/storage_key'
-import { SettingStateSchema, type SettingState } from '../types/State'
+import { type SettingState, SettingStateSchema } from '../types/State'
 
 export function loadSetting() {
   try {

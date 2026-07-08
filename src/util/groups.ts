@@ -1,7 +1,6 @@
-import { POSSchema, type IDX0, type V } from '../types/base'
-import type { Board, DigitArr } from '../types/Board'
-import type { Cell } from '../types/Cell'
-import type { Group, POS, TwoGroup, TwoGroups } from '../types/base'
+import { type Board, type DigitArr } from '../types/Board'
+import { type Cell } from '../types/Cell'
+import { type Group, IDX0, type POS, POSSchema, type TwoGroup, type TwoGroups, V } from '../types/base'
 
 export function cell2POS(cell: Cell): POS {
   const r = (cell.r - 1) as IDX0

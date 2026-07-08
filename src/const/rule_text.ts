@@ -1,4 +1,4 @@
-import type { Rule_ID } from '../types/Rule'
+import { type Rule_ID } from '../types/Rule'
 
 export const RuleText: Record<Rule_ID, string> = {
   '[Sudoku]': '[Sudoku] 스도쿠: 보드판의 모든 칸에 1~9 숫자를 채워야 합니다.',

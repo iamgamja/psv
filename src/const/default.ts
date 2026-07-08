@@ -1,5 +1,5 @@
-import type { GameState, SettingState } from '../types/State'
-import type { LevelData } from '../types/LevelData'
+import { type LevelData } from '../types/LevelData'
+import { type GameState, type SettingState } from '../types/State'
 
 export const default_level: LevelData = {
   id: '#00000',
