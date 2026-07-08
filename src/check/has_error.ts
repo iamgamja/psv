@@ -2,8 +2,8 @@ import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/grou
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distanceMap, distances, getLineGroup } from '../const/check_helper'
 import { IDX0, POSSchema, V, type POS } from '../types/base'
 import type { DigitArr } from '../types/Board'
-import { DirMap, isKnown, type RangeLetter, type RCRC, type Rule } from '../types/Rule'
-import { type Group, type Groups, type TwoGroups } from '../types/base'
+import { DirMap, isKnown, type RangeLetter, type Rule } from '../types/Rule'
+import type { Group, Groups, TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Digit, POS2number } from '../util/groups'
 import { pairwise } from '../util/pairwise'
@@ -19,38 +19,30 @@ type ParsedGroup =
       sub_groups: Map<V, Group>
       filled_all: false
     }
-export function parseGroup(digit_arr: DigitArr, group: Group): ParsedGroup {
+function parseGroup(digit_arr: DigitArr, group: Group): ParsedGroup {
   const digits = group.map((pos) => POS2Digit(digit_arr, pos))
   const filled_all = digits.every((digit) => digit)
 
-  const sub_groups = new Map<V, Group>()
-  for (let i = 0; i < group.length; i++) {
-    const digit = digits[i]
-    if (digit) {
-      if (!sub_groups.has(digit)) sub_groups.set(digit, [])
-      sub_groups.get(digit)!.push(group[i])
-    }
-  }
-
   return {
     digits,
-    sub_groups,
     filled_all,
   } as ParsedGroup
 }
 
 function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   for (const group of groups) {
-    const { sub_groups } = parseGroup(digit_arr, group)
+    const { digits } = parseGroup(digit_arr, group)
 
-    for (const group of sub_groups.values()) if (!(group.length <= 1)) return true
+    for (const v of V) {
+      const cnt = digits.filter((digit) => digit === v).length
+      if (!(cnt <= 1)) return true
+    }
   }
 
   return false
 }
 
-/** @returns 어떤 완성된 그룹이 f를 만족하지 않으면 true */
-function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
+function check_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
   for (const group of groups) {
     const { digits, filled_all } = parseGroup(digit_arr, group)
 
@@ -62,73 +54,11 @@ function has_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) =
   return false
 }
 
-function collectRangeLineData(digit_arr: DigitArr, type: RCRC, index: number) {
-  const group = getLineGroup(type, index)
-  const { digits, filled_all } = parseGroup(digit_arr, group)
-  const distances = new Set<number>()
-
-  for (let i = 0; i < digits.length; i++) {
-    for (let j = i + 1; j < digits.length; j++) {
-      if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
-        distances.add(j - i)
-      }
-    }
-  }
-
-  return { filled_all, distances }
-}
-
-type StencilPiece = Extract<Rule, { id: '[ST]' }>['render_state']['pieces'][number]
-type StencilValue = { pos: POS; value: V }
-type StencilVariant = { cells: POS[]; values: StencilValue[]; height: number; width: number }
-
-function parseStencilValues(values: StencilPiece['values']): StencilValue[] {
-  return Object.entries(values).map(([key, value]) => {
-    const [r, c] = key.split(',').map(Number)
-    return { pos: POSSchema.parse([r, c]), value }
-  })
-}
-
-function createStencilVariants(piece: StencilPiece): StencilVariant[] {
-  const values = parseStencilValues(piece.values)
-  const transforms = [
-    ([r, c]: POS): [number, number] => [r, c],
-    ([r, c]: POS): [number, number] => [c, -r],
-    ([r, c]: POS): [number, number] => [-r, -c],
-    ([r, c]: POS): [number, number] => [-c, r],
-    ([r, c]: POS): [number, number] => [r, -c],
-    ([r, c]: POS): [number, number] => [-r, c],
-    ([r, c]: POS): [number, number] => [c, r],
-    ([r, c]: POS): [number, number] => [-c, -r],
-  ]
-
-  const variants: StencilVariant[] = []
-  const seen = new Set<string>()
-
-  for (const transform of transforms) {
-    const rawCells = piece.cells.map(transform)
-    const rawValues = values.map(({ pos, value }) => ({ pos: transform(pos), value }))
-    const minR = Math.min(...rawCells.map(([r]) => r))
-    const minC = Math.min(...rawCells.map(([, c]) => c))
-    const cells = rawCells.map(([r, c]) => POSSchema.parse([r - minR, c - minC]))
-    const transformedValues = rawValues.map(({ pos: [r, c], value }) => ({ pos: POSSchema.parse([r - minR, c - minC]), value }))
-    const height = Math.max(...cells.map(([r]) => r)) + 1
-    const width = Math.max(...cells.map(([, c]) => c)) + 1
-    const key = [...cells.map((pos) => pos.join(',')).toSorted(), '|', ...transformedValues.map(({ pos, value }) => `${pos.join(',')}=${value}`).toSorted()].join(';')
-
-    if (!seen.has(key)) {
-      seen.add(key)
-      variants.push({ cells, values: transformedValues, height, width })
-    }
-  }
-
-  return variants
-}
-
 function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
   switch (rule.id) {
     case '[Sudoku]':
       return false
+
     case '[R]':
     case '[C]':
     case '[B]':
@@ -138,21 +68,26 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       return has_dup(digit_arr, getDisJointGroups(rule))
 
     case '[LK]':
-      return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
+      return check_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
     case "[LK']": {
       return (
-        has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1) ||
-        has_2groups(digit_arr, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1)
+        check_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1) ||
+        check_2groups(digit_arr, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1)
       )
     }
 
     case '[MT]': {
-      const { sub_groups, filled_all } = parseGroup(digit_arr, rule.render_state.diamond_cells)
+      const { digits, filled_all } = parseGroup(digit_arr, rule.render_state.diamond_cells)
 
-      if (filled_all) {
-        if (!Array.from(sub_groups.entries()).every(([v, s]) => s.length === v)) return true
-      } else {
-        if (!Array.from(sub_groups.entries()).every(([v, s]) => s.length <= v)) return true
+      for (const v of V) {
+        const cnt = digits.filter((digit) => digit === v).length
+        if (cnt === 0) continue
+
+        if (filled_all) {
+          if (!(cnt === v)) return true
+        } else {
+          if (!(cnt <= v)) return true
+        }
       }
 
       return false
@@ -280,7 +215,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[PO]':
-      return has_2groups(digit_arr, rule.render_state.edges, (d1, d2) => d1 < d2)
+      return check_2groups(digit_arr, rule.render_state.edges, (d1, d2) => d1 < d2)
 
     case "[R']": {
       const remainders_map = new Set<V>()
@@ -613,15 +548,26 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[RG]': {
-      for (const [type, i, distances] of rule.render_state.side_hints) {
-        const expectedDistances = new Set<number>(distances)
-        const { filled_all, distances: foundDistances } = collectRangeLineData(digit_arr, type, i)
+      for (const [type, index, arr] of rule.render_state.side_hints) {
+        const expectedDistances = new Set<number>(arr)
 
-        for (const distance of foundDistances) {
+        const group = getLineGroup(type, index)
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const distances = new Set<number>()
+
+        for (let i = 0; i < digits.length; i++) {
+          for (let j = i + 1; j < digits.length; j++) {
+            if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
+              distances.add(j - i)
+            }
+          }
+        }
+
+        for (const distance of distances) {
           if (!expectedDistances.has(distance)) return true
         }
 
-        if (filled_all && foundDistances.size === 0) return true
+        if (filled_all && distances.size === 0) return true
       }
 
       return false
@@ -630,14 +576,24 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case "[RG']": {
       const records: { letter: RangeLetter; distance: number }[] = []
 
-      for (const [type, i, letter] of rule.render_state.side_hints) {
-        const { filled_all, distances } = collectRangeLineData(digit_arr, type, i)
+      for (const [type, index, letter] of rule.render_state.side_hints) {
+        const group = getLineGroup(type, index)
+        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const distances = new Set<number>()
+
+        for (let i = 0; i < digits.length; i++) {
+          for (let j = i + 1; j < digits.length; j++) {
+            if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
+              distances.add(j - i)
+            }
+          }
+        }
 
         if (distances.size >= 2) return true
         if (filled_all && distances.size === 0) return true
 
         if (distances.size === 1) {
-          const distance = Array.from(distances)[0]!
+          const distance = distances.values().next().value!
           for (const record of records) {
             if ((record.letter === letter && record.distance !== distance) || (record.letter !== letter && record.distance === distance)) return true
           }
@@ -874,7 +830,42 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
     case '[ST]': {
       for (const piece of rule.render_state.pieces) {
-        for (const variant of createStencilVariants(piece)) {
+        const values = Object.entries(piece.values).map(([key, value]) => {
+          const [r, c] = key.split(',').map(Number)
+          return { pos: POSSchema.parse([r, c]), value }
+        })
+        const transforms = [
+          ([r, c]: POS): [number, number] => [r, c],
+          ([r, c]: POS): [number, number] => [c, -r],
+          ([r, c]: POS): [number, number] => [-r, -c],
+          ([r, c]: POS): [number, number] => [-c, r],
+          ([r, c]: POS): [number, number] => [r, -c],
+          ([r, c]: POS): [number, number] => [-r, c],
+          ([r, c]: POS): [number, number] => [c, r],
+          ([r, c]: POS): [number, number] => [-c, -r],
+        ]
+
+        const variants = []
+        const seen = new Set<string>()
+
+        for (const transform of transforms) {
+          const rawCells = piece.cells.map(transform)
+          const rawValues = values.map(({ pos, value }) => ({ pos: transform(pos), value }))
+          const minR = Math.min(...rawCells.map(([r]) => r))
+          const minC = Math.min(...rawCells.map(([, c]) => c))
+          const cells = rawCells.map(([r, c]) => POSSchema.parse([r - minR, c - minC]))
+          const transformedValues = rawValues.map(({ pos: [r, c], value }) => ({ pos: POSSchema.parse([r - minR, c - minC]), value }))
+          const height = Math.max(...cells.map(([r]) => r)) + 1
+          const width = Math.max(...cells.map(([, c]) => c)) + 1
+          const key = [...cells.map((pos) => pos.join(',')).toSorted(), '|', ...transformedValues.map(({ pos, value }) => `${pos.join(',')}=${value}`).toSorted()].join(';')
+
+          if (!seen.has(key)) {
+            seen.add(key)
+            variants.push({ cells, values: transformedValues, height, width })
+          }
+        }
+
+        for (const variant of variants) {
           for (let ro = 0; ro <= 9 - variant.height; ro++) {
             for (let co = 0; co <= 9 - variant.width; co++) {
               let matched = true

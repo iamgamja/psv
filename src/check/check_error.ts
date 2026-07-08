@@ -2,8 +2,8 @@ import { getDisJointGroups, GROUPS_QD, GROUPS_R, GROUPS_TP } from '../const/grou
 import { IDX0, POSSchema, V, type POS } from '../types/base'
 import type { Board } from '../types/Board'
 import type { Cell } from '../types/Cell'
-import { DirMap, isKnown, type RangeLetter, type RCRC, type Rule } from '../types/Rule'
-import { type Group, type Groups, type TwoGroups } from '../types/base'
+import { DirMap, isKnown, type RangeLetter, type Rule } from '../types/Rule'
+import type { Group, Groups, TwoGroups } from '../types/base'
 import { create_adjacent_group_of_pos, GROUPS_ADJACENT } from '../util/create_adjacent_group'
 import { differenceOf2Groups, POS2Cell, POS2number } from '../util/groups'
 import { Prime2Set, Square2Set, Prime3Set, Square3Set, distances, distanceMap, getLineGroup } from '../const/check_helper'
@@ -13,39 +13,21 @@ type ParsedGroup =
   | {
       digits: V[]
       cells: Cell[]
-      sub_groups: Map<V, Group>
-      sub_cells: Map<V, Cell[]>
       filled_all: true
     }
   | {
       digits: (V | 0)[]
       cells: Cell[]
-      sub_groups: Map<V, Group>
-      sub_cells: Map<V, Cell[]>
       filled_all: false
     }
-export function parseGroup(board: Board, group: Group): ParsedGroup {
+function parseGroup(board: Board, group: Group): ParsedGroup {
   const cells = group.map((pos) => POS2Cell(board, pos))
   const digits = cells.map((cell) => cell.digit)
   const filled_all = digits.every((digit) => digit)
 
-  const sub_groups = new Map<V, Group>()
-  const sub_cells = new Map<V, Cell[]>()
-  for (let i = 0; i < group.length; i++) {
-    const digit = digits[i]
-    if (digit) {
-      if (!sub_groups.has(digit)) sub_groups.set(digit, [])
-      sub_groups.get(digit)!.push(group[i])
-      if (!sub_cells.has(digit)) sub_cells.set(digit, [])
-      sub_cells.get(digit)!.push(cells[i])
-    }
-  }
-
   return {
     digits,
     cells,
-    sub_groups,
-    sub_cells,
     filled_all,
   } as ParsedGroup
 }
@@ -54,15 +36,17 @@ function check_dup(board: Board, groups: Groups): Set<Cell> {
   const collector = new CellCollector()
 
   for (const group of groups) {
-    const { sub_cells } = parseGroup(board, group)
+    const { cells } = parseGroup(board, group)
 
-    for (const cells of sub_cells.values()) if (!(cells.length <= 1)) collector.add(cells)
+    for (const v of V) {
+      const v_cells = cells.filter((cell) => cell.digit === v)
+      if (!(v_cells.length <= 1)) collector.add(cells)
+    }
   }
 
   return collector.res
 }
 
-/** @returns 모든 완성된 길이 2의 그룹마다, f를 만족하지 않는 Cell들의 집합 */
 function check_2groups(board: Board, groups: TwoGroups, f: (d1: V, d2: V) => boolean): Set<Cell> {
   const collector = new CellCollector()
 
@@ -89,74 +73,6 @@ class CellCollector {
       this.res.add(cell)
     }
   }
-}
-
-function collectRangeLineData(board: Board, type: RCRC, index: number) {
-  const group = getLineGroup(type, index)
-  const { cells, digits, filled_all } = parseGroup(board, group)
-  const pairs: { distance: number; cells: Cell[] }[] = []
-  const oneNineCells: Cell[] = []
-
-  for (let i = 0; i < digits.length; i++) {
-    if (digits[i] === 1 || digits[i] === 9) oneNineCells.push(cells[i])
-  }
-
-  for (let i = 0; i < digits.length; i++) {
-    for (let j = i + 1; j < digits.length; j++) {
-      if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
-        pairs.push({ distance: j - i, cells: [cells[i], cells[j]] })
-      }
-    }
-  }
-
-  return { cells, filled_all, oneNineCells, pairs }
-}
-
-type StencilPiece = Extract<Rule, { id: '[ST]' }>['render_state']['pieces'][number]
-type StencilValue = { pos: POS; value: V }
-type StencilVariant = { cells: POS[]; values: StencilValue[]; height: number; width: number }
-
-function parseStencilValues(values: StencilPiece['values']): StencilValue[] {
-  return Object.entries(values).map(([key, value]) => {
-    const [r, c] = key.split(',').map(Number)
-    return { pos: POSSchema.parse([r, c]), value }
-  })
-}
-
-function createStencilVariants(piece: StencilPiece): StencilVariant[] {
-  const values = parseStencilValues(piece.values)
-  const transforms = [
-    ([r, c]: POS): [number, number] => [r, c],
-    ([r, c]: POS): [number, number] => [c, -r],
-    ([r, c]: POS): [number, number] => [-r, -c],
-    ([r, c]: POS): [number, number] => [-c, r],
-    ([r, c]: POS): [number, number] => [r, -c],
-    ([r, c]: POS): [number, number] => [-r, c],
-    ([r, c]: POS): [number, number] => [c, r],
-    ([r, c]: POS): [number, number] => [-c, -r],
-  ]
-
-  const variants: StencilVariant[] = []
-  const seen = new Set<string>()
-
-  for (const transform of transforms) {
-    const rawCells = piece.cells.map(transform)
-    const rawValues = values.map(({ pos, value }) => ({ pos: transform(pos), value }))
-    const minR = Math.min(...rawCells.map(([r]) => r))
-    const minC = Math.min(...rawCells.map(([, c]) => c))
-    const cells = rawCells.map(([r, c]) => POSSchema.parse([r - minR, c - minC]))
-    const transformedValues = rawValues.map(({ pos: [r, c], value }) => ({ pos: POSSchema.parse([r - minR, c - minC]), value }))
-    const height = Math.max(...cells.map(([r]) => r)) + 1
-    const width = Math.max(...cells.map(([, c]) => c)) + 1
-    const key = [...cells.map((pos) => pos.join(',')).toSorted(), '|', ...transformedValues.map(({ pos, value }) => `${pos.join(',')}=${value}`).toSorted()].join(';')
-
-    if (!seen.has(key)) {
-      seen.add(key)
-      variants.push({ cells, values: transformedValues, height, width })
-    }
-  }
-
-  return variants
 }
 
 function check_error_rule(board: Board, rule: Rule): Set<Cell> {
@@ -186,12 +102,17 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     case '[MT]': {
       const collector = new CellCollector()
 
-      const { sub_cells, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
+      const { cells, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
 
-      if (filled_all) {
-        for (const [v, s] of sub_cells.entries()) if (!(s.length === v)) collector.add(s)
-      } else {
-        for (const [v, s] of sub_cells.entries()) if (!(s.length <= v)) collector.add(s)
+      for (const v of V) {
+        const v_cells = cells.filter((cell) => cell.digit === v)
+        if (v_cells.length === 0) continue
+
+        if (filled_all) {
+          if (!(v_cells.length === v)) collector.add(v_cells)
+        } else {
+          if (!(v_cells.length <= v)) collector.add(v_cells)
+        }
       }
 
       return collector.res
@@ -730,9 +651,25 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
     case '[RG]': {
       const collector = new CellCollector()
 
-      for (const [type, i, distances] of rule.render_state.side_hints) {
+      for (const [type, index, distances] of rule.render_state.side_hints) {
         const expectedDistances = new Set<number>(distances)
-        const { cells, filled_all, pairs } = collectRangeLineData(board, type, i)
+
+        const group = getLineGroup(type, index)
+        const { cells, digits, filled_all } = parseGroup(board, group)
+        const pairs: { distance: number; cells: Cell[] }[] = []
+        const oneNineCells: Cell[] = []
+
+        for (let i = 0; i < digits.length; i++) {
+          if (digits[i] === 1 || digits[i] === 9) oneNineCells.push(cells[i])
+        }
+
+        for (let i = 0; i < digits.length; i++) {
+          for (let j = i + 1; j < digits.length; j++) {
+            if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
+              pairs.push({ distance: j - i, cells: [cells[i], cells[j]] })
+            }
+          }
+        }
 
         for (const pair of pairs) {
           if (!expectedDistances.has(pair.distance)) collector.add(pair.cells)
@@ -748,8 +685,24 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
       const records: { letter: RangeLetter; distance: number; cells: Cell[] }[] = []
 
-      for (const [type, i, letter] of rule.render_state.side_hints) {
-        const { cells, filled_all, oneNineCells, pairs } = collectRangeLineData(board, type, i)
+      for (const [type, index, letter] of rule.render_state.side_hints) {
+        const group = getLineGroup(type, index)
+        const { cells, digits, filled_all } = parseGroup(board, group)
+        const pairs: { distance: number; cells: Cell[] }[] = []
+        const oneNineCells: Cell[] = []
+
+        for (let i = 0; i < digits.length; i++) {
+          if (digits[i] === 1 || digits[i] === 9) oneNineCells.push(cells[i])
+        }
+
+        for (let i = 0; i < digits.length; i++) {
+          for (let j = i + 1; j < digits.length; j++) {
+            if ((digits[i] === 1 && digits[j] === 9) || (digits[i] === 9 && digits[j] === 1)) {
+              pairs.push({ distance: j - i, cells: [cells[i], cells[j]] })
+            }
+          }
+        }
+
         const distances = new Set(pairs.map(({ distance }) => distance))
 
         if (distances.size >= 2) {
@@ -757,7 +710,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         } else if (filled_all && pairs.length === 0) {
           collector.add(cells)
         } else if (distances.size === 1) {
-          records.push({ letter, distance: Array.from(distances)[0]!, cells: oneNineCells })
+          records.push({ letter, distance: distances.values().next().value!, cells: oneNineCells })
         }
       }
 
@@ -1024,7 +977,42 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
 
       for (const piece of rule.render_state.pieces) {
-        for (const variant of createStencilVariants(piece)) {
+        const values = Object.entries(piece.values).map(([key, value]) => {
+          const [r, c] = key.split(',').map(Number)
+          return { pos: POSSchema.parse([r, c]), value }
+        })
+        const transforms = [
+          ([r, c]: POS): [number, number] => [r, c],
+          ([r, c]: POS): [number, number] => [c, -r],
+          ([r, c]: POS): [number, number] => [-r, -c],
+          ([r, c]: POS): [number, number] => [-c, r],
+          ([r, c]: POS): [number, number] => [r, -c],
+          ([r, c]: POS): [number, number] => [-r, c],
+          ([r, c]: POS): [number, number] => [c, r],
+          ([r, c]: POS): [number, number] => [-c, -r],
+        ]
+
+        const variants = []
+        const seen = new Set<string>()
+
+        for (const transform of transforms) {
+          const rawCells = piece.cells.map(transform)
+          const rawValues = values.map(({ pos, value }) => ({ pos: transform(pos), value }))
+          const minR = Math.min(...rawCells.map(([r]) => r))
+          const minC = Math.min(...rawCells.map(([, c]) => c))
+          const cells = rawCells.map(([r, c]) => POSSchema.parse([r - minR, c - minC]))
+          const transformedValues = rawValues.map(({ pos: [r, c], value }) => ({ pos: POSSchema.parse([r - minR, c - minC]), value }))
+          const height = Math.max(...cells.map(([r]) => r)) + 1
+          const width = Math.max(...cells.map(([, c]) => c)) + 1
+          const key = [...cells.map((pos) => pos.join(',')).toSorted(), '|', ...transformedValues.map(({ pos, value }) => `${pos.join(',')}=${value}`).toSorted()].join(';')
+
+          if (!seen.has(key)) {
+            seen.add(key)
+            variants.push({ cells, values: transformedValues, height, width })
+          }
+        }
+
+        for (const variant of variants) {
           for (let ro = 0; ro <= 9 - variant.height; ro++) {
             for (let co = 0; co <= 9 - variant.width; co++) {
               const matchedCells: Cell[] = []
