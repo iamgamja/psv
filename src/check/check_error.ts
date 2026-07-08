@@ -1175,6 +1175,85 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+
+    case '[SQ]': {
+      const collector = new CellCollector()
+
+      for (const [type, i, arr] of rule.render_state.side_hints) {
+        const group = getLineGroup(type, i)
+
+        const { digits, cells, filled_all } = parseGroup(board, group)
+        if (filled_all) {
+          const group2 = group.filter((_, i) => arr.includes(digits[i]))
+
+          const { digits: digits2, filled_all: filled_all2 } = parseGroup(board, group2)
+          if (!filled_all2) throw new Error('unreachable')
+
+          let ok = true
+          let i = 0
+          let j = 0
+
+          while (i < arr.length && j < digits2.length) {
+            const value = arr[i]
+
+            if (digits2[j] !== value) {
+              ok = false
+              collector.add(cells)
+              break
+            }
+
+            let count1 = 0
+            while (i < arr.length && arr[i] === value) {
+              ++count1
+              ++i
+            }
+
+            let count2 = 0
+            while (j < digits2.length && digits2[j] === value) {
+              ++count2
+              ++j
+            }
+
+            if (count2 < count1) {
+              ok = false
+              collector.add(cells)
+              break
+            }
+          }
+
+          if (ok && (i !== arr.length || j !== digits2.length)) {
+            collector.add(cells)
+          }
+        }
+      }
+
+      return collector.res
+    }
+
+    case "[SQ']": {
+      const collector = new CellCollector()
+
+      for (const [type, i, arr] of rule.render_state.side_hints) {
+        const group = getLineGroup(type, i)
+
+        const { digits, cells, filled_all } = parseGroup(board, group)
+        if (filled_all) {
+          const lmhs = digits.map((d) => (d <= 3 ? 'L' : d <= 6 ? 'M' : 'H'))
+
+          let j = 0
+
+          for (const x of lmhs) {
+            if (j < arr.length && x === arr[j]) {
+              ++j
+            }
+          }
+
+          if (!(j === arr.length)) collector.add(cells)
+        }
+      }
+
+      return collector.res
+    }
   }
 }
 

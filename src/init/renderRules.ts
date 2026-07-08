@@ -126,7 +126,7 @@ function parseDrawTextOptions(options?: DrawTextOptions): ParsedDrawTextOptions 
     color: options?.color ?? '#000000',
     fontSize: options?.fontSize ? DrawTextSize[options.fontSize] : DrawTextSize.small,
     align: options?.align ?? 'center',
-    maxLength: options?.maxLength ?? 4,
+    maxLength: options?.maxLength ?? 3,
   }
 }
 
@@ -181,7 +181,7 @@ const Draw = {
 
     svg.appendChild(ele)
   },
-  _createText(x: X, y: Y, text: string, { color, fontSize, align }: ParsedDrawTextOptions) {
+  _createText(x: X, y: Y, text: string, { color, fontSize, align, maxLength }: ParsedDrawTextOptions) {
     const ele = document.createElementNS('http://www.w3.org/2000/svg', 'text')
 
     ele.setAttribute('x', x.toString())
@@ -193,7 +193,7 @@ const Draw = {
 
     ele.setAttribute('dominant-baseline', 'middle')
 
-    const lines = text.match(/.{1,4}/g) ?? ['']
+    const lines = text.match(new RegExp(`.{1,${maxLength}}`, 'g')) ?? ['']
     if (lines.length === 1) {
       ele.textContent = text
     } else {
@@ -688,6 +688,15 @@ function render_rule(rule: Rule): boolean {
         else if (type === 'ROW_LEFT') Draw.Text([i, -1], x.toString(), { color: '#e7af36', fontSize: 'small', align: 'right' })
         else if (type === 'COL') Draw.Text([9, i], x.toString(), { color: '#e7af36', fontSize: 'small' })
         else Draw.Text([-1, i], x.toString(), { color: '#e7af36', fontSize: 'small' })
+      })
+      return true
+    }
+
+    case '[SQ]':
+    case "[SQ']": {
+      rule.render_state.side_hints.forEach(([type, i, arr]) => {
+        if (type === 'ROW') Draw.Text([i, 9], arr.join(''), { color: '#f64e3b', fontSize: 'small', align: 'left' })
+        else Draw.Text([9, i], arr.join(''), { color: '#f64e3b', fontSize: 'small' })
       })
       return true
     }

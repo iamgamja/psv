@@ -1,10 +1,3 @@
-/**
- * @todo
- *
- * - 보드 바깥에 힌트: GROUPS_R / GROUPS_C
- * 시퀀스 SQ
- * 시퀀스 SQ'
- */
 import { z } from 'zod'
 import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema, VSchema } from './base'
 
@@ -50,6 +43,8 @@ export const Rule_ID = [
   '[ES]',
   '[EP]',
   '[PD]',
+  '[SQ]',
+  "[SQ']",
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
 export type Rule_ID = z.infer<typeof RuleIdSchema>
@@ -68,6 +63,7 @@ const RCRCSchema = z.enum(['ROW', 'ROW_LEFT', 'COL', 'COL_TOP'])
 export type RCRC = z.infer<typeof RCRCSchema>
 const RangeDistanceSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6), z.literal(7), z.literal(8)])
 const RangeLetterSchema = z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'])
+const SQPrimeLetterSchema = z.enum(['L', 'M', 'H'])
 export type RangeLetter = z.infer<typeof RangeLetterSchema>
 const StencilValueKeySchema = z.string().refine((key) => {
   const [r, c, ...rest] = key.split(',').map(Number)
@@ -257,6 +253,14 @@ const RuleObjectMap = {
   '[PD]': z.object({
     id: z.literal('[PD]'),
     render_state: z.object({ side_hints: z.array(z.tuple([RCRCSchema, IDX0Schema, z.number()])) }),
+  }),
+  '[SQ]': z.object({
+    id: z.literal('[SQ]'),
+    render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, z.array(VSchema)])) }),
+  }),
+  "[SQ']": z.object({
+    id: z.literal("[SQ']"),
+    render_state: z.object({ side_hints: z.array(z.tuple([RCSchema, IDX0Schema, z.array(SQPrimeLetterSchema)])) }),
   }),
 } satisfies {
   [K in Rule_ID]: ZodRuleObject<K>
