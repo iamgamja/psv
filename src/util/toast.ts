@@ -11,11 +11,11 @@ function ensureContainer(): HTMLElement {
   return container
 }
 
-function createToastElement(message: string, type: ToastType): HTMLElement {
+function createToastElement(content: string | Node | (string | Node)[], type: ToastType): HTMLElement {
   const toast = createElement('div', {
     className: ['toast', `toast-${type}`],
     content: [
-      createElement('div', { className: 'toast-message', content: message }),
+      createElement('div', { className: 'toast-content', content: content }),
       createElement('button', {
         className: 'toast-close-button',
         content: '✕',
@@ -28,9 +28,9 @@ function createToastElement(message: string, type: ToastType): HTMLElement {
   return toast
 }
 
-export function showToast(message: string, type: ToastType = 'info'): HTMLElement {
+export function showToast(content: string | Node | (string | Node)[], type: ToastType = 'info'): HTMLElement {
   const container = ensureContainer()
-  const toast = createToastElement(message, type)
+  const toast = createToastElement(content, type)
   // newest on top
   container.insertBefore(toast, container.firstChild)
   return toast

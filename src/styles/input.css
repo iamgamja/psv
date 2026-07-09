@@ -11,48 +11,16 @@
 }
 
 #input > button {
-  all: unset;
-
   aspect-ratio: 1 / 1;
-
-  padding: 0.5rem;
-  border: none;
-  background-color: #f0f0f0;
-  cursor: pointer;
   font-size: 1rem;
-  border-radius: 4px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-
-  transition: background-color 0.2s ease;
-}
-
-#input > button.hide {
-  display: none;
-}
-
-#input > button.invisible {
-  visibility: hidden;
 }
 
 #input > button.input-number {
   font-size: 2rem;
 }
 
-#input > button:hover {
-  background-color: #e0e0e0;
-}
-
 #input > button.active {
   background-color: #90c6ff;
-}
-
-#input > button:disabled {
-  color: #e0e0e0;
-  cursor: not-allowed;
 }
 
 #input > button#input-branch-create-without-digit,

@@ -72,16 +72,12 @@
   font-size: calc(var(--size-cell) * 0.25);
 }
 
-#board-container > .cell-memo > .memo.hide {
-  visibility: hidden;
-}
-
 #board-container > .cell-memo > .memo.invalid {
   color: #cdcdcd;
 }
 
 #board-container > .cell-selected.selected {
-  border: calc(var(--size-cell) * 0.12) rgba(150, 227, 255, 0.5) solid;
+  border: calc(var(--size-cell) * 0.12) rgba(150, 227, 255, 0.8) solid;
 }
 
 #board-container > .cell-error.error {

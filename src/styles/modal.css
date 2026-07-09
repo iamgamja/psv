@@ -78,7 +78,7 @@
 }
 
 .modal-body ul > li {
-  list-style-type: '\2713\00A0';
+  list-style-type: '\2713\00A0'; /* ✓ */
 }
 
 .modal-body input {
@@ -93,34 +93,4 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.modal-body button {
-  all: unset;
-
-  padding: 0.5rem;
-  background-color: #f0f0f0;
-  border-radius: 4px;
-
-  transition: background-color 0.2s ease;
-}
-.modal-body button:hover {
-  background-color: #e0e0e0;
-}
-
-.modal-body button.red {
-  color: red;
-}
-
-.modal-body button.active {
-  background-color: #90c6ff;
-}
-
-.modal-body button:disabled {
-  color: #e0e0e0;
-  cursor: not-allowed;
-}
-
-.modal-body .blue {
-  color: #4fa4ff;
 }

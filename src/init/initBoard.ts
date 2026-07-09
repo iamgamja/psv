@@ -9,6 +9,7 @@ import { type Rule, isKnown } from '../types/Rule'
 import { type State } from '../types/State'
 import { IDX0, V } from '../types/base'
 import { HistoryManager } from '../util/HistoryManager'
+import { createElement } from '../util/createElement'
 import { hasCells } from '../util/groups'
 import { renderColor } from '../util/renderColor'
 import { showToast } from '../util/toast'
@@ -303,11 +304,20 @@ export function initBoard(level: LevelData, State: State): Board {
         digit_arr[cell.r - 1][cell.c - 1] = 0
       }
     },
-    _check_completed() {
+    async _check_completed() {
       if (this.errors.size === 0 && this.warnings.size === 0 && this.flat_cells.every((cell) => cell.digit)) {
         const res = this.flat_cells.map((cell) => cell.digit).join('')
-        navigator.clipboard.writeText(res)
-        showToast(`${this.level.id}번 정답이 복사되었습니다.`, 'success')
+
+        try {
+          if (!navigator?.clipboard?.writeText) {
+            throw new Error('Clipboard API not available')
+          }
+
+          await navigator.clipboard.writeText(res)
+          showToast(`${this.level.id}번 정답이 복사되었습니다.`, 'success')
+        } catch {
+          showToast(['정답 복사에 실패했습니다.', createElement('button', { className: 'retry-button', content: '재시도', onclick: () => this._check_completed() })], 'error')
+        }
       }
     },
 
