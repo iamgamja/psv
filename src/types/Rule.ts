@@ -280,8 +280,6 @@ export const RuleSchema = (function discriminatedUnionHelper<const R extends Zod
 })(RuleObjectMap)
 export type Rule = z.infer<typeof RuleSchema>
 
-export type RuleObject<T extends Rule_ID> = Rule & { id: T }
-
 export const UnknownRuleSchema = z.object({
   id: z.string().refine((id) => !Rule_ID.includes(id as Rule_ID)),
 })

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { type Rule, type RuleObject, type Rule_ID } from '../types/Rule'
+import { type Rule, type Rule_ID } from '../types/Rule'
 import { type Group, type Groups, type TwoGroups } from '../types/base'
 import { IDX0 } from '../types/base'
 import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
@@ -48,11 +48,11 @@ const Rule_ID_Has_DisJointGroup = ['[R]', '[C]', '[B]', '[SG]', "[SG']", '[DT]',
 const RuleIdHasDisJointGroupSchema = z.enum(Rule_ID_Has_DisJointGroup)
 type Rule_ID_Has_DisJointGroup = z.infer<typeof RuleIdHasDisJointGroupSchema>
 
-export function hasDisJointGroup(rule: Rule): rule is RuleObject<Rule_ID_Has_DisJointGroup> {
+export function hasDisJointGroup(rule: Rule): rule is Extract<Rule, { id: Rule_ID_Has_DisJointGroup }> {
   return RuleIdHasDisJointGroupSchema.safeParse(rule.id).success
 }
 
-export function getDisJointGroups(rule: RuleObject<Rule_ID_Has_DisJointGroup>): Groups {
+export function getDisJointGroups(rule: Extract<Rule, { id: Rule_ID_Has_DisJointGroup }>): Groups {
   switch (rule.id) {
     case '[R]':
       return GROUPS_R
