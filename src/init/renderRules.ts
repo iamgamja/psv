@@ -1,7 +1,7 @@
 import { SIZE_CELL } from '../const/const'
 import { GROUPS_R, getDisJointGroups } from '../const/groups'
 import { type Board } from '../types/Board'
-import { DirMap, type RCRC, type Rule, isKnown } from '../types/Rule'
+import { DirMap, type RCRC, type Rule, Rule_ID, isKnown } from '../types/Rule'
 import { type Group } from '../types/base'
 import { IDX0, POSSchema } from '../types/base'
 import { SoftDistinctColorGenerator } from '../util/SoftDistinctColorGenerator'
@@ -183,7 +183,7 @@ const Draw = {
     svg.appendChild(ele)
   },
   _createPath(points: Coord[], { dotted, color, strokeWidth, round }: ParsedDrawLineOptions) {
-    if (points.length < 2) return
+    if (points.length < 2) return true
 
     const ele = document.createElementNS('http://www.w3.org/2000/svg', 'path')
 
@@ -240,7 +240,7 @@ const Draw = {
   },
   Diamond(pos1: POSlike, pos2?: POSlike | null, options_?: DrawOptions) {
     const options: DrawOptions = {
-      size: !pos2 ? 'regular' : 'smallest',
+      size: !pos2 ? 'regular' : 'smaller',
       ...options_,
     }
     const [x, y] = calculateCenter(pos1, pos2)
@@ -441,19 +441,19 @@ const Draw = {
     switch (type) {
       case 'ROW': {
         Draw.Text([index, 9], text, { fontSize: 'small', align: 'left', ...options_ })
-        return
+        return true
       }
       case 'ROW_LEFT': {
         Draw.Text([index, -1], text, { fontSize: 'small', align: 'right', ...options_ })
-        return
+        return true
       }
       case 'COL': {
         Draw.Text([9, index], text, { fontSize: 'small', ...options_ })
-        return
+        return true
       }
       case 'COL_TOP': {
         Draw.Text([-1, index], text, { fontSize: 'small', ...options_ })
-        return
+        return true
       }
     }
   },
@@ -461,9 +461,62 @@ const Draw = {
 
 // ---------
 
+const render_order = [
+  // divider
+  '[Sudoku]',
+  '[R]',
+  "[R']",
+  '[C]',
+  '[B]',
+  '[SG]',
+
+  // background
+  '[RT]',
+  "[RT']",
+
+  // cage
+  '[TM]',
+  '[AQ]',
+  '[PA]',
+  "[SG']",
+
+  // shape
+  '[LO]',
+  "[LO']",
+  '[TR]',
+  "[TR']",
+  '[EF]',
+  '[VT]',
+  '[MT]',
+
+  // line
+  '[SR]',
+  '[RF]',
+  '[IV]',
+  '[MR]',
+
+  // divider shape
+  '[BD]',
+  '[PR]',
+  "[PR']",
+  '[LK]',
+  "[LK']",
+  '[PO]',
+
+  // side
+  '[QT]',
+  '[RG]',
+  "[RG']",
+  '[PD]',
+  '[SQ]',
+  "[SQ']",
+] as const
+
+type Renderable_Rule_ID = (typeof render_order)[number]
+
 const color_generator = new SoftDistinctColorGenerator()
 
-function render_rule(rule: Rule): boolean {
+function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>): boolean {
   switch (rule.id) {
     case '[Sudoku]': {
       // 보드 가장자리
@@ -705,24 +758,19 @@ function render_rule(rule: Rule): boolean {
       })
       return true
     }
-
-    case '[DT]':
-    case '[TP]':
-    case '[QD]':
-    case "[QD']":
-    case '[BP]':
-    case '[ES]':
-    case '[EP]':
-    case '[ST]': {
-      return true
-    }
   }
 }
 
-// TODO: 렌더링 순서 결정
+function isRenderable(rule: Rule): rule is Extract<Rule, { id: Renderable_Rule_ID }> {
+  return (render_order as readonly Rule_ID[]).includes(rule.id)
+}
 
 export function renderRules(board: Board) {
-  for (const rule of board.rules.filter(isKnown)) {
+  const sorted_rules = board.rules
+    .filter(isKnown)
+    .filter(isRenderable)
+    .sort((rule1, rule2) => render_order.indexOf(rule1.id) - render_order.indexOf(rule2.id))
+  for (const rule of sorted_rules) {
     render_rule(rule)
   }
 }
