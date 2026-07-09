@@ -126,6 +126,8 @@ export function initSettingModal(State: State) {
   }
 
   setting_modal.body.append(
+    createElement('span', { content: '게임 중 설정을 변경할 경우 제대로 동작하지 않을 수 있습니다. 이 경우 Info -> reset 으로 게임을 초기화하여 해결할 수 있습니다.' }),
+    createElement('hr'),
     createElement('ul', {
       content: [
         createElement('li', {
