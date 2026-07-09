@@ -1,7 +1,7 @@
 import { SIZE_CELL } from '../const/const'
 import { GROUPS_R, getDisJointGroups } from '../const/groups'
 import { type Board } from '../types/Board'
-import { DirMap, type Rule, isKnown } from '../types/Rule'
+import { DirMap, type RCRC, type Rule, isKnown } from '../types/Rule'
 import { type Group } from '../types/base'
 import { IDX0, POSSchema } from '../types/base'
 import { SoftDistinctColorGenerator } from '../util/SoftDistinctColorGenerator'
@@ -47,6 +47,7 @@ const DrawWidth = {
 
 const DrawRadius = {
   smallest: SIZE_CELL * 0.1,
+  smaller: SIZE_CELL * 0.15,
   small: SIZE_CELL * 0.2,
   regular: SIZE_CELL * 0.35,
   big: SIZE_CELL * 0.45,
@@ -181,6 +182,25 @@ const Draw = {
 
     svg.appendChild(ele)
   },
+  _createPath(points: Coord[], { dotted, color, strokeWidth, round }: ParsedDrawLineOptions) {
+    if (points.length < 2) return
+
+    const ele = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+
+    const d = points.map(([x, y], i) => (i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`)).join(' ')
+
+    ele.setAttribute('d', d)
+    ele.setAttribute('fill', '#00000000')
+    ele.setAttribute('stroke', color)
+    ele.setAttribute('stroke-width', strokeWidth.toString())
+    if (round) {
+      ele.setAttribute('stroke-linecap', 'round')
+      ele.setAttribute('stroke-linejoin', 'round')
+    }
+    if (dotted) ele.setAttribute('stroke-dasharray', '2')
+
+    svg.appendChild(ele)
+  },
   _createText(x: X, y: Y, text: string, { color, fontSize, align, maxLength }: ParsedDrawTextOptions) {
     const ele = document.createElementNS('http://www.w3.org/2000/svg', 'text')
 
@@ -229,7 +249,7 @@ const Draw = {
   },
   Triangle(pos1: POSlike, pos2?: POSlike | null, options_?: DrawOptions & { direction?: number }) {
     const options: DrawOptions = {
-      size: !pos2 ? 'regular' : 'small',
+      size: !pos2 ? 'regular' : 'smaller',
       ...options_,
     }
     const [x, y] = calculateCenter(pos1, pos2)
@@ -269,6 +289,12 @@ const Draw = {
     const [x2, y2] = calculateCenter(pos2)
 
     Draw._createLine(x1, y1, x2, y2, parseDrawLineOptions(options))
+  },
+  Path(group: POSlike[], options?: DrawLineOptions) {
+    Draw._createPath(
+      group.map((pos) => calculateCenter(pos)),
+      parseDrawLineOptions(options),
+    )
   },
   Cage(group: Group, options_?: DrawOptions) {
     const parsedRectOptions = parseDrawOptions({
@@ -391,24 +417,6 @@ const Draw = {
       if (has_map.D) Draw._createLine(d, y, D, y, parsedOptions)
     }
   },
-  StreamOrder(group: Group, options_?: DrawLineOptions) {
-    const parsedOptions = parseDrawLineOptions({
-      thickness: 'hint_regular',
-      round: false,
-      ...options_,
-    })
-
-    const r = parsedOptions.strokeWidth / 2
-
-    for (const [pos1, pos2] of pairwise(group)) {
-      const [x, y] = calculateCenter(pos1, pos2)
-      const [x1, y1] = calculateCenter(pos1)
-      const [x2, y2] = calculateCenter(pos2)
-
-      Draw._createLine(x, y, x1 + Math.sign(x1 - x) * r, y1 + Math.sign(y1 - y) * r, parsedOptions)
-      Draw._createLine(x, y, x2 + Math.sign(x2 - x) * r, y2 + Math.sign(y1 - y) * r, parsedOptions)
-    }
-  },
   Text(pos: POSlike, text: string, options?: DrawTextOptions) {
     const parsedOptions = parseDrawTextOptions(options)
 
@@ -426,6 +434,26 @@ const Draw = {
       case 'right': {
         Draw._createText(x + SIZE_CELL * 0.3, y, text, parsedOptions)
         return true
+      }
+    }
+  },
+  SideText(type: RCRC, index: IDX0, text: string, options_?: DrawTextOptions) {
+    switch (type) {
+      case 'ROW': {
+        Draw.Text([index, 9], text, { fontSize: 'small', align: 'left', ...options_ })
+        return
+      }
+      case 'ROW_LEFT': {
+        Draw.Text([index, -1], text, { fontSize: 'small', align: 'right', ...options_ })
+        return
+      }
+      case 'COL': {
+        Draw.Text([9, index], text, { fontSize: 'small', ...options_ })
+        return
+      }
+      case 'COL_TOP': {
+        Draw.Text([-1, index], text, { fontSize: 'small', ...options_ })
+        return
       }
     }
   },
@@ -541,7 +569,7 @@ function render_rule(rule: Rule): boolean {
     case '[TM]': {
       rule.render_state.regions.forEach(({ cells: group, color }) => {
         const color_code = color === 'red' ? '#fe19196b' : color === 'green' ? '#12de2d6b' : '#192cfe6b'
-        Draw.Line(group[0], group[2], { color: color_code, thickness: 'hint_heavy' })
+        Draw.Path(group, { color: color_code, thickness: 'hint_heavy' })
       })
       return true
     }
@@ -575,7 +603,7 @@ function render_rule(rule: Rule): boolean {
     }
     case '[IV]': {
       rule.render_state.lines.forEach((group) => {
-        Draw.StreamOrder(group, { color: '#29e8536b', thickness: 'hint_light' })
+        Draw.Path(group, { color: '#29e8536b', thickness: 'hint_light' })
         Draw.Circle(group[0], null, { stroke_color: '#00000000', fill_color: '#29e8536b', size: 'small' })
       })
       return true
@@ -647,40 +675,33 @@ function render_rule(rule: Rule): boolean {
     }
 
     case '[QT]': {
-      rule.render_state.side_hints.forEach(([type, i, [x, y]]) => {
-        if (type === 'ROW') Draw.Text([i, 9], `${x} ${y}`, { color: '#22c55e', fontSize: 'small', align: 'left' })
-        else Draw.Text([9, i], `${x} ${y}`, { color: '#22c55e', fontSize: 'small' })
+      rule.render_state.side_hints.forEach(([type, index, [x, y]]) => {
+        Draw.SideText(type, index, `${x} ${y}`, { color: '#22c55e' })
       })
       return true
     }
     case '[RG]': {
-      rule.render_state.side_hints.forEach(([type, i, distances]) => {
-        if (type === 'ROW') Draw.Text([i, 9], distances.join(''), { color: '#3b82f6', fontSize: 'small', align: 'left' })
-        else Draw.Text([9, i], distances.join(''), { color: '#3b82f6', fontSize: 'small' })
+      rule.render_state.side_hints.forEach(([type, index, distances]) => {
+        Draw.SideText(type, index, distances.join(''), { color: '#3b82f6' })
       })
       return true
     }
     case "[RG']": {
-      rule.render_state.side_hints.forEach(([type, i, letter]) => {
-        if (type === 'ROW') Draw.Text([i, 9], letter, { color: '#3b82f6', fontSize: 'small', align: 'left' })
-        else Draw.Text([9, i], letter, { color: '#3b82f6', fontSize: 'small' })
+      rule.render_state.side_hints.forEach(([type, index, letter]) => {
+        Draw.SideText(type, index, letter, { color: '#3b82f6' })
       })
       return true
     }
     case '[PD]': {
-      rule.render_state.side_hints.forEach(([type, i, x]) => {
-        if (type === 'ROW') Draw.Text([i, 9], x.toString(), { color: '#e7af36', fontSize: 'small', align: 'left' })
-        else if (type === 'ROW_LEFT') Draw.Text([i, -1], x.toString(), { color: '#e7af36', fontSize: 'small', align: 'right' })
-        else if (type === 'COL') Draw.Text([9, i], x.toString(), { color: '#e7af36', fontSize: 'small' })
-        else Draw.Text([-1, i], x.toString(), { color: '#e7af36', fontSize: 'small' })
+      rule.render_state.side_hints.forEach(([type, index, x]) => {
+        Draw.SideText(type, index, x.toString(), { color: '#e7af36' })
       })
       return true
     }
     case '[SQ]':
     case "[SQ']": {
-      rule.render_state.side_hints.forEach(([type, i, arr]) => {
-        if (type === 'ROW') Draw.Text([i, 9], arr.join(''), { color: '#f64e3b', fontSize: 'small', align: 'left' })
-        else Draw.Text([9, i], arr.join(''), { color: '#f64e3b', fontSize: 'small' })
+      rule.render_state.side_hints.forEach(([type, index, arr]) => {
+        Draw.SideText(type, index, arr.join(''), { color: '#f64e3b' })
       })
       return true
     }
