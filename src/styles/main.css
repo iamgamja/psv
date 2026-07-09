@@ -70,6 +70,10 @@ button:disabled {
   cursor: not-allowed;
 }
 
+button.active {
+  background-color: #90c6ff;
+}
+
 .hide {
   display: none !important;
 }
@@ -79,9 +83,9 @@ button:disabled {
 }
 
 .red {
-  color: red;
+  color: red !important;
 }
 
-.modal-body .blue {
-  color: #4fa4ff;
+.blue {
+  color: #4fa4ff !important;
 }

@@ -19,10 +19,6 @@
   font-size: 2rem;
 }
 
-#input > button.active {
-  background-color: #90c6ff;
-}
-
 #input > button#input-branch-create-without-digit,
 #input > button#input-branch-reject,
 #input > button#input-branch-cancel {
