@@ -15,8 +15,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gamja's Pillow's N Sudoku Variants Player</title>
 
-    <script type="module" crossorigin src="./assets/index-DV5-W5fm.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DT5Eg--_.css">
+    <script type="module" crossorigin src="./assets/index-Bh5ObkJL.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-kMr_BTvW.css">
   </head>
   <body>
     <div id="app">
@@ -30,7 +30,7 @@
         <button id="input-number-2" class="input-number">2</button>
         <button id="input-number-3" class="input-number">3</button>
         <button id="input-mode-num" class="active">Num</button>
-        <button id="input-branch-create-without-digit" class="hide">가정 없이 분기 생성</button>
+        <button id="input-branch-create-without-digit" class="hide">가정 없이<br />분기 생성</button>
         <div></div>
         <button id="input-info">Info</button>
 
@@ -38,7 +38,7 @@
         <button id="input-number-5" class="input-number">5</button>
         <button id="input-number-6" class="input-number">6</button>
         <button id="input-mode-memo">Memo</button>
-        <button id="input-branch-reject" class="hide">기각하고 돌아가기</button>
+        <button id="input-branch-reject" class="hide">기각하고<br />돌아가기</button>
         <div></div>
         <button id="input-undo">Undo</button>
 
@@ -46,19 +46,20 @@
         <button id="input-number-8" class="input-number">8</button>
         <button id="input-number-9" class="input-number">9</button>
         <button id="input-mode-color">Color</button>
-        <button id="input-branch-cancel" class="hide">기각하지 않고 돌아가기</button>
+        <button id="input-branch-cancel" class="hide">기각하지<br />않고<br />돌아가기</button>
         <div></div>
         <button id="input-redo">Redo</button>
 
         <button id="input-select">Select</button>
-        <button id="input-auto">Auto</button>
+        <!-- DISABLE AUTO -->
+        <button id="input-auto" class="invisible">Auto</button>
         <button id="input-delete">Delete</button>
         <button id="input-branch">Branch</button>
         <div></div>
         <button id="input-setting">Setting</button>
       </div>
 
-      <code><output id="branch-history"></output></code>
+      <code id="branch-history"></code>
     </div>
   </body>
 </html>
