@@ -12,8 +12,9 @@ import { saveSetting } from './saveloadSetting'
 export function initInfoModal(board: Board) {
   const info_modal = new Modal('info-modal', 'Info')
 
-  let elapsed_timer_span: HTMLSpanElement | null = null
+  let form_element: HTMLFormElement | null = null
   let base64_input: HTMLInputElement | null = null
+  let elapsed_timer_span: HTMLSpanElement | null = null
 
   info_modal.body.append(
     createElement('ul', {
@@ -36,7 +37,7 @@ export function initInfoModal(board: Board) {
 
     createElement('hr'),
 
-    createElement('div', {
+    (form_element = createElement('form', {
       className: 'list',
       content: [
         createElement('label', {
@@ -45,15 +46,11 @@ export function initInfoModal(board: Board) {
         createElement('button', {
           content: 'load',
           onclick: () => {
-            const url = new URL(window.location.href)
-            url.searchParams.set('data', base64_input!.value)
-
-            history.pushState(null, '', url.toString())
-            location.reload()
+            form_element?.submit()
           },
         }),
       ],
-    }),
+    })),
     createElement('button', {
       className: 'red',
       content: 'reset',
@@ -72,6 +69,16 @@ export function initInfoModal(board: Board) {
       },
     }),
   )
+
+  form_element.addEventListener('submit', (e) => {
+    e.preventDefault()
+
+    const url = new URL(window.location.href)
+    url.searchParams.set('data', base64_input!.value)
+
+    history.pushState(null, '', url.toString())
+    location.reload()
+  })
 
   function formatElapsed(ms: number) {
     const totalSeconds = Math.floor(ms / 1000)
