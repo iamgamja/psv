@@ -326,7 +326,7 @@ export function initBoard(level: LevelData, State: State): Board {
         renderColor(cell.color, cell.color_element)
         cell.num_element.textContent = cell.digit === 0 ? '' : cell.digit.toString()
         for (const v of V) {
-          cell.memo_element.children[v - 1].classList.toggle('hide', !(!cell.digit && cell.candidate_memo.has(v)))
+          cell.memo_element.children[v - 1].classList.toggle('invisible', !(!cell.digit && cell.candidate_memo.has(v)))
           cell.memo_element.children[v - 1].classList.toggle('invalid', !cell.valid_memo.has(v))
         }
 
