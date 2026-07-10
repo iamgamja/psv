@@ -4,14 +4,12 @@ import { type Rule, type UnknownRule } from './Rule'
 import { type SettingState, type State } from './State'
 import { type Groups, type V } from './base'
 
-export type DigitArr = (V | 0)[][]
-
 export type Board = {
   cells: Cell[][] // 9x9
   flat_cells: Cell[]
   get empty_cells(): Cell[]
 
-  create_digit_arr(): DigitArr // 9x9
+  create_digit_arr(): (V | 0)[][] // 9x9
 
   level: LevelData
   rules: (Rule | UnknownRule)[]
