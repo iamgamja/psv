@@ -1,19 +1,10 @@
-import { type Board, type DigitArr } from '../types/Board'
 import { type Cell } from '../types/Cell'
-import { type Group, IDX0, type POS, POSSchema, type TwoGroup, type TwoGroups, V } from '../types/base'
+import { type Group, IDX0, type POS, POSSchema, type TwoGroup, type TwoGroups } from '../types/base'
 
 export function cell2POS(cell: Cell): POS {
   const r = (cell.r - 1) as IDX0
   const c = (cell.c - 1) as IDX0
   return [r, c]
-}
-
-export function POS2Cell(board: Board, pos: POS): Cell {
-  return board.cells[pos[0]][pos[1]]
-}
-
-export function POS2Digit(digit_arr: DigitArr, pos: POS): V | 0 {
-  return digit_arr[pos[0]][pos[1]]
 }
 
 export function POS2number(pos: POS): number {

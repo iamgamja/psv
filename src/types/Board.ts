@@ -2,10 +2,11 @@ import { type Cell } from './Cell'
 import { type LevelData } from './LevelData'
 import { type Rule, type UnknownRule } from './Rule'
 import { type SettingState, type State } from './State'
-import { type Groups, type V } from './base'
+import { type Groups, type POS, type V } from './base'
 
 export type Board = {
   cells: Cell[][] // 9x9
+  getCell(pos: POS): Cell
   flat_cells: Cell[]
   get empty_cells(): Cell[]
 

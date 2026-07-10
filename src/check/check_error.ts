@@ -1,35 +1,12 @@
-import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup } from '../const/check_helper'
+import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
 import { GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
 import { type Board } from '../types/Board'
 import { type Cell } from '../types/Cell'
 import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
 import { type Group, type Groups, IDX0, type POS, POSSchema, type TwoGroups, V } from '../types/base'
 import { GROUPS_ADJACENT, create_adjacent_group_of_pos } from '../util/create_adjacent_group'
-import { POS2Cell, POS2number, differenceOf2Groups } from '../util/groups'
+import { POS2number, differenceOf2Groups } from '../util/groups'
 import { pairwise } from '../util/pairwise'
-
-type ParsedGroup =
-  | {
-      digits: V[]
-      cells: Cell[]
-      filled_all: true
-    }
-  | {
-      digits: (V | 0)[]
-      cells: Cell[]
-      filled_all: false
-    }
-function parseGroup(board: Board, group: Group): ParsedGroup {
-  const cells = group.map((pos) => POS2Cell(board, pos))
-  const digits = cells.map((cell) => cell.digit)
-  const filled_all = digits.every((digit) => digit)
-
-  return {
-    digits,
-    cells,
-    filled_all,
-  } as ParsedGroup
-}
 
 function check_dup(board: Board, groups: Groups): Set<Cell> {
   const collector = new CellCollector()
@@ -89,7 +66,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       for (const r of IDX0) {
         const group = GROUPS_R[r]
-        const cells = group.map((pos) => POS2Cell(board, pos))
+        const cells = group.map((pos) => board.getCell(pos))
 
         const { digits, filled_all } = parseGroup(board, group)
 
@@ -100,7 +77,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           if (!(reminders.length === 1)) {
             collector.add(cells)
           } else if (remainders_map.has(reminders[0])) {
-            collector.add(GROUPS_R[remainders_map.get(reminders[0])!].map((pos) => POS2Cell(board, pos)))
+            collector.add(GROUPS_R[remainders_map.get(reminders[0])!].map((pos) => board.getCell(pos)))
             collector.add(cells)
           } else remainders_map.set(reminders[0], r)
         }
@@ -136,7 +113,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
 
       for (const pos of rule.render_state.cells) {
-        const cell = POS2Cell(board, pos)
+        const cell = board.getCell(pos)
         const digit = cell.digit
 
         const group = create_adjacent_group_of_pos(pos, 'wasd')
@@ -156,7 +133,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const collector = new CellCollector()
 
       for (const pos of rule.render_state.cells) {
-        const cell = POS2Cell(board, pos)
+        const cell = board.getCell(pos)
         const digit = cell.digit
 
         const group = create_adjacent_group_of_pos(pos, 'wasd')
@@ -250,13 +227,13 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       for (const group of rule.render_state.regions) {
         for (let i = 0; i < group.length; i++) {
           const pos1 = group[i]
-          const cell1 = POS2Cell(board, pos1)
+          const cell1 = board.getCell(pos1)
           const digit1 = cell1.digit
           if (!digit1) continue
 
           for (let j = i + 1; j < group.length; j++) {
             const pos2 = group[j]
-            const cell2 = POS2Cell(board, pos2)
+            const cell2 = board.getCell(pos2)
             const digit2 = cell2.digit
             if (!digit2) continue
 
@@ -318,7 +295,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         let type: -1 | 0 | 1 = -1 // -1: 결정되지 않음; 0|1: (r^c^digit)&1
 
         for (const pos of group) {
-          const cell = POS2Cell(board, pos)
+          const cell = board.getCell(pos)
           const digit = cell.digit
           if (!digit) continue
 
@@ -328,7 +305,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             continue
           }
 
-          if (!(x === type)) collector.add(group.map((pos) => POS2Cell(board, pos)))
+          if (!(x === type)) collector.add(group.map((pos) => board.getCell(pos)))
         }
       }
 
@@ -370,7 +347,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             break
           }
 
-          const curr_cell = POS2Cell(board, curr)
+          const curr_cell = board.getCell(curr)
           const curr_digit = curr_cell.digit
           if (!curr_digit) continue
 
@@ -381,7 +358,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             const npos_num = POS2number(npos)
             if (visited.has(npos_num)) continue
 
-            const ncell = POS2Cell(board, npos)
+            const ncell = board.getCell(npos)
             const ndigit = ncell.digit
             if (ndigit === next_digit) {
               visited.add(npos_num)
@@ -391,8 +368,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         }
 
         if (!path_exists) {
-          const startCell = POS2Cell(board, start)
-          const endCell = POS2Cell(board, end)
+          const startCell = board.getCell(start)
+          const endCell = board.getCell(end)
           collector.add([startCell, endCell])
         }
       }
@@ -410,7 +387,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         const end_num = POS2number(end)
 
         if (start_num === end_num) {
-          collector.add([POS2Cell(board, start)])
+          collector.add([board.getCell(start)])
         } else {
           const src = start_num + 81
           const sink = end_num
@@ -436,7 +413,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               if (u === end_num) continue
 
               const u_pos = POSSchema.parse([r, c])
-              const u_cell = POS2Cell(board, u_pos)
+              const u_cell = board.getCell(u_pos)
               const u_digit = u_cell.digit
               if (!u_digit) continue
 
@@ -447,7 +424,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
                 const v = POS2number(npos)
                 if (v === start_num) continue
 
-                const v_cell = POS2Cell(board, npos)
+                const v_cell = board.getCell(npos)
                 const v_digit = v_cell.digit
                 if (v_digit === next_digit) {
                   addEdge(u + 81, v, 1)
@@ -493,7 +470,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           }
 
           if (totalFlow < 2) {
-            collector.add([POS2Cell(board, start), POS2Cell(board, end)])
+            collector.add([board.getCell(start), board.getCell(end)])
           }
         }
       }
@@ -506,7 +483,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
         for (const start_r of rule.render_state.start_rows) {
           const pos1 = POSSchema.parse([start_r, 0])
-          const cell1 = POS2Cell(board, pos1)
+          const cell1 = board.getCell(pos1)
           const digit1 = cell1.digit
 
           function findPathFromStart(startR: IDX0): number[] | null {
@@ -516,7 +493,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               if (r <= maxR[c]) return false
 
               const pos = POSSchema.parse([r, c])
-              const cell = POS2Cell(board, pos)
+              const cell = board.getCell(pos)
               const digit = cell.digit
               if (!(digit === ((digit1 + c - 1) % 9) + 1)) return false
 
@@ -541,7 +518,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
           const path = findPathFromStart(start_r)
           if (!path) {
-            return new Set(rule.render_state.start_rows.map((r) => POSSchema.parse([r, 0])).map((pos) => POS2Cell(board, pos)))
+            return new Set(rule.render_state.start_rows.map((r) => POSSchema.parse([r, 0])).map((pos) => board.getCell(pos)))
           }
 
           for (const c of IDX0) {
@@ -558,7 +535,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       for (const [r, c, dir] of rule.render_state.arrows) {
         const pos = POSSchema.parse([r, c])
-        const cell = POS2Cell(board, pos)
+        const cell = board.getCell(pos)
         const digit = cell.digit
 
         if (digit) {
@@ -573,7 +550,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
             continue
           }
 
-          const cell2 = POS2Cell(board, pos2.data)
+          const cell2 = board.getCell(pos2.data)
           const digit2 = cell2.digit
 
           if (digit2) {
@@ -589,7 +566,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       for (const [r1, c1, dd] of rule.render_state.cells) {
         const pos1 = POSSchema.parse([r1, c1])
-        const cell1 = POS2Cell(board, pos1)
+        const cell1 = board.getCell(pos1)
         const digit1 = cell1.digit
 
         if (digit1) {
@@ -605,7 +582,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
                 const pos2 = POSSchema.safeParse([r2, c2])
                 if (!pos2.success) continue
 
-                const cell2 = POS2Cell(board, pos2.data)
+                const cell2 = board.getCell(pos2.data)
                 const digit2 = cell2.digit
 
                 if (digit1 === digit2) collector.add([cell1, cell2])
@@ -642,7 +619,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       for (const [r1, c1, dd] of rule.render_state.cells) {
         const pos1 = POSSchema.parse([r1, c1])
-        const cell1 = POS2Cell(board, pos1)
+        const cell1 = board.getCell(pos1)
         const digit1 = cell1.digit
 
         if (digit1) {
@@ -658,7 +635,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
                 const pos2 = POSSchema.safeParse([r2, c2])
                 if (!pos2.success) continue
 
-                const cell2 = POS2Cell(board, pos2.data)
+                const cell2 = board.getCell(pos2.data)
                 const digit2 = cell2.digit
 
                 if (digit1 === digit2) collector.add([cell1, cell2])
@@ -698,12 +675,12 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           const r = i
           for (const c of IDX0) {
             const pos = POSSchema.parse([r, c])
-            const cell = POS2Cell(board, pos)
+            const cell = board.getCell(pos)
             const digit = cell.digit
             if (!digit) continue
 
             const pos2 = POSSchema.parse([digit - 1, c])
-            const cell2 = POS2Cell(board, pos2)
+            const cell2 = board.getCell(pos2)
             const digit2 = cell2.digit
             if (!digit2) continue
 
@@ -713,12 +690,12 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           const c = i
           for (const r of IDX0) {
             const pos = POSSchema.parse([r, c])
-            const cell = POS2Cell(board, pos)
+            const cell = board.getCell(pos)
             const digit = cell.digit
             if (!digit) continue
 
             const pos2 = POSSchema.parse([r, digit - 1])
-            const cell2 = POS2Cell(board, pos2)
+            const cell2 = board.getCell(pos2)
             const digit2 = cell2.digit
             if (!digit2) continue
 
@@ -756,7 +733,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       for (const r of IDX0) {
         for (const c of IDX0) {
           const pos = POSSchema.parse([r, c])
-          const cell = POS2Cell(board, pos)
+          const cell = board.getCell(pos)
           const digit = cell.digit
 
           const group = create_adjacent_group_of_pos(pos, 'wasd')
@@ -772,8 +749,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         const yes: Cell[] = []
         const no: Cell[] = []
         for (const c of IDX0) {
-          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
-          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
+          if (type_arr[r][c] === 'yes') yes.push(board.getCell(POSSchema.parse([r, c])))
+          else if (type_arr[r][c] === 'no') no.push(board.getCell(POSSchema.parse([r, c])))
         }
 
         if (!(yes.length <= 1)) collector.add(yes)
@@ -783,8 +760,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         const yes: Cell[] = []
         const no: Cell[] = []
         for (const r of IDX0) {
-          if (type_arr[r][c] === 'yes') yes.push(POS2Cell(board, POSSchema.parse([r, c])))
-          else if (type_arr[r][c] === 'no') no.push(POS2Cell(board, POSSchema.parse([r, c])))
+          if (type_arr[r][c] === 'yes') yes.push(board.getCell(POSSchema.parse([r, c])))
+          else if (type_arr[r][c] === 'no') no.push(board.getCell(POSSchema.parse([r, c])))
         }
 
         if (!(yes.length <= 1)) collector.add(yes)
@@ -799,7 +776,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       const set = new Set(rule.render_state.marked_cells.map(POS2number))
 
       for (const pos of rule.render_state.marked_cells) {
-        const cell = POS2Cell(board, pos)
+        const cell = board.getCell(pos)
         const digit = cell.digit
 
         if (digit) {
@@ -830,7 +807,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           if (visited[r][c]) continue
 
           const pos = POSSchema.parse([r, c])
-          const cell = POS2Cell(board, pos)
+          const cell = board.getCell(pos)
           const digit = cell.digit
 
           const is_potential_even = !digit || digit % 2 === 0
@@ -844,7 +821,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
             while (queue.length > 0) {
               const curr = queue.shift()!
-              const curr_cell = POS2Cell(board, curr)
+              const curr_cell = board.getCell(curr)
               component.push(curr_cell)
 
               if (curr[0] === 0 || curr[0] === 8) {
@@ -855,7 +832,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               for (const npos of adj) {
                 const [nr, nc] = npos
                 if (!visited[nr][nc]) {
-                  const ndigit = POS2Cell(board, npos).digit
+                  const ndigit = board.getCell(npos).digit
                   if (!ndigit || ndigit % 2 === 0) {
                     visited[nr][nc] = 1
                     queue.push(npos)
@@ -885,7 +862,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           if (visited[r][c]) continue
 
           const pos = POSSchema.parse([r, c])
-          const cell = POS2Cell(board, pos)
+          const cell = board.getCell(pos)
           const digit = cell.digit
 
           if (digit >= 1 && digit <= 4) {
@@ -897,13 +874,13 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
             while (queue.length > 0) {
               const curr = queue.shift()!
-              const curr_cell = POS2Cell(board, curr)
+              const curr_cell = board.getCell(curr)
               component.push(curr_cell)
 
               const adj = create_adjacent_group_of_pos(curr, 'wasd')
               for (const npos of adj) {
                 const [nr, nc] = npos
-                const ncell = POS2Cell(board, npos)
+                const ncell = board.getCell(npos)
                 const ndigit = ncell.digit
 
                 if (ndigit === 0) {
@@ -976,8 +953,8 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       for (const [type, i, [x, y]] of rule.render_state.side_hints) {
         const group = getLineGroup(type, i)
-        const cellX = POS2Cell(board, group[x - 1])
-        const cellY = POS2Cell(board, group[y - 1])
+        const cellX = board.getCell(group[x - 1])
+        const cellY = board.getCell(group[y - 1])
 
         if (!cellX.digit || !cellY.digit) continue
 
@@ -1210,7 +1187,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
                 value,
               } of variant.values) {
                 const pos = POSSchema.parse([ro + r, co + c])
-                const cell = POS2Cell(board, pos)
+                const cell = board.getCell(pos)
                 if (cell.digit !== value) {
                   matched = false
                   break

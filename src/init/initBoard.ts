@@ -24,6 +24,9 @@ export function initBoard(level: LevelData, State: State): Board {
 
   const board: Board = {
     cells,
+    getCell(pos) {
+      return this.cells[pos[0]][pos[1]]
+    },
     flat_cells: cells.flat(),
     get empty_cells() {
       return this.flat_cells.filter((cell) => !cell.digit)
@@ -282,8 +285,6 @@ export function initBoard(level: LevelData, State: State): Board {
 
       if (cell.digit) return
 
-      const digit_arr = this.create_digit_arr()
-
       cell.valid_memo.clear()
 
       const dim_setting = State.Setting.dimMemo
@@ -295,13 +296,13 @@ export function initBoard(level: LevelData, State: State): Board {
       }
 
       for (const digit of cell.candidate_memo) {
-        digit_arr[cell.r - 1][cell.c - 1] = digit
+        cell.digit = digit
 
-        if (check_rules === null || !has_error(digit_arr, check_rules)) {
+        if (check_rules === null || !has_error(board, check_rules)) {
           cell.valid_memo.add(digit)
         }
 
-        digit_arr[cell.r - 1][cell.c - 1] = 0
+        cell.digit = 0
       }
     },
     async _check_completed() {

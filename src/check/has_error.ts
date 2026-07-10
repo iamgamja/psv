@@ -1,36 +1,15 @@
-import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup } from '../const/check_helper'
+import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
 import { GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
-import { type DigitArr } from '../types/Board'
+import { type Board } from '../types/Board'
 import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
 import { type Group, type Groups, IDX0, type POS, POSSchema, type TwoGroups, V } from '../types/base'
 import { GROUPS_ADJACENT, create_adjacent_group_of_pos } from '../util/create_adjacent_group'
-import { POS2Digit, POS2number, differenceOf2Groups } from '../util/groups'
+import { POS2number, differenceOf2Groups } from '../util/groups'
 import { pairwise } from '../util/pairwise'
 
-type ParsedGroup =
-  | {
-      digits: V[]
-      sub_groups: Map<V, Group>
-      filled_all: true
-    }
-  | {
-      digits: (V | 0)[]
-      sub_groups: Map<V, Group>
-      filled_all: false
-    }
-function parseGroup(digit_arr: DigitArr, group: Group): ParsedGroup {
-  const digits = group.map((pos) => POS2Digit(digit_arr, pos))
-  const filled_all = digits.every((digit) => digit)
-
-  return {
-    digits,
-    filled_all,
-  } as ParsedGroup
-}
-
-function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
+function has_dup(board: Board, groups: Groups): boolean {
   for (const group of groups) {
-    const { digits } = parseGroup(digit_arr, group)
+    const { digits } = parseGroup(board, group)
 
     for (const v of V) {
       const cnt = digits.filter((digit) => digit === v).length
@@ -41,9 +20,9 @@ function has_dup(digit_arr: DigitArr, groups: Groups): boolean {
   return false
 }
 
-function check_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
+function check_2groups(board: Board, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
   for (const group of groups) {
-    const { digits, filled_all } = parseGroup(digit_arr, group)
+    const { digits, filled_all } = parseGroup(board, group)
 
     if (filled_all) {
       if (!f(digits[0], digits[1])) return true
@@ -53,13 +32,13 @@ function check_2groups(digit_arr: DigitArr, groups: TwoGroups, f: (d1: V, d2: V)
   return false
 }
 
-function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
+function has_error_rule(board: Board, rule: Rule): boolean {
   switch (rule.id) {
     case '[Sudoku]': {
       return false
     }
     case '[R]': {
-      return has_dup(digit_arr, getDisJointGroups(rule))
+      return has_dup(board, getDisJointGroups(rule))
     }
     case "[R']": {
       const remainders_map = new Set<V>()
@@ -67,7 +46,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       for (const r of IDX0) {
         const group = GROUPS_R[r]
 
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         const s = new Set(digits)
         const reminders = V.filter((i) => !s.has(i))
@@ -85,30 +64,31 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[B]':
     case '[SG]':
     case "[SG']": {
-      return has_dup(digit_arr, getDisJointGroups(rule))
+      return has_dup(board, getDisJointGroups(rule))
     }
 
     case '[DT]': {
-      return has_dup(digit_arr, getDisJointGroups(rule))
+      return has_dup(board, getDisJointGroups(rule))
     }
     case '[LK]': {
-      return check_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
+      return check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
     }
     case "[LK']": {
       return (
-        check_2groups(digit_arr, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1) ||
-        check_2groups(digit_arr, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1)
+        check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1) ||
+        check_2groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1)
       )
     }
     case '[PO]': {
-      return check_2groups(digit_arr, rule.render_state.edges, (d1, d2) => d1 < d2)
+      return check_2groups(board, rule.render_state.edges, (d1, d2) => d1 < d2)
     }
     case '[LO]': {
       for (const pos of rule.render_state.cells) {
-        const digit = POS2Digit(digit_arr, pos)
+        const cell = board.getCell(pos)
+        const digit = cell.digit
 
         const group = create_adjacent_group_of_pos(pos, 'wasd')
-        const { digits } = parseGroup(digit_arr, group)
+        const { digits } = parseGroup(board, group)
 
         if (digit) {
           if (!(digits.filter((d) => d).every((d) => d > digit) || digits.filter((d) => d).every((d) => d < digit))) return true
@@ -119,10 +99,11 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
     case "[LO']": {
       for (const pos of rule.render_state.cells) {
-        const digit = POS2Digit(digit_arr, pos)
+        const cell = board.getCell(pos)
+        const digit = cell.digit
 
         const group = create_adjacent_group_of_pos(pos, 'wasd')
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         if (digit && filled_all) {
           const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
@@ -134,7 +115,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
     case '[TP]': {
       for (const group of GROUPS_TP) {
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
           if (digits[0] < digits[1] && digits[1] < digits[2]) return true
@@ -146,7 +127,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
     case '[QD]': {
       for (const group of GROUPS_QD) {
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
           if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) return true
@@ -156,7 +137,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
     case "[QD']": {
       for (const group of GROUPS_QD) {
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
           if (!(digits.reduce((a, b) => a + b, 0) % 3 !== 0)) return true
@@ -167,7 +148,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
     case '[TM]': {
       for (const { cells: group, color } of rule.render_state.regions) {
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
         const sum = (digits as number[]).reduce((a, b) => a + b, 0)
 
         switch (color) {
@@ -198,12 +179,14 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       for (const group of rule.render_state.regions) {
         for (let i = 0; i < group.length; i++) {
           const pos1 = group[i]
-          const digit1 = POS2Digit(digit_arr, pos1)
+          const cell1 = board.getCell(pos1)
+          const digit1 = cell1.digit
           if (!digit1) continue
 
           for (let j = i + 1; j < group.length; j++) {
             const pos2 = group[j]
-            const digit2 = POS2Digit(digit_arr, pos2)
+            const cell2 = board.getCell(pos2)
+            const digit2 = cell2.digit
             if (!digit2) continue
 
             if (pos1[0] < pos2[0]) {
@@ -221,7 +204,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       const visit = new Set<string>() // `${d1}${d2}`; d1 <= d2
 
       for (const two_group of rule.render_state.dominoes) {
-        const { digits, filled_all } = parseGroup(digit_arr, two_group)
+        const { digits, filled_all } = parseGroup(board, two_group)
 
         if (filled_all) {
           const s = digits.toSorted().join('')
@@ -234,10 +217,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[MR]': {
-      if (has_dup(digit_arr, rule.render_state.metros)) return true
+      if (has_dup(board, rule.render_state.metros)) return true
 
       for (const group of rule.render_state.metros) {
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
           if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) return true
@@ -251,7 +234,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
         let type: -1 | 0 | 1 = -1 // -1: 결정되지 않음; 0|1: (r^c^digit)&1
 
         for (const pos of group) {
-          const digit = POS2Digit(digit_arr, pos)
+          const cell = board.getCell(pos)
+          const digit = cell.digit
           if (!digit) continue
 
           const x = ((pos[0] ^ pos[1] ^ digit) & 1) as 0 | 1
@@ -268,7 +252,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
     case '[IV]': {
       for (const group of rule.render_state.lines) {
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
         const cnt = pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length
 
         if (filled_all) {
@@ -282,7 +266,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[TR]': {
-      if (digit_arr.flat().every((digit) => digit)) {
+      if (board.empty_cells.length === 0) {
         const start = rule.render_state.start
         const end = rule.render_state.end
 
@@ -298,7 +282,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             break
           }
 
-          const curr_digit = POS2Digit(digit_arr, curr)
+          const curr_cell = board.getCell(curr)
+          const curr_digit = curr_cell.digit
           if (!curr_digit) continue
 
           const next_digit = (curr_digit % 9) + 1
@@ -308,7 +293,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             const npos_num = POS2number(npos)
             if (visited.has(npos_num)) continue
 
-            const ndigit = POS2Digit(digit_arr, npos)
+            const ncell = board.getCell(npos)
+            const ndigit = ncell.digit
             if (ndigit === next_digit) {
               visited.add(npos_num)
               queue.push(npos)
@@ -322,7 +308,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       return false
     }
     case "[TR']": {
-      if (digit_arr.flat().every((digit) => digit)) {
+      if (board.empty_cells.length === 0) {
         const start = rule.render_state.start
         const end = rule.render_state.end
 
@@ -357,7 +343,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             if (u === end_num) continue
 
             const u_pos = POSSchema.parse([r, c])
-            const u_digit = POS2Digit(digit_arr, u_pos)
+            const u_cell = board.getCell(u_pos)
+            const u_digit = u_cell.digit
             if (!u_digit) continue
 
             const next_digit = (u_digit % 9) + 1
@@ -367,7 +354,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               const v = POS2number(npos)
               if (v === start_num) continue
 
-              const v_digit = POS2Digit(digit_arr, npos)
+              const v_cell = board.getCell(npos)
+              const v_digit = v_cell.digit
               if (v_digit === next_digit) {
                 addEdge(u + 81, v, 1)
               }
@@ -417,12 +405,13 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       return false
     }
     case '[BD]': {
-      if (digit_arr.flat().every((digit) => digit)) {
+      if (board.empty_cells.length === 0) {
         const maxR = Array(9).fill(-1) // 열 c마다 이미 점유된 최대 r
 
         for (const start_r of rule.render_state.start_rows) {
           const pos1 = POSSchema.parse([start_r, 0])
-          const digit1 = POS2Digit(digit_arr, pos1)
+          const cell1 = board.getCell(pos1)
+          const digit1 = cell1.digit
 
           function findPathFromStart(startR: IDX0): number[] | null {
             const path = Array(9).fill(-1)
@@ -431,7 +420,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               if (r <= maxR[c]) return false
 
               const pos = POSSchema.parse([r, c])
-              const digit = POS2Digit(digit_arr, pos)
+              const cell = board.getCell(pos)
+              const digit = cell.digit
               if (!(digit === ((digit1 + c - 1) % 9) + 1)) return false
 
               path[c] = r
@@ -470,7 +460,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[VT]': {
       for (const [r, c, dir] of rule.render_state.arrows) {
         const pos = POSSchema.parse([r, c])
-        const digit = POS2Digit(digit_arr, pos)
+        const cell = board.getCell(pos)
+        const digit = cell.digit
 
         if (digit) {
           const [dir_dr, dir_dc] = DirMap[dir]
@@ -481,7 +472,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           const pos2 = POSSchema.safeParse([r2, c2])
           if (!pos2.success) return true
 
-          const digit2 = POS2Digit(digit_arr, pos2.data)
+          const cell2 = board.getCell(pos2.data)
+          const digit2 = cell2.digit
 
           if (digit2) {
             if (!(digit2 === 9)) return true
@@ -494,7 +486,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[RT]': {
       for (const [r1, c1, dd] of rule.render_state.cells) {
         const pos1 = POSSchema.parse([r1, c1])
-        const digit1 = POS2Digit(digit_arr, pos1)
+        const cell1 = board.getCell(pos1)
+        const digit1 = cell1.digit
 
         if (digit1) {
           const idx = distances.indexOf(dd)
@@ -509,7 +502,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
                 const pos2 = POSSchema.safeParse([r2, c2])
                 if (!pos2.success) continue
 
-                const digit2 = POS2Digit(digit_arr, pos2.data)
+                const cell2 = board.getCell(pos2.data)
+                const digit2 = cell2.digit
 
                 if (digit1 === digit2) return true
               }
@@ -531,7 +525,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             }
           }
 
-          const { digits, filled_all } = parseGroup(digit_arr, group)
+          const { digits, filled_all } = parseGroup(board, group)
           if (filled_all) {
             if (!digits.includes(digit1)) return true
           }
@@ -543,7 +537,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case "[RT']": {
       for (const [r1, c1, dd] of rule.render_state.cells) {
         const pos1 = POSSchema.parse([r1, c1])
-        const digit1 = POS2Digit(digit_arr, pos1)
+        const cell1 = board.getCell(pos1)
+        const digit1 = cell1.digit
 
         if (digit1) {
           const idx = distances.indexOf(dd)
@@ -558,7 +553,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
                 const pos2 = POSSchema.safeParse([r2, c2])
                 if (!pos2.success) continue
 
-                const digit2 = POS2Digit(digit_arr, pos2.data)
+                const cell2 = board.getCell(pos2.data)
+                const digit2 = cell2.digit
 
                 if (digit1 === digit2) return true
               }
@@ -580,7 +576,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
             }
           }
 
-          const { digits, filled_all } = parseGroup(digit_arr, group)
+          const { digits, filled_all } = parseGroup(board, group)
           if (filled_all) {
             if (!digits.includes(digit1)) return true
           }
@@ -595,11 +591,13 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           const r = i
           for (const c of IDX0) {
             const pos = POSSchema.parse([r, c])
-            const digit = POS2Digit(digit_arr, pos)
+            const cell = board.getCell(pos)
+            const digit = cell.digit
             if (!digit) continue
 
             const pos2 = POSSchema.parse([digit - 1, c])
-            const digit2 = POS2Digit(digit_arr, pos2)
+            const cell2 = board.getCell(pos2)
+            const digit2 = cell2.digit
             if (!digit2) continue
 
             if (!(digit2 - 1 === r)) return true
@@ -608,11 +606,13 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           const c = i
           for (const r of IDX0) {
             const pos = POSSchema.parse([r, c])
-            const digit = POS2Digit(digit_arr, pos)
+            const cell = board.getCell(pos)
+            const digit = cell.digit
             if (!digit) continue
 
             const pos2 = POSSchema.parse([r, digit - 1])
-            const digit2 = POS2Digit(digit_arr, pos2)
+            const cell2 = board.getCell(pos2)
+            const digit2 = cell2.digit
             if (!digit2) continue
 
             if (!(digit2 - 1 === c)) return true
@@ -624,7 +624,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     }
 
     case '[MT]': {
-      const { digits, filled_all } = parseGroup(digit_arr, rule.render_state.diamond_cells)
+      const { digits, filled_all } = parseGroup(board, rule.render_state.diamond_cells)
 
       for (const v of V) {
         const cnt = digits.filter((digit) => digit === v).length
@@ -645,10 +645,11 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       for (const r of IDX0) {
         for (const c of IDX0) {
           const pos = POSSchema.parse([r, c])
-          const digit = POS2Digit(digit_arr, pos)
+          const cell = board.getCell(pos)
+          const digit = cell.digit
 
           const group = create_adjacent_group_of_pos(pos, 'wasd')
-          const { digits, filled_all } = parseGroup(digit_arr, group)
+          const { digits, filled_all } = parseGroup(board, group)
 
           if (digit && digits.filter((d) => d).some((d) => Math.abs(d - digit) < 3)) type_arr[r][c] = 'no'
           else if (digit && filled_all) type_arr[r][c] = digits.every((d) => Math.abs(d - digit) >= 3) ? 'yes' : 'no'
@@ -685,13 +686,14 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       const set = new Set(rule.render_state.marked_cells.map(POS2number))
 
       for (const pos of rule.render_state.marked_cells) {
-        const digit = POS2Digit(digit_arr, pos)
+        const cell = board.getCell(pos)
+        const digit = cell.digit
 
         if (digit) {
           const group = create_adjacent_group_of_pos(pos, 'king').filter((pos) => set.has(POS2number(pos)))
           group.push(pos) // 자기 자신도 포함
 
-          const { digits, filled_all } = parseGroup(digit_arr, group)
+          const { digits, filled_all } = parseGroup(board, group)
           const cnt = digits.filter((d) => d).filter((d) => d <= digit).length
 
           if (filled_all) {
@@ -713,7 +715,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           if (visited[r][c]) continue
 
           const pos = POSSchema.parse([r, c])
-          const digit = POS2Digit(digit_arr, pos)
+          const cell = board.getCell(pos)
+          const digit = cell.digit
           const is_potential_even = !digit || digit % 2 === 0
 
           if (is_potential_even) {
@@ -733,7 +736,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               for (const npos of adj) {
                 const [nr, nc] = npos
                 if (!visited[nr][nc]) {
-                  const ndigit = POS2Digit(digit_arr, npos)
+                  const ncell = board.getCell(npos)
+                  const ndigit = ncell.digit
                   if (!ndigit || ndigit % 2 === 0) {
                     visited[nr][nc] = 1
                     queue.push(npos)
@@ -762,7 +766,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           if (visited[r][c]) continue
 
           const pos = POSSchema.parse([r, c])
-          const digit = POS2Digit(digit_arr, pos)
+          const cell = board.getCell(pos)
+          const digit = cell.digit
           if (digit >= 1 && digit <= 4) {
             const queue = [pos]
             visited[r][c] = 1
@@ -777,7 +782,8 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
               const adj = create_adjacent_group_of_pos(curr, 'wasd')
               for (const npos of adj) {
                 const [nr, nc] = npos
-                const ndigit = POS2Digit(digit_arr, npos)
+                const ncell = board.getCell(npos)
+                const ndigit = ncell.digit
                 if (ndigit === 0) {
                   has_adjacent_empty = true
                 } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {
@@ -802,7 +808,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           [r1, c1],
           [r2, c2],
         ]
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
           if (isred) {
@@ -822,7 +828,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
           [r2, c2],
           [r3, c3],
         ]
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
           if (isred) {
@@ -839,8 +845,10 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
     case '[QT]': {
       for (const [type, i, [x, y]] of rule.render_state.side_hints) {
         const group = getLineGroup(type, i)
-        const digitX = POS2Digit(digit_arr, group[x - 1])
-        const digitY = POS2Digit(digit_arr, group[y - 1])
+        const cellX = board.getCell(group[x - 1])
+        const digitX = cellX.digit
+        const cellY = board.getCell(group[y - 1])
+        const digitY = cellY.digit
 
         if (!digitX || !digitY) continue
 
@@ -857,7 +865,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
         const expectedDistances = new Set<number>(arr)
 
         const group = getLineGroup(type, index)
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
         const distances = new Set<number>()
 
         for (let i = 0; i < digits.length; i++) {
@@ -882,7 +890,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
 
       for (const [type, index, letter] of rule.render_state.side_hints) {
         const group = getLineGroup(type, index)
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
         const distances = new Set<number>()
 
         for (let i = 0; i < digits.length; i++) {
@@ -912,7 +920,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
         const line = getLineGroup(type, i)
         const group = type === 'ROW_LEFT' || type === 'COL_TOP' ? line.slice(0, 3) : line.slice(-3)
 
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
         if (filled_all) {
           if (!((digits as number[]).reduce((a, b) => a * b, 1) === x)) return true
         }
@@ -924,11 +932,11 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       for (const [type, i, arr] of rule.render_state.side_hints) {
         const group = getLineGroup(type, i)
 
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
         if (filled_all) {
           const group2 = group.filter((_, i) => arr.includes(digits[i]))
 
-          const { digits: digits2, filled_all: filled_all2 } = parseGroup(digit_arr, group2)
+          const { digits: digits2, filled_all: filled_all2 } = parseGroup(board, group2)
           if (!filled_all2) throw new Error('unreachable')
 
           let i = 0
@@ -964,7 +972,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
       for (const [type, i, arr] of rule.render_state.side_hints) {
         const group = getLineGroup(type, i)
 
-        const { digits, filled_all } = parseGroup(digit_arr, group)
+        const { digits, filled_all } = parseGroup(board, group)
         if (filled_all) {
           const lmhs = digits.map((d) => (d <= 3 ? 'L' : d <= 6 ? 'M' : 'H'))
 
@@ -1030,7 +1038,7 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
                 value,
               } of variant.values) {
                 const pos = POSSchema.parse([ro + r, co + c])
-                if (POS2Digit(digit_arr, pos) !== value) {
+                if (board.getCell(pos).digit !== value) {
                   matched = false
                   break
                 }
@@ -1047,9 +1055,9 @@ function has_error_rule(digit_arr: DigitArr, rule: Rule): boolean {
   }
 }
 
-export function has_error(digit_arr: DigitArr, rules: Rule[]): boolean {
+export function has_error(board: Board, rules: Rule[]): boolean {
   for (const rule of rules.filter(isKnown)) {
-    if (has_error_rule(digit_arr, rule)) return true
+    if (has_error_rule(board, rule)) return true
   }
   return false
 }

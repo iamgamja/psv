@@ -1,5 +1,7 @@
+import { type Board } from '../types/Board'
+import { type Cell } from '../types/Cell'
 import { type RCRC } from '../types/Rule'
-import { type Group, IDX0 } from '../types/base'
+import { type Group, IDX0, V } from '../types/base'
 
 export const Prime2Set = new Set([11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97])
 export const Prime3Set = new Set([
@@ -38,4 +40,27 @@ export const distances = Object.keys(distanceMap)
 
 export function getLineGroup(type: RCRC, index: number): Group {
   return IDX0.map((i) => (type.substring(0, 3) === 'ROW' ? [index, i] : [i, index])) as Group
+}
+
+type ParsedGroup =
+  | {
+      digits: V[]
+      cells: Cell[]
+      filled_all: true
+    }
+  | {
+      digits: (V | 0)[]
+      cells: Cell[]
+      filled_all: false
+    }
+export function parseGroup(board: Board, group: Group): ParsedGroup {
+  const cells = group.map((pos) => board.getCell(pos))
+  const digits = cells.map((cell) => cell.digit)
+  const filled_all = digits.every((digit) => digit)
+
+  return {
+    digits,
+    cells,
+    filled_all,
+  } as ParsedGroup
 }

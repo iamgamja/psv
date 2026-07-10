@@ -6,7 +6,6 @@ import { POSSchema, V } from '../types/base'
 import { attachDragSelection } from '../util/attachDragSelection'
 import { enableLongPress } from '../util/enableLongPress'
 import { entries } from '../util/entries'
-import { POS2Cell } from '../util/groups'
 
 import { initInfoModal, initSettingModal } from './initModal'
 
@@ -344,7 +343,7 @@ export function initInput(State: State): Input {
           const pos = POSSchema.safeParse([nxtr, nxtc])
           if (!pos.success) continue
 
-          nxt_cells.add(POS2Cell(board, pos.data))
+          nxt_cells.add(board.getCell(pos.data))
         }
 
         board.selected = nxt_cells
