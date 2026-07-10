@@ -10,8 +10,6 @@ export type Board = {
   flat_cells: Cell[]
   get empty_cells(): Cell[]
 
-  create_digit_arr(): (V | 0)[][] // 9x9
-
   level: LevelData
   rules: (Rule | UnknownRule)[]
   all_disjoint_groups: Groups

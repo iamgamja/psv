@@ -7,7 +7,7 @@ import { type Cell } from '../types/Cell'
 import { type LevelData } from '../types/LevelData'
 import { type Rule, isKnown } from '../types/Rule'
 import { type State } from '../types/State'
-import { IDX0, V } from '../types/base'
+import { V } from '../types/base'
 import { HistoryManager } from '../util/HistoryManager'
 import { createElement } from '../util/createElement'
 import { hasCells } from '../util/groups'
@@ -30,10 +30,6 @@ export function initBoard(level: LevelData, State: State): Board {
     flat_cells: cells.flat(),
     get empty_cells() {
       return this.flat_cells.filter((cell) => !cell.digit)
-    },
-
-    create_digit_arr() {
-      return IDX0.map((r) => IDX0.map((c) => this.cells[r][c].digit))
     },
 
     level,
