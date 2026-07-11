@@ -461,6 +461,7 @@ const Draw = {
 
 // ---------
 
+// TODO: 스텐실은 지원하지 않음
 const render_order = [
   // divider
   '[Sudoku]',
@@ -514,9 +515,7 @@ const render_order = [
 
 type Renderable_Rule_ID = (typeof render_order)[number]
 
-const color_generator = new SoftDistinctColorGenerator()
-
-function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>): boolean {
+function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>, color_generator: SoftDistinctColorGenerator): boolean {
   switch (rule.id) {
     case '[Sudoku]': {
       // 보드 가장자리
@@ -764,11 +763,15 @@ function isRenderable(rule: Rule): rule is Extract<Rule, { id: Renderable_Rule_I
 }
 
 export function renderRules(board: Board) {
+  svg.replaceChildren() // clear
+
+  const color_generator = new SoftDistinctColorGenerator()
+
   const sorted_rules = board.rules
     .filter(isKnown)
     .filter(isRenderable)
     .sort((rule1, rule2) => render_order.indexOf(rule1.id) - render_order.indexOf(rule2.id))
   for (const rule of sorted_rules) {
-    render_rule(rule)
+    render_rule(rule, color_generator)
   }
 }

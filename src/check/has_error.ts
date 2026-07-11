@@ -808,6 +808,7 @@ function has_error_rule(board: Board, rule: Rule): boolean {
           [r1, c1],
           [r2, c2],
         ]
+        group.sort((pos1, pos2) => POS2number(pos1) - POS2number(pos2))
         const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {
@@ -828,6 +829,7 @@ function has_error_rule(board: Board, rule: Rule): boolean {
           [r2, c2],
           [r3, c3],
         ]
+        group.sort((pos1, pos2) => POS2number(pos1) - POS2number(pos2))
         const { digits, filled_all } = parseGroup(board, group)
 
         if (filled_all) {

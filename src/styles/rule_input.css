@@ -1,0 +1,16 @@
+#console {
+  flex: 1;
+  
+  width: 100%;
+  overflow: auto;
+
+  padding: 0.5rem;
+}
+
+#console .list {
+  overflow: auto;
+}
+
+#console-rule-id-search-select {
+  width: 100px;
+}

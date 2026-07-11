@@ -1,6 +1,7 @@
 import { type Board } from '../types/Board'
 import { type Cell } from '../types/Cell'
 import { type GameState } from '../types/State'
+
 export function attachDragSelection(board: Board, gameState: GameState) {
   let dragging_mode: 'add' | 'remove' | null = null
   let pointerId: number | null = null
@@ -77,9 +78,6 @@ export function attachDragSelection(board: Board, gameState: GameState) {
         // capture 실패해도 window 리스너로 동작은 계속됨
       }
     }
-
-    // 드래그 중 텍스트 선택 같은 기본 동작 방지
-    e.preventDefault()
 
     updateCellAtPoint(e.clientX, e.clientY)
   })

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gamja's Pillow's N Sudoku Variants Maker</title>
+
+    <link rel="stylesheet" href="/src/styles/main.css" />
+    <link rel="stylesheet" href="/src/styles/board.css" />
+    <link rel="stylesheet" href="/src/styles/rule_input.css" />
+    <link rel="stylesheet" href="/src/styles/modal.css" />
+    <link rel="stylesheet" href="/src/styles/toast.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="board">
+        <div id="board-container">
+          <svg id="rule-render-svg"></svg>
+        </div>
+      </div>
+      <div id="console"></div>
+    </div>
+    <script type="module" src="/src/make.ts"></script>
+  </body>
+</html>

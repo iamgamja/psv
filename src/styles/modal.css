@@ -65,32 +65,10 @@
   box-sizing: border-box;
 }
 
-.modal-body ul {
-  margin: 8px 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.modal-body > ul {
-  padding-left: 20px;
-}
-
-.modal-body ul > li {
-  list-style-type: '\2713\00A0'; /* ✓ */
-}
-
 .modal-body input {
   all: unset;
 
   display: inline;
   width: 50px;
   border: 1px black solid;
-}
-
-.modal-body .list {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }

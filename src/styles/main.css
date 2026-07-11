@@ -25,13 +25,15 @@ body {
 }
 
 #app {
+  width: 100vw;
+  height: 100dvh;
+  
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 
   gap: 1.5rem;
-  min-height: 100vh;
 
   box-sizing: border-box;
 }
@@ -88,4 +90,27 @@ button.active {
 
 .blue {
   color: #4fa4ff !important;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.list > .right {
+  margin-left: auto;
+}
+
+ul {
+  margin: 8px 0;
+  padding-left: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+ul > li {
+  list-style-type: '\2713\00A0'; /* ✓ */
 }

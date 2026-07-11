@@ -17,7 +17,7 @@ import { showToast } from '../util/toast'
 import { initCells } from './initCells'
 import { renderRules } from './renderRules'
 
-export function initBoard(level: LevelData, State: State): Board {
+export function initBoard(level: LevelData, State: State, is_making: boolean): Board {
   document.querySelector<HTMLDivElement>('#board-container')?.addEventListener('contextmenu', (e) => e.preventDefault())
 
   const cells = initCells(level, State)
@@ -312,7 +312,8 @@ export function initBoard(level: LevelData, State: State): Board {
 
           await navigator.clipboard.writeText(res)
           showToast(`${this.level.id}번 정답이 복사되었습니다.`, 'success')
-        } catch {
+        } catch (err) {
+          console.error(err)
           showToast(['정답 복사에 실패했습니다.', createElement('button', { className: 'retry-button', content: '재시도', onclick: () => this._check_completed() })], 'error')
         }
       }
@@ -384,7 +385,14 @@ export function initBoard(level: LevelData, State: State): Board {
     },
   }
 
-  const history_manager = new HistoryManager(board)
+  if (is_making) {
+    board._check_errors = () => {}
+    board._induct = () => {}
+    board._check_warnings = () => {}
+    board._check_completed = () => {}
+  }
+
+  const history_manager = new HistoryManager(board, is_making)
 
   renderRules(board)
 

@@ -189,13 +189,17 @@ function applySnapshot(board: Board, snapshot: SnapShot) {
 
 export class HistoryManager {
   public readonly board: Board
+  public readonly is_making: boolean
   private snapshots: SnapShot[] = []
   private currentSnapshotIndex = 0
 
   private branchStack: BranchStack = []
 
-  constructor(board: Board) {
+  constructor(board: Board, is_making: boolean) {
     this.board = board
+    this.is_making = is_making
+
+    if (this.is_making) return
 
     const history = loadHistory(this.board.level.id)
     if (history) {
@@ -223,6 +227,8 @@ export class HistoryManager {
   }
 
   private persist(): void {
+    if (this.is_making) return
+
     saveHistory(this.board.level.id, {
       board: this.snapshots,
       branch: this.branchStack,
@@ -263,6 +269,8 @@ export class HistoryManager {
    * 여러 셀을 한 번에 바꿨다면, 전부 끝난 다음 한 번만 호출하면 된다.
    */
   commit(force?: boolean): void {
+    if (this.is_making) return
+
     const next = getSnapshot(this.board)
     if (!force && encodeSnapshot(next) === encodeSnapshot(this.snapshot)) return
 
