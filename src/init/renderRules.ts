@@ -6,7 +6,7 @@ import { type Group } from '../types/base'
 import { IDX0, POSSchema } from '../types/base'
 import { SoftDistinctColorGenerator } from '../util/SoftDistinctColorGenerator'
 import { GROUPS_ADJACENT } from '../util/create_adjacent_group'
-import { POS2number, hasPOSs } from '../util/groups'
+import { POS2number, hasPOSs, isAdjacent } from '../util/groups'
 import { pairwise } from '../util/pairwise'
 
 const container = document.querySelector('#board-container')!
@@ -699,14 +699,36 @@ function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>, color_gene
     }
     case '[PR]': {
       rule.render_state.edges.forEach(([r1, c1, r2, c2, isred]) => {
-        Draw.Hexagon([r1, c1], [r2, c2], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+        ]
+        group.sort((pos1, pos2) => POS2number(pos1) - POS2number(pos2))
+
+        const [pos1, pos2] = group
+
+        Draw.Hexagon(pos1, pos2, { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+        if (!isAdjacent(pos1, pos2, 'wasd')) Draw.Line(pos1, pos2, { color: '#dddddd', dotted: true })
       })
       return true
     }
     case "[PR']": {
       rule.render_state.triplets.forEach(([r1, c1, r2, c2, r3, c3, isred]) => {
-        Draw.Hexagon([r1, c1], [r2, c2], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
-        Draw.Hexagon([r2, c2], [r3, c3], { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+        const group: Group = [
+          [r1, c1],
+          [r2, c2],
+          [r3, c3],
+        ]
+        group.sort((pos1, pos2) => POS2number(pos1) - POS2number(pos2))
+
+        const [pos1, pos2, pos3] = group
+
+        Draw.Hexagon(pos1, pos2, { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+        Draw.Hexagon(pos2, pos3, { stroke_color: '#ffffff', fill_color: isred ? '#ff0000cc' : '#0000ffcc' })
+        if (!isAdjacent(pos1, pos2, 'wasd') || !isAdjacent(pos2, pos3, 'wasd') || !((r1 === r2 && r2 === r3) || (c1 === c2 && c2 === c3))) {
+          Draw.Line(pos1, pos2, { color: '#dddddd', dotted: true })
+          Draw.Line(pos2, pos3, { color: '#dddddd', dotted: true })
+        }
       })
       return true
     }
@@ -714,12 +736,14 @@ function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>, color_gene
     case "[LK']": {
       rule.render_state.edges.forEach(([pos1, pos2]) => {
         Draw.Diamond(pos1, pos2)
+        if (!isAdjacent(pos1, pos2, 'wasd')) Draw.Line(pos1, pos2, { color: '#dddddd', dotted: true })
       })
       return true
     }
     case '[PO]': {
       rule.render_state.edges.forEach(([pos1, pos2]) => {
         Draw.Triangle(pos1, pos2, { stroke_color: '#ffffff', fill_color: '#000000' })
+        if (!isAdjacent(pos1, pos2, 'wasd')) Draw.Line(pos1, pos2, { color: '#dddddd', dotted: true })
       })
       return true
     }

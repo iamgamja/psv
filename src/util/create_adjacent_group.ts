@@ -1,9 +1,9 @@
 import { type Group, type Groups, type POS, type TwoGroup, type TwoGroups } from '../types/base'
 import { IDX0, POSSchema } from '../types/base'
 
-type AdjacentMode = 'wasd' | 'king'
+export type AdjacentMode = 'wasd' | 'king'
 
-const DeltaMap: Record<AdjacentMode, [number, number][]> = {
+export const DeltaMap: Record<AdjacentMode, [number, number][]> = {
   wasd: [
     [-1, +0],
     [+0, -1],

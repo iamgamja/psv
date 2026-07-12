@@ -13,7 +13,7 @@ import { type Group, IDX0, type POS, V } from './types/base'
 import { Modal } from './util/Modal'
 import { attachDragSelection } from './util/attachDragSelection'
 import { createElement } from './util/createElement'
-import { cell2POS } from './util/groups'
+import { POS2number, cell2POS } from './util/groups'
 import { type InputMessage, type OutputMessage } from './util/solver.worker'
 import { showToast } from './util/toast'
 
@@ -300,14 +300,10 @@ function addHint(rule: Rule, selected: POS[]): boolean {
       return true
     }
     case '[SG]': {
-      if (selected.length !== 9) return false
-
       rule.render_state.regions.push(selected)
       return true
     }
     case "[SG']": {
-      if (selected.length !== 5) return false
-
       rule.render_state.regions.push(selected)
       return true
     }
@@ -471,7 +467,10 @@ function addHint(rule: Rule, selected: POS[]): boolean {
     case "[SQ']": {
       if (selected.length < 1) return false
 
+      selected.sort((pos1, pos2) => POS2number(pos1) - POS2number(pos2))
+
       const [r0, c0] = selected[0]
+      const [rm1, cm1] = selected.at(-1)!
       let type: 'ROW' | 'COL' | 'ROW_LEFT' | 'COL_TOP' | null = null
       let index: IDX0 | null = null
 
@@ -484,10 +483,10 @@ function addHint(rule: Rule, selected: POS[]): boolean {
           }
           type = 'COL_TOP'
           index = c0
-        } else if (r0 === 8) {
+        } else if (rm1 === 8) {
           // Bottom에서 위로 수직 진입 (8, 7, 6...)
           for (let i = 0; i < selected.length; i++) {
-            if (selected[i][0] !== 8 - i) return false
+            if (selected[i][0] !== 9 - selected.length + i) return false
           }
           type = 'COL'
           index = c0
@@ -503,10 +502,10 @@ function addHint(rule: Rule, selected: POS[]): boolean {
           }
           type = 'ROW_LEFT'
           index = r0
-        } else if (c0 === 8) {
+        } else if (cm1 === 8) {
           // Right에서 왼쪽으로 수직 진입 (8, 7, 6...)
           for (let i = 0; i < selected.length; i++) {
-            if (selected[i][1] !== 8 - i) return false
+            if (selected[i][1] !== 9 - selected.length + i) return false
           }
           type = 'ROW'
           index = r0

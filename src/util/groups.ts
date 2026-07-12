@@ -1,6 +1,8 @@
 import { type Cell } from '../types/Cell'
 import { type Group, IDX0, type POS, POSSchema, type TwoGroup, type TwoGroups } from '../types/base'
 
+import { type AdjacentMode, DeltaMap } from './create_adjacent_group'
+
 export function cell2POS(cell: Cell): POS {
   const r = (cell.r - 1) as IDX0
   const c = (cell.c - 1) as IDX0
@@ -41,4 +43,11 @@ export function differenceOf2Groups(groups1: TwoGroups, groups2: TwoGroups) {
   const set = new Set(groups1.map(TwoGroupComb2number))
   groups2.map(TwoGroupComb2number).forEach((n) => set.delete(n))
   return Array.from(set).map(number2TwoGroup)
+}
+
+export function isAdjacent([r1, c1]: POS, [r2, c2]: POS, adjacent_mode: AdjacentMode) {
+  for (const [dr, dc] of DeltaMap[adjacent_mode]) {
+    if (r1 + dr === r2 && c1 + dc === c2) return true
+  }
+  return false
 }
