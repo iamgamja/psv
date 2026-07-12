@@ -75,8 +75,6 @@ export default defineConfig([
         },
       ],
 
-      'import-x/extensions': ['error', 'never', { fix: true }],
-
       'import-x/consistent-type-specifier-style': ['warn', 'prefer-inline'],
     },
   },

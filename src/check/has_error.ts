@@ -1,13 +1,13 @@
 import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
 import { GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
-import { type Board } from '../types/Board'
+import { type LiteBoard } from '../types/Board'
 import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
 import { type Group, type Groups, IDX0, type POS, POSSchema, type TwoGroups, V } from '../types/base'
 import { GROUPS_ADJACENT, create_adjacent_group_of_pos } from '../util/create_adjacent_group'
 import { POS2number, differenceOf2Groups } from '../util/groups'
 import { pairwise } from '../util/pairwise'
 
-function has_dup(board: Board, groups: Groups): boolean {
+function has_dup(board: LiteBoard, groups: Groups): boolean {
   for (const group of groups) {
     const { digits } = parseGroup(board, group)
 
@@ -20,7 +20,7 @@ function has_dup(board: Board, groups: Groups): boolean {
   return false
 }
 
-function check_2groups(board: Board, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
+function check_2groups(board: LiteBoard, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
   for (const group of groups) {
     const { digits, filled_all } = parseGroup(board, group)
 
@@ -32,7 +32,7 @@ function check_2groups(board: Board, groups: TwoGroups, f: (d1: V, d2: V) => boo
   return false
 }
 
-function has_error_rule(board: Board, rule: Rule): boolean {
+function has_error_rule(board: LiteBoard, rule: Rule): boolean {
   switch (rule.id) {
     case '[Sudoku]': {
       return false
@@ -1057,8 +1057,8 @@ function has_error_rule(board: Board, rule: Rule): boolean {
   }
 }
 
-export function has_error(board: Board, rules: Rule[]): boolean {
-  for (const rule of rules.filter(isKnown)) {
+export function has_error(board: LiteBoard, rules?: Rule[]): boolean {
+  for (const rule of (rules ?? board.rules).filter(isKnown)) {
     if (has_error_rule(board, rule)) return true
   }
   return false

@@ -1,6 +1,6 @@
 #console {
   flex: 1;
-  
+
   width: 100%;
   overflow: auto;
 
@@ -13,4 +13,9 @@
 
 #console-rule-id-search-select {
   width: 100px;
+}
+
+#solve-progress-modal-progress {
+  display: block;
+  width: 100%;
 }

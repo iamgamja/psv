@@ -16,7 +16,9 @@ export class Modal {
   private isOpen = false
   private closeTimer: number | null = null
 
-  constructor(id: string, title?: string) {
+  onclose?: () => unknown
+
+  constructor(id: string, title?: string, onclose?: () => unknown) {
     this.overlay = createElement('div', {
       id,
       className: 'modal-overlay',
@@ -50,6 +52,8 @@ export class Modal {
         this.close()
       },
     })
+
+    this.onclose = onclose
   }
 
   open(): void {
@@ -70,6 +74,8 @@ export class Modal {
 
   close(): void {
     if (!this.isOpen) return
+
+    this.onclose?.()
 
     this.overlay.classList.remove('open')
     document.removeEventListener('keydown', this.handleKeyDown)

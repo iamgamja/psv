@@ -18,3 +18,8 @@ export type Cell = {
   warning_element: HTMLDivElement
   selected_element: HTMLDivElement
 }
+
+export type LiteCell = {
+  digit: 0 | V
+  is_static: boolean
+}

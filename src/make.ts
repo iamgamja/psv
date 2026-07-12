@@ -10,9 +10,11 @@ import { type LevelData } from './types/LevelData'
 import { type Rule, RuleIdSchema, RuleSchema, Rule_ID, isKnown } from './types/Rule'
 import { type State } from './types/State'
 import { type Group, IDX0, type POS, V } from './types/base'
+import { Modal } from './util/Modal'
 import { attachDragSelection } from './util/attachDragSelection'
 import { createElement } from './util/createElement'
 import { cell2POS } from './util/groups'
+import { type InputMessage, type OutputMessage } from './util/solver.worker'
 import { showToast } from './util/toast'
 
 function saveLevel(level: LevelData) {
@@ -919,59 +921,143 @@ function render() {
 
     createElement('hr'),
 
-    createElement('div', {
-      className: 'list',
+    createElement('ul', {
       content: [
-        createElement('label', {
-          content: [
-            'level id:',
-            createElement('input', {
-              attr: [['value', level.id]],
-              onchange: (e) => {
-                const input = e.target as HTMLInputElement
-                level.id = input.value
+        createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              createElement('button', {
+                id: 'console-solve',
+                content: '해 탐색',
+                onclick: async () => {
+                  const modal = new Modal('solve-progress-modal', '해 탐색')
 
-                saveLevel(level)
-              },
-            }),
-          ],
+                  modal.body.append(
+                    createElement('progress', {
+                      id: 'solve-progress-modal-progress',
+                      attr: [
+                        ['max', '1'],
+                        ['value', '0'],
+                      ],
+                    }),
+                    createElement('code', {
+                      id: 'solve-progress-modal-code',
+                      content: 'initing...',
+                    }),
+                  )
+
+                  modal.open()
+
+                  const worker = new Worker(new URL('./util/solver.worker.ts', import.meta.url), {
+                    type: 'module',
+                  })
+
+                  modal.onclose = () => {
+                    worker.terminate()
+                  }
+
+                  worker.onmessage = (ev: MessageEvent<OutputMessage>) => {
+                    switch (ev.data.type) {
+                      case 'progress': {
+                        const progress = document.querySelector<HTMLProgressElement>('#solve-progress-modal-progress')
+                        const code = document.querySelector<HTMLElement>('#solve-progress-modal-code')
+
+                        if (progress) progress.value = Number('0.' + ev.data.progress)
+                        if (code) code.textContent = (ev.data.progress.slice(0, 2) + '.' + ev.data.progress.slice(2) + '%').replace(/(.{10})/g, '$1\n')
+
+                        break
+                      }
+
+                      case 'done': {
+                        switch (ev.data.status) {
+                          case 'none': {
+                            showToast('해가 없습니다.', 'error')
+                            break
+                          }
+                          case 'unique': {
+                            showToast('유일해가 존재합니다.', 'success')
+                            break
+                          }
+                          case 'multiple': {
+                            showToast('해가 2개 이상 존재합니다.', 'error')
+                            break
+                          }
+                        }
+
+                        break
+                      }
+                    }
+                  }
+
+                  worker.postMessage({
+                    type: 'solve',
+                    flat_cells: board.flat_cells.map((cell) => ({ digit: cell.digit, is_static: cell.is_static })),
+                    rules: board.rules,
+                  } satisfies InputMessage)
+                },
+              }),
+            ],
+          }),
         }),
 
-        createElement('button', {
-          id: 'console-export',
-          className: 'blue',
-          content: 'export',
-          onclick: async (e) => {
-            const res = btoa(JSON.stringify(level))
+        createElement('li', {
+          content: createElement('div', {
+            className: 'list',
+            content: [
+              createElement('label', {
+                content: [
+                  'level id:',
+                  createElement('input', {
+                    attr: [['value', level.id]],
+                    onchange: (e) => {
+                      const input = e.target as HTMLInputElement
+                      level.id = input.value
 
-            try {
-              if (!navigator?.clipboard?.writeText) {
-                throw new Error('Clipboard API not available')
-              }
+                      saveLevel(level)
+                    },
+                  }),
+                ],
+              }),
 
-              await navigator.clipboard.writeText(res)
-              showToast('base64 코드가 복사되었습니다.', 'success')
-            } catch (err) {
-              console.error(err)
-              showToast(
-                ['복사에 실패했습니다.', createElement('button', { className: 'retry-button', content: '재시도', onclick: () => (e.target as HTMLButtonElement).click() })],
-                'error',
-              )
-            }
-          },
-        }),
+              createElement('button', {
+                id: 'console-export',
+                className: 'blue',
+                content: 'export',
+                onclick: async (e) => {
+                  const res = btoa(JSON.stringify(level))
 
-        createElement('button', {
-          id: 'console-reset',
-          className: 'red',
-          content: 'reset',
-          onclick: () => {
-            if (confirm('초기화하시겠습니까?')) {
-              deleteLevel()
+                  try {
+                    if (!navigator?.clipboard?.writeText) {
+                      throw new Error('Clipboard API not available')
+                    }
 
-              location.reload()
-            }
-          },
+                    await navigator.clipboard.writeText(res)
+                    showToast('base64 코드가 복사되었습니다.', 'success')
+                  } catch (err) {
+                    console.error(err)
+                    showToast(
+                      ['복사에 실패했습니다.', createElement('button', { className: 'retry-button', content: '재시도', onclick: () => (e.target as HTMLButtonElement).click() })],
+                      'error',
+                    )
+                  }
+                },
+              }),
+
+              createElement('button', {
+                id: 'console-reset',
+                className: 'red',
+                content: 'reset',
+                onclick: () => {
+                  if (confirm('초기화하시겠습니까?')) {
+                    deleteLevel()
+
+                    location.reload()
+                  }
+                },
+              }),
+            ],
+          }),
         }),
       ],
     }),

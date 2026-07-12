@@ -1,5 +1,4 @@
-import { type Board } from '../types/Board'
-import { type Cell } from '../types/Cell'
+import { type LiteBoard } from '../types/Board'
 import { type RCRC } from '../types/Rule'
 import { type Group, IDX0, V } from '../types/base'
 
@@ -42,18 +41,18 @@ export function getLineGroup(type: RCRC, index: number): Group {
   return IDX0.map((i) => (type.substring(0, 3) === 'ROW' ? [index, i] : [i, index])) as Group
 }
 
-type ParsedGroup =
+type ParsedGroup<B extends LiteBoard> =
   | {
       digits: V[]
-      cells: Cell[]
+      cells: B['flat_cells']
       filled_all: true
     }
   | {
       digits: (V | 0)[]
-      cells: Cell[]
+      cells: B['flat_cells']
       filled_all: false
     }
-export function parseGroup(board: Board, group: Group): ParsedGroup {
+export function parseGroup<B extends LiteBoard>(board: B, group: Group): ParsedGroup<B> {
   const cells = group.map((pos) => board.getCell(pos))
   const digits = cells.map((cell) => cell.digit)
   const filled_all = digits.every((digit) => digit)
@@ -62,5 +61,5 @@ export function parseGroup(board: Board, group: Group): ParsedGroup {
     digits,
     cells,
     filled_all,
-  } as ParsedGroup
+  } as ParsedGroup<B>
 }

@@ -1,4 +1,4 @@
-import { type Cell } from './Cell'
+import { type Cell, type LiteCell } from './Cell'
 import { type LevelData } from './LevelData'
 import { type Rule, type UnknownRule } from './Rule'
 import { type SettingState, type State } from './State'
@@ -71,4 +71,13 @@ export type Board = {
   get branch_history(): string
 
   reset(): void
+}
+
+export type LiteBoard = {
+  flat_cells: LiteCell[]
+  getCell: (pos: POS) => LiteCell
+
+  get empty_cells(): LiteCell[]
+
+  rules: (Rule | UnknownRule)[]
 }
