@@ -1,0 +1,1 @@
+#console{flex:1;width:100%;max-height:90%;padding:.5rem;overflow:auto}#console .list{overflow:auto}#console input,#console select{width:200px;height:2rem;font:inherit;box-sizing:border-box;text-overflow:ellipsis;background:#fff;border:1px solid #dcdfe5;border-radius:6px;overflow:hidden}#solve-progress-modal-progress{width:100%;display:block}
