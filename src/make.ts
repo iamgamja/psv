@@ -881,25 +881,29 @@ function render() {
           content: createElement('div', {
             className: 'list',
             content: [
-              createElement('select', {
-                id: 'console-fill-v',
-                content: [0].concat(V).map((x) =>
-                  createElement('option', {
-                    attr: [['value', String(x)]],
-                    content: String(x),
-                  }),
-                ),
-              }),
+              ...V.map((v) =>
+                createElement('button', {
+                  content: String(v),
+                  onclick: () => {
+                    board.selected.forEach((cell) => {
+                      level.board[cell.r - 1][cell.c - 1] = v
+                      cell.digit = v
+                      cell.is_static = true
+                      cell.num_element.classList.toggle('static', cell.is_static)
+                    })
 
+                    board.render()
+                    saveLevel(level)
+                  },
+                }),
+              ),
               createElement('button', {
-                content: '숫자 채우기',
+                content: '✕',
                 onclick: () => {
-                  const v = Number(document.querySelector<HTMLSelectElement>('#console-fill-v')!.value) as 0 | V
-
                   board.selected.forEach((cell) => {
-                    level.board[cell.r - 1][cell.c - 1] = v
-                    cell.digit = v
-                    cell.is_static = v !== 0
+                    level.board[cell.r - 1][cell.c - 1] = 0
+                    cell.digit = 0
+                    cell.is_static = false
                     cell.num_element.classList.toggle('static', cell.is_static)
                   })
 
