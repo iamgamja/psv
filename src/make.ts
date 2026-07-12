@@ -836,6 +836,20 @@ function createHintElement(rule: Rule): HTMLElement[] {
 let last_id: Rule_ID = '[Sudoku]'
 
 function render() {
+  let flag = false
+
+  board.rules.filter(isKnown).forEach((rule) => {
+    const hintelements = createHintElement(rule)
+    if (hintelements.length === 0) {
+      board.rules.splice(board.rules.indexOf(rule), 1)
+      flag = true
+    }
+  })
+
+  if (flag) {
+    saveLevel(level)
+  }
+
   console_element.replaceChildren(
     createElement('ul', {
       content: [
