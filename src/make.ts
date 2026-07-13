@@ -24,7 +24,7 @@ function deleteLevel() {
   localStorage.removeItem(STORAGE_KEY_MAKING)
 }
 
-const level = initLevel(localStorage.getItem(STORAGE_KEY_MAKING) ?? '') ?? { ...default_level, id: `customlevel-${Date.now()}` }
+const level = (await initLevel(localStorage.getItem(STORAGE_KEY_MAKING) ?? '')) ?? { ...default_level, id: `customlevel-${Date.now()}` }
 saveLevel(level)
 
 const State: State = {

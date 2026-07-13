@@ -41,7 +41,7 @@ export function initInfoModal(board: Board) {
       className: 'list',
       content: [
         createElement('label', {
-          content: ['base64 코드: ', (base64_input = createElement('input'))],
+          content: ['id 혹은 base64 코드: ', (base64_input = createElement('input'))],
         }),
         createElement('button', {
           content: 'load',
@@ -70,11 +70,11 @@ export function initInfoModal(board: Board) {
     }),
   )
 
-  form_element.addEventListener('submit', (e) => {
+  form_element.addEventListener('submit', async (e) => {
     e.preventDefault()
 
     const url = new URL(window.location.href)
-    url.searchParams.set('data', base64_input!.value)
+    url.searchParams.set('code', base64_input!.value)
 
     history.pushState(null, '', url.toString())
     location.reload()
