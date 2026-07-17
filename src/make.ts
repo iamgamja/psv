@@ -759,14 +759,7 @@ function createHintElement(rule: Rule): HTMLElement[] {
     case "[TR']": {
       const start = rule.render_state.start
       const end = rule.render_state.end
-      return [
-        createElement('li', {
-          content: createElement('div', {
-            className: 'list',
-            content: [rule.id, stringifyPos(start), '→', stringifyPos(end)],
-          }),
-        }),
-      ]
+      return [ListHelper([stringifyPos(start), '→', stringifyPos(end)])]
     }
     case '[BD]':
       return [ListHelper(rule.render_state.start_rows.map((r) => String(r + 1)))]
