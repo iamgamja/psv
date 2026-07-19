@@ -229,6 +229,9 @@ const DefaultRuleMap: { [K in Rule_ID]: Extract<Rule, { id: K }> } = {
   '[EP]': {
     id: '[EP]',
   },
+  "[EP']": {
+    id: "[EP']",
+  },
 
   '[PR]': {
     id: '[PR]',
@@ -405,7 +408,7 @@ function addHint(rule: Rule, selected: POS[]): boolean {
       selected.forEach((pos) => {
         rule.render_state.arrows.push([...pos, 'L'])
       })
-      
+
       return true
     }
     case '[RT]':
@@ -413,7 +416,7 @@ function addHint(rule: Rule, selected: POS[]): boolean {
       selected.forEach((pos) => {
         rule.render_state.cells.push([...pos, 0])
       })
-      
+
       return true
     }
     case '[RF]': {
@@ -444,7 +447,8 @@ function addHint(rule: Rule, selected: POS[]): boolean {
     case '[ES]': {
       return true
     }
-    case '[EP]': {
+    case '[EP]':
+    case "[EP']": {
       return true
     }
 
@@ -791,6 +795,7 @@ function createHintElement(rule: Rule): HTMLElement[] {
     case '[ES]':
       return [ListHelper([])]
     case '[EP]':
+    case "[EP']":
       return [ListHelper([])]
 
     case '[PR]': {

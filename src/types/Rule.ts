@@ -53,6 +53,7 @@ export const Rule_ID = [
   // connected component
   '[ES]',
   '[EP]',
+  "[EP']",
 
   // math
   '[PR]',
@@ -243,6 +244,9 @@ const RuleObjectMap = {
   }),
   '[EP]': z.object({
     id: z.literal('[EP]'),
+  }),
+  "[EP']": z.object({
+    id: z.literal("[EP']"),
   }),
 
   '[PR]': z.object({

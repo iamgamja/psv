@@ -842,7 +842,14 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
-    case '[EP]': {
+    case '[EP]':
+    case "[EP']": {
+      const config = {
+        '[EP]': { values: [1, 2, 3, 4], size: 3 },
+        "[EP']": { values: [5, 6, 7, 8, 9], size: 5 },
+      } as const
+      const { values, size } = config[rule.id]
+
       const collector = new CellCollector()
       const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
 
@@ -854,7 +861,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
           const cell = board.getCell(pos)
           const digit = cell.digit
 
-          if (digit >= 1 && digit <= 4) {
+          if ((values as readonly number[]).includes(digit)) {
             const component: Cell[] = []
             const queue = [pos]
             visited[r][c] = 1
@@ -874,16 +881,16 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
                 if (ndigit === 0) {
                   has_adjacent_empty = true
-                } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {
+                } else if (!visited[nr][nc] && (values as readonly number[]).includes(ndigit)) {
                   visited[nr][nc] = 1
                   queue.push(npos)
                 }
               }
             }
 
-            if (component.length >= 4) {
+            if (component.length > size) {
               collector.add(component)
-            } else if (component.length < 3 && !has_adjacent_empty) {
+            } else if (component.length < size && !has_adjacent_empty) {
               collector.add(component)
             }
           }

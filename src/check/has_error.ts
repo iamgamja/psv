@@ -754,7 +754,14 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
 
       return false
     }
-    case '[EP]': {
+    case '[EP]':
+    case "[EP']": {
+      const config = {
+        '[EP]': { values: [1, 2, 3, 4], size: 3 },
+        "[EP']": { values: [5, 6, 7, 8, 9], size: 5 },
+      } as const
+      const { values, size } = config[rule.id]
+
       const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
 
       for (const r of IDX0) {
@@ -764,16 +771,16 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
           const pos = POSSchema.parse([r, c])
           const cell = board.getCell(pos)
           const digit = cell.digit
-          if (digit >= 1 && digit <= 4) {
+          if ((values as readonly number[]).includes(digit)) {
             const queue = [pos]
             visited[r][c] = 1
 
-            let size = 0
+            let comp_size = 0
             let has_adjacent_empty = false
 
             while (queue.length > 0) {
               const curr = queue.shift()!
-              size++
+              comp_size++
 
               const adj = create_adjacent_group_of_pos(curr, 'wasd')
               for (const npos of adj) {
@@ -782,15 +789,15 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
                 const ndigit = ncell.digit
                 if (ndigit === 0) {
                   has_adjacent_empty = true
-                } else if (!visited[nr][nc] && ndigit >= 1 && ndigit <= 4) {
+                } else if (!visited[nr][nc] && (values as readonly number[]).includes(ndigit)) {
                   visited[nr][nc] = 1
                   queue.push(npos)
                 }
               }
             }
 
-            if (size >= 4) return true
-            if (size < 3 && !has_adjacent_empty) return true
+            if (comp_size > size) return true
+            if (comp_size < size && !has_adjacent_empty) return true
           }
         }
       }
