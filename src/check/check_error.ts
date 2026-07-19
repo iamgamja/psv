@@ -5,7 +5,7 @@ import { type Cell } from '../types/Cell'
 import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
 import { type Group, type Groups, IDX0, type POS, POSSchema, V } from '../types/base'
 import { GROUPS_ADJACENT, create_adjacent_group_of_pos } from '../util/create_adjacent_group'
-import { POS2number, differenceOf2Groups } from '../util/groups'
+import { POS2number, cell2POS, differenceOf2Groups } from '../util/groups'
 import { pairwise } from '../util/pairwise'
 
 function check_dup(board: Board, groups: Groups): Set<Cell> {
@@ -894,6 +894,54 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
               collector.add(component)
             }
           }
+        }
+      }
+
+      return collector.res
+    }
+    case '[TS]': {
+      const collector = new CellCollector()
+      const values = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ] as const
+
+      for (const vals of values) {
+        const F: Cell[] = []
+        for (const r of IDX0) {
+          for (const c of IDX0) {
+            const pos = POSSchema.parse([r, c])
+            const cell = board.getCell(pos)
+            if ((vals as readonly number[]).includes(cell.digit)) {
+              F.push(cell)
+            }
+          }
+        }
+
+        if (F.length <= 1) continue
+
+        const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+        const queue: POS[] = [cell2POS(F[0])]
+        visited[queue[0][0]][queue[0][1]] = 1
+
+        while (queue.length > 0) {
+          const curr = queue.shift()!
+          const adj = create_adjacent_group_of_pos(curr, 'king')
+          for (const npos of adj) {
+            const [nr, nc] = npos
+            if (!visited[nr][nc]) {
+              const ndigit = board.getCell(npos).digit
+              if (ndigit === 0 || (vals as readonly number[]).includes(ndigit)) {
+                visited[nr][nc] = 1
+                queue.push(npos)
+              }
+            }
+          }
+        }
+
+        if (F.some((cell) => !visited[cell.r - 1][cell.c - 1])) {
+          collector.add(F)
         }
       }
 

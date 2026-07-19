@@ -804,6 +804,51 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
 
       return false
     }
+    case '[TS]': {
+      const values = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ] as const
+
+      for (const vals of values) {
+        const F: POS[] = []
+        for (const r of IDX0) {
+          for (const c of IDX0) {
+            const pos = POSSchema.parse([r, c])
+            const cell = board.getCell(pos)
+            if ((vals as readonly number[]).includes(cell.digit)) {
+              F.push(pos)
+            }
+          }
+        }
+
+        if (F.length <= 1) continue
+
+        const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+        const queue: POS[] = [F[0]]
+        visited[F[0][0]][F[0][1]] = 1
+
+        while (queue.length > 0) {
+          const curr = queue.shift()!
+          const adj = create_adjacent_group_of_pos(curr, 'king')
+          for (const npos of adj) {
+            const [nr, nc] = npos
+            if (!visited[nr][nc]) {
+              const ndigit = board.getCell(npos).digit
+              if (ndigit === 0 || (vals as readonly number[]).includes(ndigit)) {
+                visited[nr][nc] = 1
+                queue.push(npos)
+              }
+            }
+          }
+        }
+
+        if (F.some((pos) => !visited[pos[0]][pos[1]])) return true
+      }
+
+      return false
+    }
 
     case '[PR]': {
       for (const [r1, c1, r2, c2, isred] of rule.render_state.edges) {
