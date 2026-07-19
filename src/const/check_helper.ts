@@ -41,7 +41,7 @@ export function getLineGroup(type: RCRC, index: number): Group {
   return IDX0.map((i) => (type.substring(0, 3) === 'ROW' ? [index, i] : [i, index])) as Group
 }
 
-type ParsedGroup<B extends LiteBoard> =
+export type ParsedGroup<B extends LiteBoard> =
   | {
       digits: V[]
       cells: B['flat_cells']

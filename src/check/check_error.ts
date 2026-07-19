@@ -1,9 +1,9 @@
-import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
+import { type ParsedGroup, Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
 import { GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
 import { type Board } from '../types/Board'
 import { type Cell } from '../types/Cell'
 import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
-import { type Group, type Groups, IDX0, type POS, POSSchema, type TwoGroups, V } from '../types/base'
+import { type Group, type Groups, IDX0, type POS, POSSchema, V } from '../types/base'
 import { GROUPS_ADJACENT, create_adjacent_group_of_pos } from '../util/create_adjacent_group'
 import { POS2number, differenceOf2Groups } from '../util/groups'
 import { pairwise } from '../util/pairwise'
@@ -23,14 +23,16 @@ function check_dup(board: Board, groups: Groups): Set<Cell> {
   return collector.res
 }
 
-function check_2groups(board: Board, groups: TwoGroups, f: (d1: V, d2: V) => boolean): Set<Cell> {
+function check_groups(board: Board, groups: Groups, f_filled: (parsed: ParsedGroup<Board>) => boolean, f_not_filled?: (parsed: ParsedGroup<Board>) => boolean): Set<Cell> {
   const collector = new CellCollector()
 
   for (const group of groups) {
-    const { cells, digits, filled_all } = parseGroup(board, group)
+    const parsed = parseGroup(board, group)
 
-    if (filled_all) {
-      if (!f(digits[0], digits[1])) collector.add(cells)
+    if (parsed.filled_all) {
+      if (!f_filled(parsed)) collector.add(parsed.cells)
+    } else {
+      if (f_not_filled && !f_not_filled(parsed)) collector.add(parsed.cells)
     }
   }
 
@@ -96,18 +98,18 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       return check_dup(board, getDisJointGroups(rule))
     }
     case '[LK]': {
-      return check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
+      return check_groups(board, rule.render_state.edges, ({ digits }) => Math.abs(digits[0] - digits[1]) === 1)
     }
     case "[LK']": {
       const collector = new CellCollector()
 
-      collector.add(check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1))
-      collector.add(check_2groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1))
+      collector.add(check_groups(board, rule.render_state.edges, ({ digits }) => Math.abs(digits[0] - digits[1]) === 1))
+      collector.add(check_groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), ({ digits }) => Math.abs(digits[0] - digits[1]) !== 1))
 
       return collector.res
     }
     case '[PO]': {
-      return check_2groups(board, rule.render_state.edges, (d1, d2) => d1 < d2)
+      return check_groups(board, rule.render_state.edges, ({ digits }) => digits[0] < digits[1])
     }
     case '[LO]': {
       const collector = new CellCollector()
@@ -140,7 +142,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
         const { cells, digits, filled_all } = parseGroup(board, group)
 
         if (digit && filled_all) {
-          const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
+          const avg = Math.floor((digits as number[]).reduce((a, b) => a + b, 0) / digits.length)
           if (!(digit === avg)) {
             collector.add([cell])
             collector.add(cells)
@@ -151,45 +153,15 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       return collector.res
     }
     case '[TP]': {
-      const collector = new CellCollector()
-
-      for (const group of GROUPS_TP) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (digits[0] < digits[1] && digits[1] < digits[2]) collector.add(cells)
-          else if (digits[0] > digits[1] && digits[1] > digits[2]) collector.add(cells)
-        }
-      }
-
-      return collector.res
+      return check_groups(board, GROUPS_TP, ({ digits }) => !((digits[0] < digits[1] && digits[1] < digits[2]) || (digits[0] > digits[1] && digits[1] > digits[2])))
     }
     case '[QD]': {
-      const collector = new CellCollector()
-
-      for (const group of GROUPS_QD) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) collector.add(cells)
-        }
-      }
-
-      return collector.res
+      return check_groups(board, GROUPS_QD, ({ digits }) => digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))
     }
     case "[QD']": {
-      const collector = new CellCollector()
-
-      for (const group of GROUPS_QD) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!(digits.reduce((a, b) => a + b, 0) % 3 !== 0)) collector.add(cells)
-        }
-      }
-
-      return collector.res
+      return check_groups(board, GROUPS_QD, ({ digits }) => (digits as number[]).reduce((a, b) => a + b, 0) % 3 !== 0)
     }
+
     case '[TM]': {
       const collector = new CellCollector()
 
@@ -278,13 +250,7 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       collector.add(check_dup(board, rule.render_state.metros))
 
-      for (const group of rule.render_state.metros) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) collector.add(cells)
-        }
-      }
+      collector.add(check_groups(board, rule.render_state.metros, ({ digits }) => digits.toSorted().every((v, i, a) => v - a[0] === i)))
 
       return collector.res
     }
@@ -312,20 +278,12 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
       return collector.res
     }
     case '[IV]': {
-      const collector = new CellCollector()
-
-      for (const group of rule.render_state.lines) {
-        const { cells, digits, filled_all } = parseGroup(board, group)
-        const cnt = pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length
-
-        if (filled_all) {
-          if (!(cnt === 1)) collector.add(cells)
-        } else {
-          if (!(cnt <= 1)) collector.add(cells)
-        }
-      }
-
-      return collector.res
+      return check_groups(
+        board,
+        rule.render_state.lines,
+        ({ digits }) => pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length === 1,
+        ({ digits }) => pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length <= 1,
+      )
     }
 
     case '[TR]': {

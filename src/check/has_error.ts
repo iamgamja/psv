@@ -1,8 +1,8 @@
-import { Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
+import { type ParsedGroup, Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
 import { GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
 import { type LiteBoard } from '../types/Board'
 import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
-import { type Group, type Groups, IDX0, type POS, POSSchema, type TwoGroups, V } from '../types/base'
+import { type Group, type Groups, IDX0, type POS, POSSchema, V } from '../types/base'
 import { GROUPS_ADJACENT, create_adjacent_group_of_pos } from '../util/create_adjacent_group'
 import { POS2number, differenceOf2Groups } from '../util/groups'
 import { pairwise } from '../util/pairwise'
@@ -20,12 +20,19 @@ function has_dup(board: LiteBoard, groups: Groups): boolean {
   return false
 }
 
-function check_2groups(board: LiteBoard, groups: TwoGroups, f: (d1: V, d2: V) => boolean): boolean {
+function check_groups(
+  board: LiteBoard,
+  groups: Groups,
+  f_filled: (parsed: ParsedGroup<LiteBoard>) => boolean,
+  f_not_filled?: (parsed: ParsedGroup<LiteBoard>) => boolean,
+): boolean {
   for (const group of groups) {
-    const { digits, filled_all } = parseGroup(board, group)
+    const parsed = parseGroup(board, group)
 
-    if (filled_all) {
-      if (!f(digits[0], digits[1])) return true
+    if (parsed.filled_all) {
+      if (!f_filled(parsed)) return true
+    } else {
+      if (f_not_filled && !f_not_filled(parsed)) return true
     }
   }
 
@@ -71,16 +78,16 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
       return has_dup(board, getDisJointGroups(rule))
     }
     case '[LK]': {
-      return check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1)
+      return check_groups(board, rule.render_state.edges, ({ digits }) => Math.abs(digits[0] - digits[1]) === 1)
     }
     case "[LK']": {
       return (
-        check_2groups(board, rule.render_state.edges, (d1, d2) => Math.abs(d1 - d2) === 1) ||
-        check_2groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), (d1, d2) => Math.abs(d1 - d2) !== 1)
+        check_groups(board, rule.render_state.edges, ({ digits }) => Math.abs(digits[0] - digits[1]) === 1) ||
+        check_groups(board, differenceOf2Groups(GROUPS_ADJACENT['wasd'], rule.render_state.edges), ({ digits }) => Math.abs(digits[0] - digits[1]) !== 1)
       )
     }
     case '[PO]': {
-      return check_2groups(board, rule.render_state.edges, (d1, d2) => d1 < d2)
+      return check_groups(board, rule.render_state.edges, ({ digits }) => digits[0] < digits[1])
     }
     case '[LO]': {
       for (const pos of rule.render_state.cells) {
@@ -106,7 +113,7 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
         const { digits, filled_all } = parseGroup(board, group)
 
         if (digit && filled_all) {
-          const avg = Math.floor(digits.reduce((a, b) => a + b, 0) / digits.length)
+          const avg = Math.floor((digits as number[]).reduce((a, b) => a + b, 0) / digits.length)
           if (!(digit === avg)) return true
         }
       }
@@ -114,36 +121,13 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
       return false
     }
     case '[TP]': {
-      for (const group of GROUPS_TP) {
-        const { digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (digits[0] < digits[1] && digits[1] < digits[2]) return true
-          else if (digits[0] > digits[1] && digits[1] > digits[2]) return true
-        }
-      }
-
-      return false
+      return check_groups(board, GROUPS_TP, ({ digits }) => !((digits[0] < digits[1] && digits[1] < digits[2]) || (digits[0] > digits[1] && digits[1] > digits[2])))
     }
     case '[QD]': {
-      for (const group of GROUPS_QD) {
-        const { digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!(digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))) return true
-        }
-      }
-      return false
+      return check_groups(board, GROUPS_QD, ({ digits }) => digits.some((d) => d % 2 === 0) && digits.some((d) => d % 2 === 1))
     }
     case "[QD']": {
-      for (const group of GROUPS_QD) {
-        const { digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!(digits.reduce((a, b) => a + b, 0) % 3 !== 0)) return true
-        }
-      }
-      return false
+      return check_groups(board, GROUPS_QD, ({ digits }) => (digits as number[]).reduce((a, b) => a + b, 0) % 3 !== 0)
     }
 
     case '[TM]': {
@@ -219,15 +203,7 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
     case '[MR]': {
       if (has_dup(board, rule.render_state.metros)) return true
 
-      for (const group of rule.render_state.metros) {
-        const { digits, filled_all } = parseGroup(board, group)
-
-        if (filled_all) {
-          if (!digits.toSorted().every((v, i, a) => v - a[0] === i)) return true
-        }
-      }
-
-      return false
+      return check_groups(board, rule.render_state.metros, ({ digits }) => digits.toSorted().every((v, i, a) => v - a[0] === i))
     }
     case '[SR]': {
       for (const group of rule.render_state.streams) {
@@ -251,18 +227,12 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
       return false
     }
     case '[IV]': {
-      for (const group of rule.render_state.lines) {
-        const { digits, filled_all } = parseGroup(board, group)
-        const cnt = pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length
-
-        if (filled_all) {
-          if (!(cnt === 1)) return true
-        } else {
-          if (!(cnt <= 1)) return true
-        }
-      }
-
-      return false
+      return check_groups(
+        board,
+        rule.render_state.lines,
+        ({ digits }) => pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length === 1,
+        ({ digits }) => pairwise(digits).filter(([d1, d2]) => d1 && d2 && d1 > d2).length <= 1,
+      )
     }
 
     case '[TR]': {
