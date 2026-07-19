@@ -519,6 +519,37 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+    case "[VT']": {
+      const collector = new CellCollector()
+
+      for (const [r, c, dir] of rule.render_state.arrows) {
+        const pos = POSSchema.parse([r, c])
+        const cell = board.getCell(pos)
+        const digit = cell.digit
+
+        if (digit) {
+          const [dir_dr, dir_dc] = DirMap[dir]
+
+          const r2 = r + dir_dr * digit
+          const c2 = c + dir_dc * digit
+
+          const pos2 = POSSchema.safeParse([r2, c2])
+          if (!pos2.success) {
+            collector.add([cell])
+            continue
+          }
+
+          const cell2 = board.getCell(pos2.data)
+          const digit2 = cell2.digit
+
+          if (digit2) {
+            if (!(digit2 > digit)) collector.add([cell, cell2])
+          }
+        }
+      }
+
+      return collector.res
+    }
     case '[RT]': {
       const collector = new CellCollector()
 

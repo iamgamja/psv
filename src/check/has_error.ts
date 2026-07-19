@@ -453,6 +453,32 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
 
       return false
     }
+    case "[VT']": {
+      for (const [r, c, dir] of rule.render_state.arrows) {
+        const pos = POSSchema.parse([r, c])
+        const cell = board.getCell(pos)
+        const digit = cell.digit
+
+        if (digit) {
+          const [dir_dr, dir_dc] = DirMap[dir]
+
+          const r2 = r + dir_dr * digit
+          const c2 = c + dir_dc * digit
+
+          const pos2 = POSSchema.safeParse([r2, c2])
+          if (!pos2.success) return true
+
+          const cell2 = board.getCell(pos2.data)
+          const digit2 = cell2.digit
+
+          if (digit2) {
+            if (!(digit2 > digit)) return true
+          }
+        }
+      }
+
+      return false
+    }
     case '[RT]': {
       for (const [r1, c1, dd] of rule.render_state.cells) {
         const pos1 = POSSchema.parse([r1, c1])

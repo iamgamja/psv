@@ -488,6 +488,7 @@ const render_order = [
   "[TR']",
   '[EF]',
   '[VT]',
+  "[VT']",
   '[MT]',
 
   // line
@@ -649,6 +650,13 @@ function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>, color_gene
       rule.render_state.arrows.forEach(([r, c, dir]) => {
         const [dr, dc] = DirMap[dir]
         Draw.Triangle(POSSchema.parse([r, c]), null, { size: 'small', stroke_color: '#ff7b82', fill_color: '#ff7b82', direction: Math.atan2(-dr, dc) })
+      })
+      return true
+    }
+    case "[VT']": {
+      rule.render_state.arrows.forEach(([r, c, dir]) => {
+        const [dr, dc] = DirMap[dir]
+        Draw.Triangle(POSSchema.parse([r, c]), null, { size: 'small', stroke_color: '#c084fc', fill_color: '#c084fc', direction: Math.atan2(-dr, dc) })
       })
       return true
     }

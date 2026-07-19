@@ -182,6 +182,12 @@ const DefaultRuleMap: { [K in Rule_ID]: Extract<Rule, { id: K }> } = {
       arrows: [],
     },
   },
+  "[VT']": {
+    id: "[VT']",
+    render_state: {
+      arrows: [],
+    },
+  },
   '[RT]': {
     id: '[RT]',
     render_state: {
@@ -394,27 +400,23 @@ function addHint(rule: Rule, selected: POS[]): boolean {
       return true
     }
 
-    case '[VT]': {
-      if (selected.length !== 1) return false
-
-      rule.render_state.arrows.push([...selected[0], 'L'])
+    case '[VT]':
+    case "[VT']": {
+      selected.forEach((pos) => {
+        rule.render_state.arrows.push([...pos, 'L'])
+      })
+      
       return true
     }
-    case '[RT]': {
-      if (selected.length !== 1) return false
-
-      rule.render_state.cells.push([...selected[0], 0])
-      return true
-    }
+    case '[RT]':
     case "[RT']": {
-      if (selected.length !== 1) return false
-
-      rule.render_state.cells.push([...selected[0], 0])
+      selected.forEach((pos) => {
+        rule.render_state.cells.push([...pos, 0])
+      })
+      
       return true
     }
     case '[RF]': {
-      if (selected.length !== 9) return false
-
       if (selected.every(([r, _c]) => r === selected[0][0])) {
         rule.render_state.lines.push(['ROW', selected[0][0]])
         return true
@@ -465,7 +467,7 @@ function addHint(rule: Rule, selected: POS[]): boolean {
     case '[PD]':
     case '[SQ]':
     case "[SQ']": {
-      if (selected.length < 1) return false
+      if (selected.length === 0) return false
 
       selected.sort((pos1, pos2) => POS2number(pos1) - POS2number(pos2))
 
@@ -765,6 +767,9 @@ function createHintElement(rule: Rule): HTMLElement[] {
       return [ListHelper(rule.render_state.start_rows.map((r) => String(r + 1)))]
 
     case '[VT]': {
+      return rule.render_state.arrows.map((obj) => SelectHelper(obj, 2, ['L', 'R', 'U', 'D'] as const, stringifyPos(obj.slice(0, 2) as POS)))
+    }
+    case "[VT']": {
       return rule.render_state.arrows.map((obj) => SelectHelper(obj, 2, ['L', 'R', 'U', 'D'] as const, stringifyPos(obj.slice(0, 2) as POS)))
     }
     case '[RT]': {

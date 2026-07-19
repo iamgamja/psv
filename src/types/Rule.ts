@@ -40,6 +40,7 @@ export const Rule_ID = [
 
   // distance
   '[VT]',
+  "[VT']",
   '[RT]',
   "[RT']",
   '[RF]',
@@ -202,6 +203,10 @@ const RuleObjectMap = {
 
   '[VT]': z.object({
     id: z.literal('[VT]'),
+    render_state: z.object({ arrows: z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema])) }),
+  }),
+  "[VT']": z.object({
+    id: z.literal("[VT']"),
     render_state: z.object({ arrows: z.array(z.tuple([IDX0Schema, IDX0Schema, LRUDSchema])) }),
   }),
   '[RT]': z.object({
