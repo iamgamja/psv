@@ -241,6 +241,9 @@ const DefaultRuleMap: { [K in Rule_ID]: Extract<Rule, { id: K }> } = {
   '[TS]': {
     id: '[TS]',
   },
+  '[BL]': {
+    id: '[BL]',
+  },
 
   '[PR]': {
     id: '[PR]',
@@ -464,6 +467,9 @@ function addHint(rule: Rule, selected: POS[]): boolean {
       return true
     }
     case '[TS]': {
+      return true
+    }
+    case '[BL]': {
       return true
     }
 
@@ -816,6 +822,8 @@ function createHintElement(rule: Rule): HTMLElement[] {
     case "[EP']":
       return [ListHelper([])]
     case '[TS]':
+      return [ListHelper([])]
+    case '[BL]':
       return [ListHelper([])]
 
     case '[PR]': {

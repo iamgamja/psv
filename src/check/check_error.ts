@@ -983,6 +983,71 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+    case '[BL]': {
+      const collector = new CellCollector()
+      const groups = [
+        [1, 2, 3],
+        [7, 8, 9],
+      ] as const
+
+      for (const values of groups) {
+        const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
+
+        for (const r of IDX0) {
+          for (const c of IDX0) {
+            if (visited[r][c]) continue
+
+            const pos = POSSchema.parse([r, c])
+            const cell = board.getCell(pos)
+            const digit = cell.digit
+
+            if ((values as readonly number[]).includes(digit)) {
+              const component: Cell[] = []
+              const queue = [pos]
+              visited[r][c] = 1
+
+              let has_adjacent_empty = false
+
+              while (queue.length > 0) {
+                const curr = queue.shift()!
+                const curr_cell = board.getCell(curr)
+                component.push(curr_cell)
+
+                const adj = create_adjacent_group_of_pos(curr, 'wasd')
+                for (const npos of adj) {
+                  const [nr, nc] = npos
+                  const ncell = board.getCell(npos)
+                  const ndigit = ncell.digit
+
+                  if (ndigit === 0) {
+                    has_adjacent_empty = true
+                  } else if (!visited[nr][nc] && (values as readonly number[]).includes(ndigit)) {
+                    visited[nr][nc] = 1
+                    queue.push(npos)
+                  }
+                }
+              }
+
+              if (!has_adjacent_empty) {
+                const rs = component.map((cell) => cell.r)
+                const cs = component.map((cell) => cell.c)
+                const minR = Math.min(...rs)
+                const maxR = Math.max(...rs)
+                const minC = Math.min(...cs)
+                const maxC = Math.max(...cs)
+
+                const is_rectangle = component.length === (maxR - minR + 1) * (maxC - minC + 1)
+                if (is_rectangle) {
+                  collector.add(component)
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
 
     case '[PR]': {
       const collector = new CellCollector()

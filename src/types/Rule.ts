@@ -56,6 +56,7 @@ export const Rule_ID = [
   '[EP]',
   "[EP']",
   '[TS]',
+  '[BL]',
 
   // math
   '[PR]',
@@ -256,6 +257,9 @@ const RuleObjectMap = {
   }),
   '[TS]': z.object({
     id: z.literal('[TS]'),
+  }),
+  '[BL]': z.object({
+    id: z.literal('[BL]'),
   }),
 
   '[PR]': z.object({
