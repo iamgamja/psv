@@ -20,6 +20,9 @@ export type Cell = {
 }
 
 export type LiteCell = {
+  r: IDX
+  c: IDX
+
   digit: 0 | V
   is_static: boolean
 }

@@ -1,5 +1,5 @@
 import { type ParsedGroup, Prime2Set, Prime3Set, Square2Set, Square3Set, distanceMap, distances, getLineGroup, parseGroup } from '../const/check_helper'
-import { GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
+import { GROUPS_B, GROUPS_QD, GROUPS_R, GROUPS_TP, getDisJointGroups } from '../const/groups'
 import { type LiteBoard } from '../types/Board'
 import { DirMap, type RangeLetter, type Rule, isKnown } from '../types/Rule'
 import { type Group, type Groups, IDX0, type POS, POSSchema, V } from '../types/base'
@@ -72,6 +72,40 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
     case '[SG]':
     case "[SG']": {
       return has_dup(board, getDisJointGroups(rule))
+    }
+    case "[B']": {
+      for (let idx = 0; idx < 9; idx++) {
+        const [h1, h2] = rule.render_state.hints[idx]
+
+        const group = GROUPS_B[idx]
+        const cells = group.map((pos) => board.getCell(pos))
+
+        const coloredCells = cells.filter((cell) => ((cell.r ^ cell.c) & 1) === 0)
+        const uncoloredCells = cells.filter((cell) => ((cell.r ^ cell.c) & 1) !== 0)
+
+        const digitsColored = coloredCells.map((cell) => cell.digit).filter((d) => d)
+        const digitsUncolored = uncoloredCells.map((cell) => cell.digit).filter((d) => d)
+
+        const sumColored = (digitsColored as number[]).reduce((a, b) => a + b, 0)
+        const sumUncolored = (digitsUncolored as number[]).reduce((a, b) => a + b, 0)
+
+        const allColoredFilled = digitsColored.length === coloredCells.length
+        const allUncoloredFilled = digitsUncolored.length === uncoloredCells.length
+
+        const checkCase1 =
+          ((allColoredFilled && sumColored === h1) || (!allColoredFilled && sumColored <= h1)) &&
+          ((allUncoloredFilled && sumUncolored === h2) || (!allUncoloredFilled && sumUncolored <= h2))
+
+        const checkCase2 =
+          ((allColoredFilled && sumColored === h2) || (!allColoredFilled && sumColored <= h2)) &&
+          ((allUncoloredFilled && sumUncolored === h1) || (!allUncoloredFilled && sumUncolored <= h1))
+
+        if (!checkCase1 && !checkCase2) {
+          return true
+        }
+      }
+
+      return false
     }
 
     case '[DT]': {

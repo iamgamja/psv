@@ -1,5 +1,5 @@
 import { SIZE_CELL } from '../const/const'
-import { GROUPS_R, getDisJointGroups } from '../const/groups'
+import { GROUPS_B, GROUPS_R, getDisJointGroups } from '../const/groups'
 import { type Board } from '../types/Board'
 import { DirMap, type RCRC, type Rule, Rule_ID, isKnown } from '../types/Rule'
 import { type Group } from '../types/base'
@@ -93,6 +93,7 @@ interface DrawTextOptions {
   color?: string
   fontSize?: keyof typeof DrawTextSize
   align?: 'left' | 'center' | 'right'
+  vAlign?: 'top' | 'center' | 'bottom'
   maxLength?: number
 }
 
@@ -100,6 +101,7 @@ interface ParsedDrawTextOptions {
   color: string
   fontSize: number
   align: 'left' | 'center' | 'right'
+  vAlign: 'top' | 'center' | 'bottom'
   maxLength: number
 }
 
@@ -127,6 +129,7 @@ function parseDrawTextOptions(options?: DrawTextOptions): ParsedDrawTextOptions 
     color: options?.color ?? '#000000',
     fontSize: options?.fontSize ? DrawTextSize[options.fontSize] : DrawTextSize.small,
     align: options?.align ?? 'center',
+    vAlign: options?.vAlign ?? 'center',
     maxLength: options?.maxLength ?? 3,
   }
 }
@@ -201,7 +204,7 @@ const Draw = {
 
     svg.appendChild(ele)
   },
-  _createText(x: X, y: Y, text: string, { color, fontSize, align, maxLength }: ParsedDrawTextOptions) {
+  _createText(x: X, y: Y, text: string, { color, fontSize, align, vAlign, maxLength }: ParsedDrawTextOptions) {
     const ele = document.createElementNS('http://www.w3.org/2000/svg', 'text')
 
     ele.setAttribute('x', x.toString())
@@ -210,7 +213,6 @@ const Draw = {
     ele.setAttribute('font-size', fontSize.toString())
 
     ele.setAttribute('text-anchor', align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle')
-
     ele.setAttribute('dominant-baseline', 'middle')
 
     const lines = text.match(new RegExp(`.{1,${maxLength}}`, 'g')) ?? ['']
@@ -220,7 +222,9 @@ const Draw = {
       lines.forEach((line, i) => {
         const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan')
         tspan.setAttribute('x', x.toString())
-        tspan.setAttribute('dy', i === 0 ? `${-(lines.length - 1) * 0.55}em` : '1.1em')
+        if (vAlign === 'top') tspan.setAttribute('dy', i === 0 ? '0em' : '1.1em')
+        if (vAlign === 'center') tspan.setAttribute('dy', i === 0 ? `${-(lines.length - 1) * 0.55}em` : '1.1em')
+        if (vAlign === 'bottom') tspan.setAttribute('dy', i === 0 ? `${-(lines.length - 1) * 1.1}em` : '1.1em')
         tspan.textContent = line
         ele.appendChild(tspan)
       })
@@ -420,22 +424,30 @@ const Draw = {
   Text(pos: POSlike, text: string, options?: DrawTextOptions) {
     const parsedOptions = parseDrawTextOptions(options)
 
-    const [x, y] = calculateCenter(pos)
+    let [x, y] = calculateCenter(pos)
 
     switch (parsedOptions.align) {
       case 'left': {
-        Draw._createText(x - SIZE_CELL * 0.3, y, text, parsedOptions)
-        return true
-      }
-      case 'center': {
-        Draw._createText(x, y, text, parsedOptions)
-        return true
+        x -= SIZE_CELL * 0.4
+        break
       }
       case 'right': {
-        Draw._createText(x + SIZE_CELL * 0.3, y, text, parsedOptions)
-        return true
+        x += SIZE_CELL * 0.4
+        break
       }
     }
+    switch (parsedOptions.vAlign) {
+      case 'top': {
+        y -= SIZE_CELL * 0.25
+        break
+      }
+      case 'bottom': {
+        y += SIZE_CELL * 0.3
+        break
+      }
+    }
+
+    Draw._createText(x, y, text, parsedOptions)
   },
   SideText(type: RCRC, index: IDX0, text: string, options_?: DrawTextOptions) {
     switch (type) {
@@ -469,6 +481,7 @@ const render_order = [
   "[R']",
   '[C]',
   '[B]',
+  "[B']",
   '[SG]',
 
   // background
@@ -573,6 +586,37 @@ function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>, color_gene
         .forEach(([pos1, pos2]) => {
           Draw.Divider(pos1, pos2, { thickness: 'border_heavy' })
         })
+      return true
+    }
+    case "[B']": {
+      GROUPS_ADJACENT['wasd']
+        .filter(([pos1, pos2]) => {
+          return !GROUPS_B.some((group) => hasPOSs(group, pos1, pos2))
+        })
+        .forEach(([pos1, pos2]) => {
+          Draw.Divider(pos1, pos2, { thickness: 'border_heavy' })
+        })
+
+      for (let idx = 0; idx < 9; idx++) {
+        const group = GROUPS_B[idx]
+        const [h1, h2] = rule.render_state.hints[idx]
+
+        group.forEach((pos) => {
+          if (((pos[0] ^ pos[1]) & 1) === 0) {
+            Draw.Fill(pos, { stroke_color: '#00000000', fill_color: '#ffe74954' })
+          }
+        })
+
+        const r_min = Math.floor(idx / 3) * 3
+        const c_min = (idx % 3) * 3
+        Draw.Text([r_min, c_min], `${h1} ${h2}`, {
+          align: 'left',
+          vAlign: 'top',
+          fontSize: 'small',
+          maxLength: 5,
+          color: '#444444',
+        })
+      }
       return true
     }
     case '[SG]': {

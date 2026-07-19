@@ -9,6 +9,7 @@ export const Rule_ID = [
   "[R']",
   '[C]',
   '[B]',
+  "[B']",
   '[SG]',
   "[SG']",
 
@@ -121,6 +122,10 @@ const RuleObjectMap = {
   }),
   '[B]': z.object({
     id: z.literal('[B]'),
+  }),
+  "[B']": z.object({
+    id: z.literal("[B']"),
+    render_state: z.object({ hints: z.array(z.tuple([z.number(), z.number()])).length(9) }),
   }),
   '[SG]': z.object({
     id: z.literal('[SG]'),

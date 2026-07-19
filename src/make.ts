@@ -67,6 +67,12 @@ const DefaultRuleMap: { [K in Rule_ID]: Extract<Rule, { id: K }> } = {
   '[B]': {
     id: '[B]',
   },
+  "[B']": {
+    id: "[B']",
+    render_state: {
+      hints: Array.from({ length: 9 }, () => [1, 1] as [number, number]),
+    },
+  },
   '[SG]': {
     id: '[SG]',
     render_state: {
@@ -309,6 +315,9 @@ function addHint(rule: Rule, selected: POS[]): boolean {
       return true
     }
     case '[B]': {
+      return true
+    }
+    case "[B']": {
       return true
     }
     case '[SG]': {
@@ -583,7 +592,7 @@ function createHintElement(rule: Rule): HTMLElement[] {
             className: ['right', 'red'],
             content: '✕',
             onclick: () => {
-              if ('render_state' in rule) Object.values(rule.render_state).forEach((arr) => arr.splice(arr.indexOf(obj), 1))
+              if ('render_state' in rule && rule.id !== "[B']") Object.values(rule.render_state).forEach((arr) => arr.splice(arr.indexOf(obj), 1))
               else board.rules.splice(board.rules.indexOf(rule), 1)
               renderRules(board)
               saveLevel(level)
@@ -623,7 +632,7 @@ function createHintElement(rule: Rule): HTMLElement[] {
             className: ['right', 'red'],
             content: '✕',
             onclick: () => {
-              if ('render_state' in rule) Object.values(rule.render_state).forEach((arr) => arr.splice(arr.indexOf(obj), 1))
+              if ('render_state' in rule && rule.id !== "[B']") Object.values(rule.render_state).forEach((arr) => arr.splice(arr.indexOf(obj), 1))
               else board.rules.splice(board.rules.indexOf(rule), 1)
 
               renderRules(board)
@@ -672,7 +681,7 @@ function createHintElement(rule: Rule): HTMLElement[] {
             className: ['right', 'red'],
             content: '✕',
             onclick: () => {
-              if ('render_state' in rule) Object.values(rule.render_state).forEach((arr) => arr.splice(arr.indexOf(obj), 1))
+              if ('render_state' in rule && rule.id !== "[B']") Object.values(rule.render_state).forEach((arr) => arr.splice(arr.indexOf(obj), 1))
               else board.rules.splice(board.rules.indexOf(rule), 1)
 
               renderRules(board)
@@ -728,6 +737,9 @@ function createHintElement(rule: Rule): HTMLElement[] {
     case '[C]':
     case '[B]':
       return [ListHelper([])]
+    case "[B']": {
+      return rule.render_state.hints.flatMap((h, i) => [SelectNumberHelper(h, 0, `Box ${i + 1} H1`), SelectNumberHelper(h, 1, `Box ${i + 1} H2`)])
+    }
     case '[SG]':
       return rule.render_state.regions.map((group) => GroupHelper(group))
     case "[SG']":
@@ -1020,7 +1032,7 @@ function render() {
 
                   worker.postMessage({
                     type: 'solve',
-                    flat_cells: board.flat_cells.map((cell) => ({ digit: cell.digit, is_static: cell.is_static })),
+                    flat_cells: board.flat_cells.map((cell) => ({ r: cell.r, c: cell.c, digit: cell.digit, is_static: cell.is_static })),
                     rules: board.rules,
                   } satisfies InputMessage)
                 },
