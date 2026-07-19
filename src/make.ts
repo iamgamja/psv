@@ -228,6 +228,12 @@ const DefaultRuleMap: { [K in Rule_ID]: Extract<Rule, { id: K }> } = {
       marked_cells: [],
     },
   },
+  '[LI]': {
+    id: '[LI]',
+    render_state: {
+      cells: [],
+    },
+  },
 
   '[ES]': {
     id: '[ES]',
@@ -456,6 +462,12 @@ function addHint(rule: Rule, selected: POS[]): boolean {
     }
     case '[EF]': {
       rule.render_state.marked_cells = rule.render_state.marked_cells.concat(selected)
+      return true
+    }
+    case '[LI]': {
+      selected.forEach((pos) => {
+        rule.render_state.cells.push([...pos, 1])
+      })
       return true
     }
 
@@ -815,6 +827,8 @@ function createHintElement(rule: Rule): HTMLElement[] {
       return [ListHelper([])]
     case '[EF]':
       return rule.render_state.marked_cells.map((pos) => PosHelper(pos))
+    case '[LI]':
+      return rule.render_state.cells.map((obj) => SelectHelper(obj, 2, [...V], stringifyPos(obj.slice(0, 2) as POS)))
 
     case '[ES]':
       return [ListHelper([])]

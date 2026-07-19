@@ -487,6 +487,7 @@ const render_order = [
   // background
   '[RT]',
   "[RT']",
+  '[LI]',
 
   // cage
   '[TM]',
@@ -634,6 +635,12 @@ function render_rule(rule: Extract<Rule, { id: Renderable_Rule_ID }>, color_gene
     case "[RT']": {
       rule.render_state.cells.forEach(([r, c, dd]) => {
         Draw.Text([r, c], '√' + dd.toString(), { color: '#8e8e8eee', fontSize: 'regular' })
+      })
+      return true
+    }
+    case '[LI]': {
+      rule.render_state.cells.forEach(([r, c, v]) => {
+        Draw.Text([r, c], v.toString(), { color: '#8e8e8eee', fontSize: 'regular' })
       })
       return true
     }

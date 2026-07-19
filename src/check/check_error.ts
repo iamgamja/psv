@@ -821,6 +821,49 @@ function check_error_rule(board: Board, rule: Rule): Set<Cell> {
 
       return collector.res
     }
+    case '[LI]': {
+      const collector = new CellCollector()
+
+      for (const idx of IDX0) {
+        // Row check
+        const row_hints = rule.render_state.cells.filter(([r, _c, _v]) => r === idx)
+        if (row_hints.length > 0) {
+          const cells = row_hints.map(([r, c, _v]) => board.getCell(POSSchema.parse([r, c])))
+          const filled = row_hints.filter(([r, c, _v]) => board.getCell(POSSchema.parse([r, c])).digit !== 0)
+          const different = filled.filter(([r, c, v]) => board.getCell(POSSchema.parse([r, c])).digit !== v)
+
+          if (filled.length === row_hints.length) {
+            if (different.length !== 1) {
+              collector.add(cells)
+            }
+          } else {
+            if (different.length >= 2) {
+              collector.add(different.map(([r, c, _v]) => board.getCell(POSSchema.parse([r, c]))))
+            }
+          }
+        }
+
+        // Col check
+        const col_hints = rule.render_state.cells.filter(([_r, c, _v]) => c === idx)
+        if (col_hints.length > 0) {
+          const cells = col_hints.map(([r, c, _v]) => board.getCell(POSSchema.parse([r, c])))
+          const filled = col_hints.filter(([r, c, _v]) => board.getCell(POSSchema.parse([r, c])).digit !== 0)
+          const different = filled.filter(([r, c, v]) => board.getCell(POSSchema.parse([r, c])).digit !== v)
+
+          if (filled.length === col_hints.length) {
+            if (different.length !== 1) {
+              collector.add(cells)
+            }
+          } else {
+            if (different.length >= 2) {
+              collector.add(different.map(([r, c, _v]) => board.getCell(POSSchema.parse([r, c]))))
+            }
+          }
+        }
+      }
+
+      return collector.res
+    }
 
     case '[ES]': {
       const collector = new CellCollector()

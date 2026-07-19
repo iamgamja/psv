@@ -50,6 +50,7 @@ export const Rule_ID = [
   '[MT]',
   '[BP]',
   '[EF]',
+  '[LI]',
 
   // connected component
   '[ES]',
@@ -244,6 +245,12 @@ const RuleObjectMap = {
   '[EF]': z.object({
     id: z.literal('[EF]'),
     render_state: z.object({ marked_cells: GroupSchema }),
+  }),
+  '[LI]': z.object({
+    id: z.literal('[LI]'),
+    render_state: z.object({
+      cells: z.array(z.tuple([IDX0Schema, IDX0Schema, VSchema])),
+    }),
   }),
 
   '[ES]': z.object({

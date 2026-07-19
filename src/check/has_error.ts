@@ -737,6 +737,37 @@ function has_error_rule(board: LiteBoard, rule: Rule): boolean {
 
       return false
     }
+    case '[LI]': {
+      for (const idx of IDX0) {
+        // Row check
+        const row_hints = rule.render_state.cells.filter(([r, _c, _v]) => r === idx)
+        if (row_hints.length > 0) {
+          const filled = row_hints.filter(([r, c, _v]) => board.getCell(POSSchema.parse([r, c])).digit !== 0)
+          const different = filled.filter(([r, c, v]) => board.getCell(POSSchema.parse([r, c])).digit !== v)
+
+          if (filled.length === row_hints.length) {
+            if (different.length !== 1) return true
+          } else {
+            if (different.length >= 2) return true
+          }
+        }
+
+        // Col check
+        const col_hints = rule.render_state.cells.filter(([_r, c, _v]) => c === idx)
+        if (col_hints.length > 0) {
+          const filled = col_hints.filter(([r, c, _v]) => board.getCell(POSSchema.parse([r, c])).digit !== 0)
+          const different = filled.filter(([r, c, v]) => board.getCell(POSSchema.parse([r, c])).digit !== v)
+
+          if (filled.length === col_hints.length) {
+            if (different.length !== 1) return true
+          } else {
+            if (different.length >= 2) return true
+          }
+        }
+      }
+
+      return false
+    }
 
     case '[ES]': {
       const visited = Array.from({ length: 9 }, () => new Uint8Array(9))
