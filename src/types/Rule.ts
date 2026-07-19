@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { GroupSchema, GroupsSchema, IDX0Schema, POSSchema, TwoGroupsSchema, VSchema } from './base'
 
 export const Rule_ID = [
+  // basic
   '[Sudoku]',
   '[R]',
   "[R']",
@@ -11,6 +12,7 @@ export const Rule_ID = [
   '[SG]',
   "[SG']",
 
+  // adjacent
   '[DT]',
   '[LK]',
   "[LK']",
@@ -21,33 +23,41 @@ export const Rule_ID = [
   '[QD]',
   "[QD']",
 
+  // group
   '[TM]',
   '[AQ]',
   '[PA]',
 
+  // line
   '[MR]',
   '[SR]',
   '[IV]',
 
+  // path
   '[TR]',
   "[TR']",
   '[BD]',
 
+  // distance
   '[VT]',
   '[RT]',
   "[RT']",
   '[RF]',
 
+  // count
   '[MT]',
   '[BP]',
   '[EF]',
 
+  // connected component
   '[ES]',
   '[EP]',
 
+  // math
   '[PR]',
   "[PR']",
 
+  // side
   '[QT]',
   '[RG]',
   "[RG']",
@@ -55,6 +65,7 @@ export const Rule_ID = [
   '[SQ]',
   "[SQ']",
 
+  // etc
   '[ST]',
 ] as const
 export const RuleIdSchema = z.enum(Rule_ID)
