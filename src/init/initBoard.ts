@@ -39,8 +39,8 @@ export function initBoard(level: LevelData, State: State, is_making: boolean): B
       .filter(isKnown)
       .filter(hasDisJointGroup)
       .map(getDisJointGroups)
-      .filter((groups) => groups.length === 9)
-      .flat(),
+      .flat()
+      .filter((group) => group.length === 9),
 
     selected: new Set(),
     get empty_selected() {
