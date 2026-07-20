@@ -460,11 +460,11 @@ const Draw = {
         return true
       }
       case 'COL': {
-        Draw.Text([9, index], text, { fontSize: 'small', ...options_ })
+        Draw.Text([9, index], text, { fontSize: 'small', vAlign: 'top', ...options_ })
         return true
       }
       case 'COL_TOP': {
-        Draw.Text([-1, index], text, { fontSize: 'small', ...options_ })
+        Draw.Text([-1, index], text, { fontSize: 'small', vAlign: 'bottom', ...options_ })
         return true
       }
     }
