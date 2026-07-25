@@ -286,17 +286,6 @@ export function initInput(State: State): Input {
         return
       }
 
-      case 'a': {
-        if (e.ctrlKey || e.metaKey) {
-          for (const cell of board.flat_cells) {
-            board.selected.add(cell)
-            board.render()
-          }
-        }
-
-        return
-      }
-
       case 'backspace':
       case 'delete': {
         buttons.delete.click()
@@ -323,14 +312,30 @@ export function initInput(State: State): Input {
         return
       }
 
+      case 'w':
+      case 'a':
+      case 's':
+      case 'd':
       case 'arrowup':
       case 'arrowdown':
       case 'arrowleft':
       case 'arrowright': {
+        if (key === 'a' && (e.ctrlKey || e.metaKey)) {
+          for (const cell of board.flat_cells) {
+            board.selected.add(cell)
+          }
+          board.render()
+          return
+        }
+
         const map = {
+          w: [-1, 0],
           arrowup: [-1, 0],
+          s: [1, 0],
           arrowdown: [1, 0],
+          a: [0, -1],
           arrowleft: [0, -1],
+          d: [0, 1],
           arrowright: [0, 1],
         } as const
         const [dr, dc] = map[key as keyof typeof map]
