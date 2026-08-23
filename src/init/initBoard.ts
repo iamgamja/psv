@@ -288,7 +288,7 @@ export function initBoard(level: LevelData, State: State, is_making: boolean): B
       if (dim_setting === 'all') {
         check_rules = this.rules.filter(isKnown)
       } else if (dim_setting === 'rcb') {
-        check_rules = this.rules.filter((rule) => isKnown(rule) && (rule.id === '[R]' || rule.id === '[C]' || rule.id === '[B]'))
+        check_rules = this.rules.filter((rule) => isKnown(rule) && (rule.id === '[R]' || rule.id === '[C]' || rule.id === '[B]' || rule.id === '[SG]'))
       }
 
       for (const digit of cell.candidate_memo) {

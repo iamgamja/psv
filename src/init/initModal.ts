@@ -230,7 +230,7 @@ export function initSettingModal(State: State) {
                 content: '끄기',
               })),
               (button_map.dimMemo.rcb = createElement('button', {
-                content: '[R], [C], [B]만',
+                content: '[R], [C], [B], [SG]만',
               })),
               (button_map.dimMemo.all = createElement('button', {
                 content: '전부',
