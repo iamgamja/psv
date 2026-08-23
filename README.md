@@ -3,6 +3,6 @@
 Join Pillow's N Sudoku Variants Discord Server: https://discord.com/invite/E2hwVqQ3PC
 
 - player: https://iamgamja.github.io/psv/
-- maker: https://iamgamja.github.io/psv/make/
+- maker: https://iamgamja.github.io/psv/make
 
 [오류 감지 로직 문서](error_check_impl.md)
